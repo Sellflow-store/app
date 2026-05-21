@@ -14,8 +14,12 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // ── Subdomain routing ────────────────────────────────────────────────────
   // monostore.sellflow.app → rewrite to /(storefront)/[shop]/...
   // localhost:3000 is the Sellflow platform (no subdomain)
+  // Platform lives at app.<domain> — treat it as main, not a shop subdomain
+  const appSubdomain = process.env.NEXT_PUBLIC_APP_SUBDOMAIN ?? "app";
+  const isPlatform = hostname === `${appSubdomain}.${appDomain}`;
+
   const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
-  const isMainDomain = hostname === appDomain || hostname === `www.${appDomain}`;
+  const isMainDomain = hostname === appDomain || hostname === `www.${appDomain}` || isPlatform;
   const hasSubdomain = !isLocalhost && !isMainDomain && hostname.endsWith(`.${appDomain}`);
 
   if (hasSubdomain) {
