@@ -19,7 +19,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   const isPlatform = hostname === `${appSubdomain}.${appDomain}`;
 
   const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
-  const isMainDomain = hostname === appDomain || hostname === `www.${appDomain}` || isPlatform;
+  const isVercelPreview = hostname.endsWith(".vercel.app");
+  const isMainDomain = hostname === appDomain || hostname === `www.${appDomain}` || isPlatform || isVercelPreview;
   const hasSubdomain = !isLocalhost && !isMainDomain && hostname.endsWith(`.${appDomain}`);
 
   if (hasSubdomain) {
