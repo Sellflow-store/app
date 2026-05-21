@@ -1,5 +1,8 @@
-import AuthForm from "@/components/AuthForm";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
-export default function RootPage() {
-  return <AuthForm />;
+export default async function RootPage() {
+  const { userId } = await auth();
+  if (userId) redirect("/dashboard");
+  redirect("/login");
 }
