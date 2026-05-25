@@ -4,15 +4,77 @@
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/inter-tight";
 
-/* ── Sellflow design tokens (from design.md) ── */
+/* ── Sellflow design tokens (locked, from design.md) ──────────────────────
+   Raw values use --brand-* prefix to avoid colliding with Tailwind's
+   reserved --color-* / --ease-* namespaces in :root. The @theme inline
+   block below maps them to Tailwind utilities (bg-paper, text-ink, etc).
+   <BrandTheme> overrides --brand-paper / --brand-ink / --brand-accent
+   per-shop at runtime; storefront UI re-reads via the utility classes. */
 :root {
+  /* Paper / ink */
+  --brand-paper:      oklch(99%  0.005 250);
+  --brand-paper-2:    oklch(98%  0.025 195);
+  --brand-paper-3:    oklch(97%  0.008 250);
+  --brand-ink:        oklch(11%  0.10  275);
+  --brand-ink-2:      oklch(40%  0.06  240);
+  --brand-rule:       oklch(91%  0.020 230);
+
+  /* Brand — navy primary */
+  --brand-navy:       oklch(22%  0.24  270);
+  --brand-navy-2:     oklch(17%  0.22  273);
+  --brand-navy-3:     oklch(96%  0.015 270);
+
+  /* Accent A — aqua */
+  --brand-aqua:       oklch(80%  0.16  195);
+  --brand-aqua-2:     oklch(91%  0.09  195);
+
+  /* Accent B — magenta (destructive / hot) */
+  --brand-magenta:    oklch(56%  0.30  335);
+  --brand-magenta-2:  oklch(46%  0.25  333);
+
+  /* Status */
+  --brand-success:    oklch(50%  0.13  160);
+  --brand-warning:    oklch(76%  0.16   75);
+
+  /* Per-shop overridable accent (defaults to magenta). BrandTheme rewrites
+     --brand-accent + --brand-ink + --brand-paper to repaint the storefront. */
+  --brand-accent:     var(--brand-magenta);
+
+  /* Type */
   --font-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body:    "Inter Tight Variable", "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Motion */
+  --brand-ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --brand-ease-in:     cubic-bezier(0.7,  0, 0.84, 0);
+  --brand-ease-in-out: cubic-bezier(0.83, 0, 0.17, 1);
 }
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Sellflow brand utilities — bg-paper, text-ink, bg-accent-brand, etc. */
+  --color-paper:       var(--brand-paper);
+  --color-paper-2:     var(--brand-paper-2);
+  --color-paper-3:     var(--brand-paper-3);
+  --color-ink:         var(--brand-ink);
+  --color-ink-2:       var(--brand-ink-2);
+  --color-rule:        var(--brand-rule);
+  --color-navy:        var(--brand-navy);
+  --color-navy-2:      var(--brand-navy-2);
+  --color-navy-3:      var(--brand-navy-3);
+  --color-aqua:        var(--brand-aqua);
+  --color-aqua-2:      var(--brand-aqua-2);
+  --color-magenta:     var(--brand-magenta);
+  --color-magenta-2:   var(--brand-magenta-2);
+  --color-accent-brand: var(--brand-accent);
+  --color-success-brand: var(--brand-success);
+  --color-warning-brand: var(--brand-warning);
+  --font-display: var(--font-display);
+  --font-body:    var(--font-body);
+
+  /* shadcn defaults preserved below */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);

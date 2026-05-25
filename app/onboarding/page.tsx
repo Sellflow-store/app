@@ -3,25 +3,32 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { shops, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import OnboardingForm from "@/components/OnboardingForm";
+import Wizard from "@/components/onboarding/Wizard";
 
 export default async function OnboardingPage() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) redirect("/login");
+  const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  let firstName = "";
 
-  // If user already has a shop, skip onboarding
-  try {
-    const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-    if (user) {
-      const shop = await db.query.shops.findFirst({ where: eq(shops.ownerId, user.id) });
-      if (shop) redirect(`/dashboard/${shop.slug}/orders`);
+  // Auth + dedupe-shop guard only runs when Clerk is configured. In dev
+  // without keys, the wizard renders standalone so the UI can be iterated
+  // without setting up Clerk + DB.
+  if (clerkConfigured) {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) redirect("/login");
+
+    try {
+      const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+      if (user) {
+        const shop = await db.query.shops.findFirst({ where: eq(shops.ownerId, user.id) });
+        if (shop) redirect(`/dashboard/${shop.slug}/orders`);
+      }
+    } catch {
+      // DB not ready — continue to wizard
     }
-  } catch {
-    // DB not ready — continue to form
+
+    const clerkUser = await currentUser();
+    firstName = clerkUser?.firstName ?? "";
   }
 
-  const clerkUser = await currentUser();
-  const firstName = clerkUser?.firstName ?? "";
-
-  return <OnboardingForm firstName={firstName} />;
+  return <Wizard firstName={firstName} />;
 }
