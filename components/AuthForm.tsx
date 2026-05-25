@@ -89,7 +89,10 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
   const searchParams = useSearchParams();
   // Honor ?redirect_url=/x set by the onboarding wizard's Save CTA so an
   // anonymous user lands back on /onboarding/save after sign-up + auto-finalizes.
-  const afterLogin    = safeRedirect(searchParams.get("redirect_url"), "/dashboard");
+  // Default afterLogin is "/" because the root page does the user → shop lookup
+  // and redirects to /dashboard/[slug]/orders or /onboarding accordingly —
+  // avoiding the bare /dashboard route that collides with the (dashboard) group.
+  const afterLogin    = safeRedirect(searchParams.get("redirect_url"), "/");
   const afterRegister = safeRedirect(searchParams.get("redirect_url"), "/onboarding");
   const { signIn, setActive: setSignInActive, isLoaded: siLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: suLoaded } = useSignUp();
