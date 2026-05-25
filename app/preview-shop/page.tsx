@@ -27,7 +27,13 @@ export default function PreviewShopPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const raw = new URLSearchParams(window.location.search).get("bootstrap");
+    // Payload arrives in the hash (#bootstrap=...) to avoid edge URL limits.
+    // We also accept ?bootstrap=... as a fallback for old links / direct shares.
+    const hashRaw = window.location.hash.startsWith("#bootstrap=")
+      ? window.location.hash.slice("#bootstrap=".length)
+      : null;
+    const queryRaw = new URLSearchParams(window.location.search).get("bootstrap");
+    const raw = hashRaw ?? queryRaw;
     if (!raw) { setError("Brak danych do podglądu."); return; }
     const payload = decodeBootstrap(raw);
     if (!payload) { setError("Nieprawidłowy payload."); return; }

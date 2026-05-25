@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
 import { Eye, EyeOff, ArrowRight, Mail, Loader2 } from "lucide-react";
+
+/** Only accept same-origin relative paths to avoid open-redirect abuse. */
+function safeRedirect(raw: string | null, fallback: string): string {
+  if (!raw) return fallback;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return fallback;
+  return raw;
+}
 
 type Mode  = "login" | "register";
 type Phase = "form" | "verifying" | "loading";
@@ -79,6 +86,11 @@ interface Props {
 
 export default function AuthForm({ defaultMode = "register" }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Honor ?redirect_url=/x set by the onboarding wizard's Save CTA so an
+  // anonymous user lands back on /onboarding/save after sign-up + auto-finalizes.
+  const afterLogin    = safeRedirect(searchParams.get("redirect_url"), "/dashboard");
+  const afterRegister = safeRedirect(searchParams.get("redirect_url"), "/onboarding");
   const { signIn, setActive: setSignInActive, isLoaded: siLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: suLoaded } = useSignUp();
 
@@ -98,7 +110,9 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
     setMode(m);
     setError("");
     setPhase("form");
-    router.push(m === "login" ? "/login" : "/register");
+    const base = m === "login" ? "/login" : "/register";
+    const pending = searchParams.get("redirect_url");
+    router.push(pending ? `${base}?redirect_url=${encodeURIComponent(pending)}` : base);
   }
 
   // ── Login ────────────────────────────────────────────────────────────────────
@@ -111,7 +125,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       const result = await signIn!.create({ identifier: email, password });
       if (result.status === "complete") {
         await setSignInActive!({ session: result.createdSessionId });
-        router.push("/dashboard");
+        router.push(afterLogin);
       }
     } catch (err) {
       setError(clerkMsg(err));
@@ -151,7 +165,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       const result = await signUp!.attemptEmailAddressVerification({ code });
       if (result.status === "complete") {
         await setSignUpActive!({ session: result.createdSessionId });
-        router.push("/onboarding");
+        router.push(afterRegister);
       }
     } catch (err) {
       setError(clerkMsg(err));
@@ -166,13 +180,13 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
         await signIn!.authenticateWithRedirect({
           strategy: "oauth_google",
           redirectUrl: "/sso-callback",
-          redirectUrlComplete: "/dashboard",
+          redirectUrlComplete: afterLogin,
         });
       } else if (!isLogin && suLoaded) {
         await signUp!.authenticateWithRedirect({
           strategy: "oauth_google",
           redirectUrl: "/sso-callback",
-          redirectUrlComplete: "/onboarding",
+          redirectUrlComplete: afterRegister,
         });
       }
     } catch (err) {

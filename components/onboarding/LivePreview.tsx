@@ -28,7 +28,9 @@ export default function LivePreview() {
     const p: StoreBootstrap = buildBootstrap(state.business, state.brand);
     const sessionSlug = makeSlug(state.business.name);
     return {
-      url: `/preview-shop?bootstrap=${encodeBootstrap(p)}`,
+      // Hash, not query — payload stays client-side, never hits Vercel/edge
+      // URL limits (URI_TOO_LONG with full inferred catalogs + brand data).
+      url: `/preview-shop#bootstrap=${encodeBootstrap(p)}`,
       previewSlug: sessionSlug,
       payload: p,
       dbSlug: slugifyName(p.store.name), // server slug — no shortid suffix needed before uniqueness check
@@ -62,9 +64,14 @@ export default function LivePreview() {
       });
       const data = (await res.json()) as { shopSlug?: string; error?: string };
       if (!res.ok) {
-        // 401: Clerk not configured / not signed in — send them to register.
+        // 401: anonymous visitor — stash payload, send them to register.
+        // /onboarding/save picks the payload back up after sign-up + auto-finalizes.
         if (res.status === 401) {
-          router.push(`/register?redirect=${encodeURIComponent("/onboarding")}`);
+          sessionStorage.setItem(
+            "sellflow_pending_onboarding",
+            JSON.stringify({ shopName, slug: dbSlug, bootstrap: payload }),
+          );
+          router.push(`/register?redirect_url=${encodeURIComponent("/onboarding/save")}`);
           return;
         }
         setError(data.error ?? "Nie udało się zapisać sklepu.");
