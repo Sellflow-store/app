@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isAuthRoute = createRouteMatcher(["/login(.*)", "/register(.*)"]);
 const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
+const isOpsRoute = createRouteMatcher(["/ops(.*)"]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const url = req.nextUrl;
@@ -41,10 +42,12 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return response;
   }
 
-  // ── Auth guards for dashboard ────────────────────────────────────────────
-  // Skip auth guard in dev when Clerk keys are not configured
+  // ── Auth guards for dashboard + ops ──────────────────────────────────────
+  // Skip auth guard in dev when Clerk keys are not configured. Role check
+  // for /ops lives in app/(ops)/ops/layout.tsx — middleware would need DB
+  // access at the edge, so we keep it to a plain signed-in gate here.
   const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (isDashboardRoute(req) && clerkConfigured) {
+  if (clerkConfigured && (isDashboardRoute(req) || isOpsRoute(req))) {
     await auth.protect();
   }
 });

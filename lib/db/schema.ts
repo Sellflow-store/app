@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   plan: text("plan").notNull().default("free"), // free | starter | pro
+  role: text("role").notNull().default("merchant"), // merchant | admin (Sellflow staff)
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { users, shops, shopConfig, products as productsTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { adminEmailAllowlist } from "@/lib/api";
 import type { StoreBootstrap } from "@/lib/brand/types";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
@@ -59,9 +60,15 @@ export async function POST(req: NextRequest) {
     name = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || undefined;
   }
 
+  // Promote Sellflow staff to admin on first sign-up if their email is in
+  // SELLFLOW_ADMIN_EMAILS. Existing users get promoted on next save too.
+  const role = adminEmailAllowlist().includes(email.toLowerCase()) ? "admin" : "merchant";
+
   let user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
   if (!user) {
-    [user] = await db.insert(users).values({ clerkId, email, name }).returning();
+    [user] = await db.insert(users).values({ clerkId, email, name, role }).returning();
+  } else if (role === "admin" && user.role !== "admin") {
+    [user] = await db.update(users).set({ role: "admin" }).where(eq(users.id, user.id)).returning();
   }
 
   // Re-submit / back button guard.
