@@ -16,7 +16,7 @@ export default function TopBar({ config }: Props) {
     : "";
 
   return (
-    <div className="bg-neutral-900 text-white text-center py-2.5 px-4">
+    <div className="bg-ink text-on-ink text-center py-2.5 px-4">
       <p
         className="text-xs tracking-[0.2em] uppercase font-light"
         dangerouslySetInnerHTML={{ __html: topBar.text + codeText }}

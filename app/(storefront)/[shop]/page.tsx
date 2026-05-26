@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getShopBySlug } from "@/lib/shop";
+import BrandTheme from "@/components/store/BrandTheme";
 import TopBar from "@/components/store/TopBar";
 import Navbar from "@/components/store/Navbar";
 import HeroSection from "@/components/store/HeroSection";
@@ -20,16 +21,19 @@ export default async function StorefrontHome({ params }: Props) {
   if (!shop) notFound();
 
   return (
-    <div className="min-h-screen bg-white">
-      <TopBar config={shop.home} />
-      <Navbar shopSlug={shop.slug} branding={shop.branding} />
-      <HeroSection config={shop.home.hero} shopSlug={shop.slug} />
-      <ProductsSection config={shop.home.products} products={shop.products} shopSlug={shop.slug} />
-      <BenefitsSection config={shop.home.benefits} />
-      <ReviewsSection config={shop.home.reviews} />
-      <GuaranteeSection config={shop.home.guarantee} />
-      <Footer shopSlug={shop.slug} branding={shop.branding} />
-    </div>
+    <>
+      <BrandTheme branding={shop.branding} />
+      <div className="min-h-screen bg-paper">
+        <TopBar config={shop.home} />
+        <Navbar shopSlug={shop.slug} branding={shop.branding} />
+        <HeroSection config={shop.home.hero} shopSlug={shop.slug} />
+        <ProductsSection config={shop.home.products} products={shop.products} shopSlug={shop.slug} />
+        <BenefitsSection config={shop.home.benefits} />
+        <ReviewsSection config={shop.home.reviews} />
+        <GuaranteeSection config={shop.home.guarantee} />
+        <Footer shopSlug={shop.slug} branding={shop.branding} />
+      </div>
+    </>
   );
 }
 

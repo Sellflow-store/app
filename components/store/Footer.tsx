@@ -37,15 +37,15 @@ export default function Footer({ shopSlug, branding }: Props) {
   };
 
   return (
-    <footer id="kontakt" className="bg-neutral-50 border-t border-neutral-100">
+    <footer id="kontakt" className="bg-paper-2 border-t border-rule">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
-            <Link href={base} className="text-lg font-bold tracking-tight text-neutral-900">
+            <Link href={base} className="text-lg font-bold tracking-tight text-ink">
               {branding.shopName}
             </Link>
-            <p className="mt-3 text-sm text-neutral-500 font-light leading-relaxed">
+            <p className="mt-3 text-sm text-ink-2 font-light leading-relaxed">
               Minimalistyczne produkty najwyższej jakości.
             </p>
             <div className="flex gap-2.5 mt-5">
@@ -54,7 +54,7 @@ export default function Footer({ shopSlug, branding }: Props) {
                   key={label}
                   href="#"
                   aria-label={label}
-                  className="w-8 h-8 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-400 hover:border-neutral-900 hover:text-neutral-900 transition-colors"
+                  className="w-8 h-8 rounded-full border border-rule flex items-center justify-center text-ink-2/70 hover:border-ink hover:text-ink transition-colors"
                 >
                   <Icon className="w-3.5 h-3.5" strokeWidth={1.5} />
                 </a>
@@ -64,13 +64,13 @@ export default function Footer({ shopSlug, branding }: Props) {
 
           {Object.entries(FOOTER_LINKS).map(([title, items]) => (
             <div key={title}>
-              <h4 className="text-xs tracking-[0.2em] uppercase text-neutral-900 font-semibold mb-4">{title}</h4>
+              <h4 className="text-xs tracking-[0.2em] uppercase text-ink font-semibold mb-4">{title}</h4>
               <ul className="space-y-2.5">
                 {items.map((item) => (
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors font-light"
+                      className="text-sm text-ink-2 hover:text-ink transition-colors font-light"
                     >
                       {item.label}
                     </Link>
@@ -81,15 +81,15 @@ export default function Footer({ shopSlug, branding }: Props) {
           ))}
         </div>
 
-        <div className="mt-14 pt-6 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-neutral-400">
+        <div className="mt-14 pt-6 border-t border-rule flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-ink-2/70">
             © {new Date().getFullYear()} {branding.shopName}. Wszelkie prawa zastrzeżone.
           </p>
           <div className="flex items-center gap-3">
             {PAYMENT_ICONS.map((name) => (
               <span
                 key={name}
-                className="text-[10px] font-semibold text-neutral-300 border border-neutral-200 rounded px-2 py-1"
+                className="text-[10px] font-semibold text-ink-2/60 border border-rule rounded px-2 py-1"
               >
                 {name}
               </span>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { decodeBootstrap } from "@/lib/brand/bootstrap";
 import { bootstrapToShopContext } from "@/lib/brand/bootstrap-to-shop";
 import type { ShopContext } from "@/types/shop";
+import BrandTheme from "@/components/store/BrandTheme";
 import TopBar from "@/components/store/TopBar";
 import Navbar from "@/components/store/Navbar";
 import HeroSection from "@/components/store/HeroSection";
@@ -40,33 +41,26 @@ export default function PreviewShopPage() {
     setShop(bootstrapToShopContext(payload));
   }, []);
 
-  const brandStyle = useMemo(() => {
-    if (!shop) return undefined;
-    return {
-      // Per-preview brand overrides — same vars BrandTheme will set after Save.
-      ["--brand-paper" as string]: "#ffffff",
-      ["--brand-ink" as string]: shop.branding.primaryColor,
-      ["--brand-accent" as string]: shop.branding.accentColor,
-    } as React.CSSProperties;
-  }, [shop]);
-
   if (error) return <PreviewError message={error} />;
   if (!shop) return <PreviewLoading />;
 
   return (
-    <div className="min-h-screen bg-white" style={brandStyle}>
-      <TopBar config={shop.home} />
-      <Navbar shopSlug={shop.slug} branding={shop.branding} />
-      <HeroSection config={shop.home.hero} shopSlug={shop.slug} />
-      <ProductsSection
-        config={shop.home.products}
-        products={shop.products}
-        shopSlug={shop.slug}
-      />
-      <BenefitsSection config={shop.home.benefits} />
-      <GuaranteeSection config={shop.home.guarantee} />
-      <Footer shopSlug={shop.slug} branding={shop.branding} />
-    </div>
+    <>
+      <BrandTheme branding={shop.branding} />
+      <div className="min-h-screen bg-paper">
+        <TopBar config={shop.home} />
+        <Navbar shopSlug={shop.slug} branding={shop.branding} />
+        <HeroSection config={shop.home.hero} shopSlug={shop.slug} />
+        <ProductsSection
+          config={shop.home.products}
+          products={shop.products}
+          shopSlug={shop.slug}
+        />
+        <BenefitsSection config={shop.home.benefits} />
+        <GuaranteeSection config={shop.home.guarantee} />
+        <Footer shopSlug={shop.slug} branding={shop.branding} />
+      </div>
+    </>
   );
 }
 

@@ -11,16 +11,16 @@ export default function ProductsSection({ config, products, shopSlug }: Props) {
   const displayed = products.filter((p) => p.visible).slice(0, 3);
 
   return (
-    <section id="sklep" className="py-20 lg:py-28 bg-white">
+    <section id="sklep" className="py-20 lg:py-28 bg-paper">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
-          <span className="text-xs tracking-[0.25em] uppercase text-neutral-400 font-medium">
+          <span className="text-xs tracking-[0.25em] uppercase text-ink-2/70 font-medium">
             {config.eyebrow}
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight">
+          <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-ink tracking-tight">
             {config.headline}
           </h2>
-          <p className="mt-3 text-neutral-500 font-light max-w-md mx-auto">
+          <p className="mt-3 text-ink-2 font-light max-w-md mx-auto">
             {config.subheadline}
           </p>
         </div>
