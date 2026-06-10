@@ -15,6 +15,7 @@ import Wizard from "@/components/onboarding/Wizard";
 export default async function OnboardingPage() {
   const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   let firstName = "";
+  let existingSlug: string | null = null;
 
   if (clerkConfigured) {
     const { userId: clerkId } = await auth();
@@ -23,9 +24,7 @@ export default async function OnboardingPage() {
         const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
         if (user) {
           const shop = await db.query.shops.findFirst({ where: eq(shops.ownerId, user.id) });
-          // …unless they're mid-Save (came back here from /register with a
-          // pending payload). /onboarding/save handles that case explicitly.
-          if (shop) redirect(`/dashboard/${shop.slug}/orders`);
+          existingSlug = shop?.slug ?? null;
         }
       } catch {
         // DB not ready — fall through to wizard
@@ -35,6 +34,11 @@ export default async function OnboardingPage() {
       firstName = clerkUser?.firstName ?? "";
     }
   }
+
+  // redirect() throws internally, so it must stay outside the try/catch —
+  // …unless they're mid-Save (came back here from /register with a
+  // pending payload). /onboarding/save handles that case explicitly.
+  if (existingSlug) redirect(`/dashboard/${existingSlug}/orders`);
 
   return <Wizard firstName={firstName} />;
 }
