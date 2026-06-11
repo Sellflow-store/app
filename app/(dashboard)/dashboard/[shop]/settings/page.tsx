@@ -1,15 +1,31 @@
-export default function SettingsPage() {
+import { notFound } from "next/navigation";
+import { db } from "@/lib/db";
+import { shops } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { getShopAccess } from "@/lib/api";
+import SettingsForm from "./SettingsForm";
+
+export default async function SettingsPage({
+  params,
+}: {
+  params: Promise<{ shop: string }>;
+}) {
+  const { shop: shopSlug } = await params;
+
+  const access = await getShopAccess(shopSlug);
+  if (!access) notFound();
+
+  const shop = await db.query.shops.findFirst({ where: eq(shops.id, access.shopId) });
+  if (!shop) notFound();
+
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store";
+
   return (
-    <div className="p-6 lg:p-8">
-      <h1
-        className="text-xl font-bold mb-1"
-        style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
-      >
-        Ustawienia panelu
-      </h1>
-      <p className="text-sm" style={{ color: "oklch(50% 0 0)" }}>
-        Ta sekcja jest w przygotowaniu.
-      </p>
-    </div>
+    <SettingsForm
+      shopSlug={shop.slug}
+      initialName={shop.name}
+      initialActive={shop.active}
+      storeUrl={`https://${shop.slug}.${appDomain}`}
+    />
   );
 }

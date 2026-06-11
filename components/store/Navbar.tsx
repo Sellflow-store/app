@@ -17,10 +17,11 @@ export default function Navbar({ shopSlug, branding }: Props) {
 
   const base = `/${shopSlug}`;
 
+  // Blog wraca do nawigacji, gdy MVP dostanie moduł bloga
   const NAV_ITEMS = [
     { label: "Sklep", href: `${base}/products` },
-    { label: "Blog", href: `${base}/blog` },
     { label: "O nas", href: `${base}/about` },
+    { label: "FAQ", href: `${base}/faq` },
     { label: "Kontakt", href: `${base}/contact` },
   ];
 
