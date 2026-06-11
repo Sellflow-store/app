@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Check } from "lucide-react";
 import type { StorefrontProduct } from "@/types/shop";
+import { useCart } from "@/lib/cart";
 
 interface Props {
   product: StorefrontProduct;
@@ -12,6 +14,19 @@ interface Props {
 
 export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
   const mainImage = product.images?.[0] ?? null;
+  const { add } = useCart(shopSlug);
+  const [added, setAdded] = useState(false);
+
+  function quickAdd() {
+    add({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: mainImage,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  }
 
   return (
     <div className="group">
@@ -31,8 +46,20 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
             {product.badge}
           </span>
         )}
-        <button className="absolute bottom-3 right-3 bg-paper/90 backdrop-blur-sm p-2.5 rounded-full opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-ink hover:text-on-ink text-ink-2 shadow-sm">
-          <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+        <button
+          onClick={quickAdd}
+          aria-label={`Dodaj ${product.name} do koszyka`}
+          className={`absolute bottom-3 right-3 backdrop-blur-sm p-2.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-sm ${
+            added
+              ? "opacity-100 translate-y-0 bg-ink text-on-ink"
+              : "bg-paper/90 opacity-0 group-hover:opacity-100 hover:bg-ink hover:text-on-ink text-ink-2"
+          }`}
+        >
+          {added ? (
+            <Check className="w-4 h-4" strokeWidth={2} />
+          ) : (
+            <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+          )}
         </button>
       </div>
 

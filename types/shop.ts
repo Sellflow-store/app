@@ -91,6 +91,26 @@ export interface PopupConfig {
   successText: string;
 }
 
+export interface DeliveryMethod {
+  id: string;
+  label: string;
+  price: string; // "12.99"
+  enabled: boolean;
+}
+
+export interface DeliveryConfig {
+  methods: DeliveryMethod[];
+  freeShippingFrom: string; // "" = brak progu darmowej dostawy
+}
+
+export interface CheckoutConfig {
+  transferEnabled: boolean;
+  bankAccount: string;
+  accountOwner: string;
+  codEnabled: boolean; // płatność za pobraniem
+  codFee: string; // doliczana do zamówienia, "0" = bez opłaty
+}
+
 export interface BrandingConfig {
   shopName: string;
   tagline: string;
@@ -174,5 +194,7 @@ export interface ShopContext {
   name: string;
   branding: BrandingConfig;
   home: HomeConfig;
+  delivery: DeliveryConfig;
+  checkout: CheckoutConfig;
   products: StorefrontProduct[];
 }

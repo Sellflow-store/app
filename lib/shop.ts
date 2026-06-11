@@ -1,7 +1,14 @@
 import { db } from "./db";
 import { shops, shopConfig, products } from "./db/schema";
 import { eq, and } from "drizzle-orm";
-import type { ShopContext, HomeConfig, BrandingConfig, StorefrontProduct } from "@/types/shop";
+import type {
+  ShopContext,
+  HomeConfig,
+  BrandingConfig,
+  DeliveryConfig,
+  CheckoutConfig,
+  StorefrontProduct,
+} from "@/types/shop";
 
 export const DEFAULT_BRANDING: BrandingConfig = {
   shopName: "Mój sklep",
@@ -70,6 +77,23 @@ export const DEFAULT_HOME: HomeConfig = {
   },
 };
 
+export const DEFAULT_DELIVERY: DeliveryConfig = {
+  methods: [
+    { id: "kurier", label: "Kurier", price: "16.99", enabled: true },
+    { id: "paczkomat", label: "Paczkomat InPost", price: "12.99", enabled: true },
+    { id: "odbior", label: "Odbiór osobisty", price: "0.00", enabled: false },
+  ],
+  freeShippingFrom: "",
+};
+
+export const DEFAULT_CHECKOUT: CheckoutConfig = {
+  transferEnabled: true,
+  bankAccount: "",
+  accountOwner: "",
+  codEnabled: true,
+  codFee: "5.00",
+};
+
 export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, slug),
@@ -104,6 +128,16 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     popup: { ...DEFAULT_HOME.popup, ...((configMap.home as HomeConfig)?.popup ?? {}) },
   };
 
+  const delivery: DeliveryConfig = {
+    ...DEFAULT_DELIVERY,
+    ...((configMap.delivery as Partial<DeliveryConfig>) ?? {}),
+  };
+
+  const checkout: CheckoutConfig = {
+    ...DEFAULT_CHECKOUT,
+    ...((configMap.checkout as Partial<CheckoutConfig>) ?? {}),
+  };
+
   const storefrontProducts: StorefrontProduct[] = shopProducts.map((p) => ({
     id: p.id,
     name: p.name,
@@ -128,5 +162,14 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     sortOrder: p.sortOrder,
   }));
 
-  return { id: shop.id, slug: shop.slug, name: shop.name, branding, home, products: storefrontProducts };
+  return {
+    id: shop.id,
+    slug: shop.slug,
+    name: shop.name,
+    branding,
+    home,
+    delivery,
+    checkout,
+    products: storefrontProducts,
+  };
 }

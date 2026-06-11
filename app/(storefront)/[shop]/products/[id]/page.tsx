@@ -76,7 +76,15 @@ export default async function ProductPage({ params }: Props) {
                 </p>
               )}
 
-              <AddToCartButton productId={product.id} />
+              <AddToCartButton
+                shopSlug={shop.slug}
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                  image: product.images[0] ?? null,
+                }}
+              />
 
               {/* Benefits */}
               {product.benefits.length > 0 && (

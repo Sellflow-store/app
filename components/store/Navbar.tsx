@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
 import type { BrandingConfig } from "@/types/shop";
+import { useCart } from "@/lib/cart";
 
 interface Props {
   shopSlug: string;
@@ -12,7 +13,7 @@ interface Props {
 
 export default function Navbar({ shopSlug, branding }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [cartCount] = useState(0);
+  const { count: cartCount } = useCart(shopSlug);
 
   const base = `/${shopSlug}`;
 

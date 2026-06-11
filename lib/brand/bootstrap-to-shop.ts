@@ -1,5 +1,6 @@
 import type { ShopContext, StorefrontProduct } from "@/types/shop";
 import type { StoreBootstrap } from "./types";
+import { DEFAULT_DELIVERY, DEFAULT_CHECKOUT } from "@/lib/shop";
 
 /**
  * Map an in-memory StoreBootstrap (built by the onboarding wizard) into the
@@ -109,6 +110,8 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
         successText: "Kod został wysłany na Twojego maila.",
       },
     },
+    delivery: DEFAULT_DELIVERY,
+    checkout: DEFAULT_CHECKOUT,
     products,
   };
 }
