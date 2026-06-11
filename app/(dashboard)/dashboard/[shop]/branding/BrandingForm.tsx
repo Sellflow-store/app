@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Save } from "lucide-react";
+import { Save, X } from "lucide-react";
 import type { BrandingConfig } from "@/types/shop";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 const PRESET_COLORS = [
   { name: "Navy",    hex: "#12128c" },
@@ -64,6 +65,7 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initialConfig }: Props) {
   const [shopName, setShopName]       = useState(initialConfig.shopName);
   const [tagline, setTagline]         = useState(initialConfig.tagline ?? "");
+  const [logoUrl, setLogoUrl]         = useState(initialConfig.logoUrl ?? "");
   const [primaryColor, setPrimary]    = useState(initialConfig.primaryColor);
   const [accentColor, setAccent]      = useState(initialConfig.accentColor);
   const [saveState, setSaveState]     = useState<SaveState>("idle");
@@ -79,7 +81,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           value: {
             shopName,
             tagline,
-            logoUrl: initialConfig.logoUrl,
+            logoUrl,
             faviconUrl: initialConfig.faviconUrl,
             primaryColor,
             accentColor,
@@ -134,33 +136,44 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
       {/* Logo upload */}
       <SectionCard title="Logo sklepu">
         <div className="flex items-start gap-4">
-          <div
-            className="w-20 h-20 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "oklch(95% 0.008 260)", border: "1.5px dashed oklch(80% 0 0)" }}
-          >
-            {initialConfig.logoUrl ? (
-              <img src={initialConfig.logoUrl} alt="logo" className="w-full h-full object-contain rounded-xl" />
-            ) : (
-              <span
-                className="text-2xl font-black"
-                style={{ color: primaryColor, fontFamily: "var(--font-display)" }}
+          <div className="relative shrink-0">
+            <div
+              className="w-20 h-20 rounded-xl flex items-center justify-center"
+              style={{ background: "oklch(95% 0.008 260)", border: "1.5px dashed oklch(80% 0 0)" }}
+            >
+              {logoUrl ? (
+                <img src={logoUrl} alt="logo" className="w-full h-full object-contain rounded-xl" />
+              ) : (
+                <span
+                  className="text-2xl font-black"
+                  style={{ color: primaryColor, fontFamily: "var(--font-display)" }}
+                >
+                  {shopName.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+            {logoUrl && (
+              <button
+                onClick={() => setLogoUrl("")}
+                aria-label="Usuń logo"
+                className="absolute -top-1.5 -right-1.5 p-1 rounded-full"
+                style={{ background: "oklch(25% 0 0)", color: "#fff" }}
               >
-                {shopName.charAt(0).toUpperCase()}
-              </span>
+                <X className="w-3 h-3" strokeWidth={2} />
+              </button>
             )}
           </div>
 
           <div className="flex-1">
             <p className="text-xs mb-2" style={{ color: "oklch(45% 0 0)" }}>
-              PNG lub SVG, min. 200×200 px. Zalecane tło transparentne.
+              PNG lub SVG, min. 200×200 px. Zalecane tło transparentne. Pamiętaj o
+              kliknięciu „Zapisz zmiany” po wgraniu.
             </p>
-            <button
-              className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-              style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
-            >
-              <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
-              Wgraj logo
-            </button>
+            <ImageUpload
+              endpoint="shopLogo"
+              label="Wgraj logo"
+              onUploaded={(urls) => urls[0] && setLogoUrl(urls[0])}
+            />
           </div>
         </div>
       </SectionCard>

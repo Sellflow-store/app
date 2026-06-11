@@ -14,6 +14,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = (await req.json()) as Partial<{
     name: string;
     price: string;
+    oldPrice: string | null;
     category: string;
     badge: string;
     visible: boolean;
@@ -29,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   const fields = [
-    "name", "price", "category", "badge", "visible",
+    "name", "price", "oldPrice", "category", "badge", "visible",
     "shortDesc", "description", "images", "colors", "sizes",
     "benefits", "specs", "sortOrder",
   ] as const;

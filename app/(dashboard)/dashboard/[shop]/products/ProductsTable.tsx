@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, Pencil, Eye, EyeOff, Package } from "lucide-react";
 
 export interface Product {
@@ -68,7 +69,8 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
           </p>
         </div>
 
-        <button
+        <Link
+          href={`/dashboard/${shopSlug}/products/new`}
           className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all"
           style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "oklch(46% 0.25 333)")}
@@ -76,7 +78,7 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
         >
           <Plus className="w-4 h-4" strokeWidth={2} />
           Dodaj produkt
-        </button>
+        </Link>
       </div>
 
       {/* Table card */}
@@ -182,7 +184,9 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
 
               {/* Actions */}
               <div className="flex justify-end">
-                <button
+                <Link
+                  href={`/dashboard/${shopSlug}/products/${product.id}`}
+                  aria-label={`Edytuj ${product.name}`}
                   className="p-1.5 rounded-lg transition-colors"
                   style={{ color: "oklch(55% 0 0)" }}
                   onMouseEnter={(e) => {
@@ -195,7 +199,7 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
                   }}
                 >
                   <Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />
-                </button>
+                </Link>
               </div>
             </div>
           ))

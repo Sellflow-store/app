@@ -3,7 +3,7 @@ import { shops, shopConfig, products } from "./db/schema";
 import { eq, and } from "drizzle-orm";
 import type { ShopContext, HomeConfig, BrandingConfig, StorefrontProduct } from "@/types/shop";
 
-const DEFAULT_BRANDING: BrandingConfig = {
+export const DEFAULT_BRANDING: BrandingConfig = {
   shopName: "Mój sklep",
   tagline: "",
   logoUrl: "",
@@ -13,7 +13,7 @@ const DEFAULT_BRANDING: BrandingConfig = {
   fontFamily: "Space Grotesk",
 };
 
-const DEFAULT_HOME: HomeConfig = {
+export const DEFAULT_HOME: HomeConfig = {
   topBar: { text: "Darmowa dostawa od 150 zł · Zwroty do 30 dni", visible: true },
   hero: {
     eyebrow: "Kolekcja 2026",

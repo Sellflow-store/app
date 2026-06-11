@@ -28,6 +28,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const body = (await req.json()) as {
     name: string;
     price: string;
+    oldPrice?: string | null;
     category?: string;
     badge?: string;
     visible?: boolean;
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       shopId: access.shopId,
       name: body.name.trim(),
       price: body.price,
+      oldPrice: body.oldPrice ?? null,
       category: body.category,
       badge: body.badge,
       visible: body.visible ?? true,

@@ -1,31 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Save, ChevronDown, ChevronUp } from "lucide-react";
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface HomeConfig {
-  topBar:  { enabled: boolean; text: string };
-  hero:    { headline: string; subheadline: string; ctaText: string; ctaUrl: string };
-  benefits: { items: { icon: string; title: string; desc: string }[] };
-  reviews:  { enabled: boolean };
-  guarantee: { enabled: boolean; text: string };
-}
-
-const DEFAULT: HomeConfig = {
-  topBar:  { enabled: true, text: "🚚 Darmowa dostawa od 199 zł" },
-  hero:    { headline: "Styl, który mówi za Ciebie.", subheadline: "Ubrania i akcesoria dla tych, którzy wiedzą czego chcą.", ctaText: "Odkryj kolekcję", ctaUrl: "#produkty" },
-  benefits: {
-    items: [
-      { icon: "🚚", title: "Szybka dostawa",     desc: "Wysyłamy w 24h w dni robocze" },
-      { icon: "↩️", title: "Zwrot 30 dni",       desc: "Bez pytań, bez stresu" },
-      { icon: "🔒", title: "Bezpieczne płatności", desc: "Stripe + BLIK + przelew" },
-    ],
-  },
-  reviews:  { enabled: true },
-  guarantee: { enabled: true, text: "Jeśli nie będziesz zadowolony/-a — zwrot bez zbędnych pytań." },
-};
+import { Save, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import type { HomeConfig } from "@/types/shop";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -96,6 +73,13 @@ const inputStyle = {
   outline: "none",
 };
 
+const focusProps = {
+  onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+  onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (e.target.style.borderColor = "oklch(88% 0 0)"),
+};
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
@@ -107,12 +91,82 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function ItemListEditor({
+  items,
+  onChange,
+  addLabel,
+}: {
+  items: { title: string; description: string }[];
+  onChange: (items: { title: string; description: string }[]) => void;
+  addLabel: string;
+}) {
+  function update(i: number, patch: Partial<{ title: string; description: string }>) {
+    const next = [...items];
+    next[i] = { ...next[i], ...patch };
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className="p-3 rounded-xl"
+          style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
+        >
+          <div className="grid grid-cols-[1fr_1.5fr_2rem] gap-2 items-end">
+            <Field label="Tytuł">
+              <input
+                value={item.title}
+                onChange={(e) => update(i, { title: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+            <Field label="Opis">
+              <input
+                value={item.description}
+                onChange={(e) => update(i, { description: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+            <button
+              onClick={() => onChange(items.filter((_, j) => j !== i))}
+              aria-label="Usuń pozycję"
+              className="p-2 mb-3 rounded-lg transition-colors"
+              style={{ color: "oklch(50% 0.15 20)" }}
+            >
+              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      ))}
+      <button
+        onClick={() => onChange([...items, { title: "", description: "" }])}
+        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+        style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+      >
+        <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+        {addLabel}
+      </button>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function HomeEditor() {
-  const [config, setConfig] = useState<HomeConfig>(DEFAULT);
-  const [open, setOpen] = useState<Record<string, boolean>>({ topBar: true, hero: false, benefits: false });
-  const [saved, setSaved] = useState(false);
+interface Props {
+  shopSlug: string;
+  initialConfig: HomeConfig;
+}
+
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+export default function HomeEditor({ shopSlug, initialConfig }: Props) {
+  const [config, setConfig] = useState<HomeConfig>(initialConfig);
+  const [open, setOpen] = useState<Record<string, boolean>>({ topBar: true });
+  const [saveState, setSaveState] = useState<SaveState>("idle");
 
   function toggle(key: string) {
     setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -122,10 +176,33 @@ export default function HomeEditor() {
     setConfig((prev) => ({ ...prev, [key]: { ...prev[key], ...value } }));
   }
 
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  async function handleSave() {
+    setSaveState("saving");
+    try {
+      // Full config object — preserves sections this editor doesn't touch
+      // (reviews, video, discounts, popup) instead of dropping them.
+      const res = await fetch(`/api/shops/${shopSlug}/config`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "home", value: config }),
+      });
+      setSaveState(res.ok ? "saved" : "error");
+    } catch {
+      setSaveState("error");
+    }
+    setTimeout(() => setSaveState("idle"), 2500);
   }
+
+  const buttonLabel =
+    saveState === "saving" ? "Zapisywanie…"
+    : saveState === "saved" ? "Zapisano!"
+    : saveState === "error" ? "Błąd — spróbuj ponownie"
+    : "Zapisz zmiany";
+
+  const buttonBg =
+    saveState === "saved" ? "oklch(52% 0.20 158)"
+    : saveState === "error" ? "oklch(50% 0.20 20)"
+    : "oklch(56% 0.30 335)";
 
   return (
     <div className="p-6 lg:p-8 max-w-2xl">
@@ -145,14 +222,12 @@ export default function HomeEditor() {
 
         <button
           onClick={handleSave}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all"
-          style={{
-            background: saved ? "oklch(52% 0.20 158)" : "oklch(56% 0.30 335)",
-            color: "#fff",
-          }}
+          disabled={saveState === "saving"}
+          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />
-          {saved ? "Zapisano!" : "Zapisz zmiany"}
+          {buttonLabel}
         </button>
       </div>
 
@@ -160,17 +235,16 @@ export default function HomeEditor() {
       <Accordion title="Pasek powiadomień (TopBar)" open={!!open.topBar} onToggle={() => toggle("topBar")}>
         <div className="space-y-3">
           <Toggle
-            checked={config.topBar.enabled}
-            onChange={(v) => patch("topBar", { enabled: v })}
-            label="Włącz pasek"
+            checked={config.topBar.visible}
+            onChange={(v) => patch("topBar", { visible: v })}
+            label="Pokaż pasek nad menu"
           />
           <Field label="Tekst paska">
             <input
               value={config.topBar.text}
               onChange={(e) => patch("topBar", { text: e.target.value })}
               style={inputStyle}
-              onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-              onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+              {...focusProps}
             />
           </Field>
         </div>
@@ -179,130 +253,157 @@ export default function HomeEditor() {
       {/* Hero */}
       <Accordion title="Sekcja Hero (nagłówek)" open={!!open.hero} onToggle={() => toggle("hero")}>
         <div className="space-y-0">
-          <Field label="Nagłówek główny">
+          <Field label="Nadtytuł (eyebrow)">
             <input
-              value={config.hero.headline}
-              onChange={(e) => patch("hero", { headline: e.target.value })}
+              value={config.hero.eyebrow}
+              onChange={(e) => patch("hero", { eyebrow: e.target.value })}
+              placeholder="np. Kolekcja 2026"
               style={inputStyle}
-              onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-              onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
-            />
-          </Field>
-          <Field label="Pod-nagłówek">
-            <textarea
-              value={config.hero.subheadline}
-              onChange={(e) => patch("hero", { subheadline: e.target.value })}
-              rows={2}
-              style={{ ...inputStyle, resize: "vertical" }}
-              onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-              onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+              {...focusProps}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Tekst przycisku">
+            <Field label="Nagłówek — linia 1">
               <input
-                value={config.hero.ctaText}
-                onChange={(e) => patch("hero", { ctaText: e.target.value })}
+                value={config.hero.headline}
+                onChange={(e) => patch("hero", { headline: e.target.value })}
                 style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+                {...focusProps}
               />
             </Field>
-            <Field label="Link przycisku">
+            <Field label="Nagłówek — linia 2 (wyróżniona)">
               <input
-                value={config.hero.ctaUrl}
-                onChange={(e) => patch("hero", { ctaUrl: e.target.value })}
+                value={config.hero.headlineSub}
+                onChange={(e) => patch("hero", { headlineSub: e.target.value })}
                 style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+                {...focusProps}
               />
             </Field>
           </div>
+          <Field label="Opis pod nagłówkiem">
+            <textarea
+              value={config.hero.description}
+              onChange={(e) => patch("hero", { description: e.target.value })}
+              rows={2}
+              style={{ ...inputStyle, resize: "vertical" }}
+              {...focusProps}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Przycisk główny">
+              <input
+                value={config.hero.ctaPrimary}
+                onChange={(e) => patch("hero", { ctaPrimary: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+            <Field label="Przycisk drugorzędny">
+              <input
+                value={config.hero.ctaSecondary}
+                onChange={(e) => patch("hero", { ctaSecondary: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+          </div>
+          <Field label="Social proof (np. liczba klientów)">
+            <input
+              value={config.hero.socialProof}
+              onChange={(e) => patch("hero", { socialProof: e.target.value })}
+              placeholder="np. Ponad 1 000 zadowolonych klientów"
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+        </div>
+      </Accordion>
+
+      {/* Products section */}
+      <Accordion title="Sekcja Produkty" open={!!open.products} onToggle={() => toggle("products")}>
+        <div className="space-y-0">
+          <Field label="Nadtytuł (eyebrow)">
+            <input
+              value={config.products.eyebrow}
+              onChange={(e) => patch("products", { eyebrow: e.target.value })}
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+          <Field label="Nagłówek sekcji">
+            <input
+              value={config.products.headline}
+              onChange={(e) => patch("products", { headline: e.target.value })}
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+          <Field label="Pod-nagłówek">
+            <input
+              value={config.products.subheadline}
+              onChange={(e) => patch("products", { subheadline: e.target.value })}
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
         </div>
       </Accordion>
 
       {/* Benefits */}
       <Accordion title="Sekcja Korzyści" open={!!open.benefits} onToggle={() => toggle("benefits")}>
         <div className="space-y-3">
-          {config.benefits.items.map((item, i) => (
-            <div
-              key={i}
-              className="p-3 rounded-xl"
-              style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
-            >
-              <div className="grid grid-cols-[3rem_1fr_1fr] gap-2">
-                <Field label="Ikona">
-                  <input
-                    value={item.icon}
-                    onChange={(e) => {
-                      const items = [...config.benefits.items];
-                      items[i] = { ...items[i], icon: e.target.value };
-                      patch("benefits", { items });
-                    }}
-                    style={{ ...inputStyle, textAlign: "center" }}
-                    onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                    onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
-                  />
-                </Field>
-                <Field label="Tytuł">
-                  <input
-                    value={item.title}
-                    onChange={(e) => {
-                      const items = [...config.benefits.items];
-                      items[i] = { ...items[i], title: e.target.value };
-                      patch("benefits", { items });
-                    }}
-                    style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                    onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
-                  />
-                </Field>
-                <Field label="Opis">
-                  <input
-                    value={item.desc}
-                    onChange={(e) => {
-                      const items = [...config.benefits.items];
-                      items[i] = { ...items[i], desc: e.target.value };
-                      patch("benefits", { items });
-                    }}
-                    style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                    onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
-                  />
-                </Field>
-              </div>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Nadtytuł (eyebrow)">
+              <input
+                value={config.benefits.eyebrow}
+                onChange={(e) => patch("benefits", { eyebrow: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+            <Field label="Nagłówek sekcji">
+              <input
+                value={config.benefits.headline}
+                onChange={(e) => patch("benefits", { headline: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+          </div>
+          <ItemListEditor
+            items={config.benefits.items}
+            onChange={(items) => patch("benefits", { items })}
+            addLabel="Dodaj korzyść"
+          />
         </div>
-      </Accordion>
-
-      {/* Reviews */}
-      <Accordion title="Sekcja Opinie" open={!!open.reviews} onToggle={() => toggle("reviews")}>
-        <Toggle
-          checked={config.reviews.enabled}
-          onChange={(v) => patch("reviews", { enabled: v })}
-          label="Pokaż sekcję opinii na stronie"
-        />
       </Accordion>
 
       {/* Guarantee */}
       <Accordion title="Gwarancja satysfakcji" open={!!open.guarantee} onToggle={() => toggle("guarantee")}>
         <div className="space-y-3">
-          <Toggle
-            checked={config.guarantee.enabled}
-            onChange={(v) => patch("guarantee", { enabled: v })}
-            label="Pokaż sekcję gwarancji"
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Nagłówek">
+              <input
+                value={config.guarantee.headline}
+                onChange={(e) => patch("guarantee", { headline: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+            <Field label="Pod-nagłówek">
+              <input
+                value={config.guarantee.subheadline}
+                onChange={(e) => patch("guarantee", { subheadline: e.target.value })}
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+          </div>
+          <ItemListEditor
+            items={config.guarantee.items}
+            onChange={(items) => patch("guarantee", { items })}
+            addLabel="Dodaj punkt gwarancji"
           />
-          <Field label="Tekst gwarancji">
-            <textarea
-              value={config.guarantee.text}
-              onChange={(e) => patch("guarantee", { text: e.target.value })}
-              rows={2}
-              style={{ ...inputStyle, resize: "vertical" }}
-              onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-              onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
-            />
-          </Field>
         </div>
       </Accordion>
     </div>
