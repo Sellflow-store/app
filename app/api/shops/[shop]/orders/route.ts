@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { shops, shopConfig, products, orders, customers } from "@/lib/db/schema";
+import { shops, shopConfig, products, orders, customers, users } from "@/lib/db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { DEFAULT_DELIVERY, DEFAULT_CHECKOUT } from "@/lib/shop";
+import { sendEmail } from "@/lib/email";
+import { orderConfirmationEmail, merchantNewOrderEmail } from "@/lib/email-templates";
 import type { DeliveryConfig, CheckoutConfig } from "@/types/shop";
 
 type Params = { params: Promise<{ shop: string }> };
@@ -186,6 +188,52 @@ export async function POST(req: NextRequest, { params }: Params) {
         totalSpent: sql`${customers.totalSpent} + ${total.toFixed(2)}`,
       },
     });
+
+  // ── Emails — best-effort, never fail the order on email problems ────────
+  const transferDetails =
+    body.paymentMethod === "transfer"
+      ? {
+          bankAccount: checkout.bankAccount,
+          accountOwner: checkout.accountOwner,
+          title: `Zamówienie ${order.orderNumber}`,
+        }
+      : null;
+
+  const summary = {
+    orderNumber: order.orderNumber,
+    items: orderItems,
+    subtotal: subtotal.toFixed(2),
+    shippingCost: shippingCost.toFixed(2),
+    codFee: codFee > 0 ? codFee.toFixed(2) : null,
+    total: total.toFixed(2),
+  };
+
+  try {
+    const confirmation = orderConfirmationEmail({
+      shopName: shop.name,
+      customerName: name,
+      order: summary,
+      paymentMethod: body.paymentMethod,
+      transfer: transferDetails,
+    });
+    await sendEmail({ to: email, ...confirmation });
+
+    const owner = await db.query.users.findFirst({ where: eq(users.id, shop.ownerId) });
+    if (owner?.email) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+      const notification = merchantNewOrderEmail({
+        shopName: shop.name,
+        order: summary,
+        customerName: name,
+        customerEmail: email,
+        paymentMethod: body.paymentMethod,
+        orderUrl: `${appUrl}/dashboard/${shop.slug}/orders/${order.id}`,
+      });
+      await sendEmail({ to: owner.email, ...notification, replyTo: email });
+    }
+  } catch (e) {
+    console.error("Order emails failed:", e);
+  }
 
   return NextResponse.json(
     {

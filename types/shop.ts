@@ -111,6 +111,27 @@ export interface CheckoutConfig {
   codFee: string; // doliczana do zamówienia, "0" = bez opłaty
 }
 
+export interface LegalConfig {
+  content: string; // plain text, renderowany z zachowaniem akapitów
+}
+
+export interface AboutConfig {
+  headline: string;
+  content: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
+export interface FaqItem {
+  q: string;
+  a: string;
+}
+
+export interface FaqConfig {
+  items: FaqItem[];
+}
+
 export interface BrandingConfig {
   shopName: string;
   tagline: string;
@@ -196,5 +217,9 @@ export interface ShopContext {
   home: HomeConfig;
   delivery: DeliveryConfig;
   checkout: CheckoutConfig;
+  about: AboutConfig;
+  faq: FaqConfig;
+  terms: LegalConfig;
+  privacy: LegalConfig;
   products: StorefrontProduct[];
 }

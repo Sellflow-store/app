@@ -7,6 +7,9 @@ import type {
   BrandingConfig,
   DeliveryConfig,
   CheckoutConfig,
+  AboutConfig,
+  FaqConfig,
+  LegalConfig,
   StorefrontProduct,
 } from "@/types/shop";
 
@@ -94,6 +97,18 @@ export const DEFAULT_CHECKOUT: CheckoutConfig = {
   codFee: "5.00",
 };
 
+export const DEFAULT_ABOUT: AboutConfig = {
+  headline: "O nas",
+  content: "",
+  email: "",
+  phone: "",
+  address: "",
+};
+
+export const DEFAULT_FAQ: FaqConfig = { items: [] };
+
+export const DEFAULT_LEGAL: LegalConfig = { content: "" };
+
 export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, slug),
@@ -138,6 +153,23 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     ...((configMap.checkout as Partial<CheckoutConfig>) ?? {}),
   };
 
+  const about: AboutConfig = {
+    ...DEFAULT_ABOUT,
+    ...((configMap.about as Partial<AboutConfig>) ?? {}),
+  };
+  const faq: FaqConfig = {
+    ...DEFAULT_FAQ,
+    ...((configMap.faq as Partial<FaqConfig>) ?? {}),
+  };
+  const terms: LegalConfig = {
+    ...DEFAULT_LEGAL,
+    ...((configMap.terms as Partial<LegalConfig>) ?? {}),
+  };
+  const privacy: LegalConfig = {
+    ...DEFAULT_LEGAL,
+    ...((configMap.privacy as Partial<LegalConfig>) ?? {}),
+  };
+
   const storefrontProducts: StorefrontProduct[] = shopProducts.map((p) => ({
     id: p.id,
     name: p.name,
@@ -170,6 +202,10 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     home,
     delivery,
     checkout,
+    about,
+    faq,
+    terms,
+    privacy,
     products: storefrontProducts,
   };
 }
