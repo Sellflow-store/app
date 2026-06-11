@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { shops, products, orders, shopConfig } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { ArrowLeft, ExternalLink, LogIn } from "lucide-react";
+import ShopActions from "./ShopActions";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -115,6 +116,14 @@ export default async function ShopDetailPage({ params }: PageProps) {
           tone={shop.active ? "success" : "muted"}
         />
       </section>
+
+      {/* ── Operator actions ─────────────────────────────────────── */}
+      <ShopActions
+        slug={shop.slug}
+        shopName={shop.name}
+        active={shop.active}
+        plan={shop.owner.plan ?? "free"}
+      />
 
       {/* ── Details ──────────────────────────────────────────────── */}
       <section

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { products, shops } from "@/lib/db/schema";
+import { asc, count, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { planLimits } from "@/lib/plans";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -40,6 +41,26 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (!body.name?.trim() || !body.price) {
     return NextResponse.json({ error: "name and price required" }, { status: 400 });
+  }
+
+  // Plan limit — counted against the shop owner's plan, not the requester's
+  // (an admin acting as owner shouldn't bypass the merchant's limit).
+  const [shopRow, [{ total }]] = await Promise.all([
+    db.query.shops.findFirst({
+      where: eq(shops.id, access.shopId),
+      with: { owner: true },
+    }),
+    db.select({ total: count() }).from(products).where(eq(products.shopId, access.shopId)),
+  ]);
+  const ownerPlan = shopRow?.owner.plan ?? "free";
+  const limit = planLimits(ownerPlan).maxProducts;
+  if (total >= limit) {
+    return NextResponse.json(
+      {
+        error: `Osiągnięto limit planu ${ownerPlan} (${limit} produktów). Zmień plan, aby dodać kolejne.`,
+      },
+      { status: 403 }
+    );
   }
 
   const [product] = await db

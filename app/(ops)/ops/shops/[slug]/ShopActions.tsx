@@ -1,0 +1,189 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Power, Trash2 } from "lucide-react";
+import { PLANS, PLAN_IDS, type PlanId } from "@/lib/plans";
+
+interface Props {
+  slug: string;
+  shopName: string;
+  active: boolean;
+  plan: string;
+}
+
+export default function ShopActions({ slug, shopName, active, plan }: Props) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function patch(body: { active?: boolean; plan?: string }): Promise<boolean> {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/ops/shops/${slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        setError("Operacja nie powiodła się.");
+        return false;
+      }
+      router.refresh();
+      return true;
+    } catch {
+      setError("Operacja nie powiodła się.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleToggleActive() {
+    if (
+      active &&
+      !confirm(`Zawiesić sklep „${shopName}”? Klienci zobaczą stronę „nie znaleziono”, panel merchanta pozostanie dostępny.`)
+    ) {
+      return;
+    }
+    await patch({ active: !active });
+  }
+
+  async function handlePlanChange(next: string) {
+    if (next === plan) return;
+    await patch({ plan: next });
+  }
+
+  async function handleDelete() {
+    const typed = prompt(
+      `Trwale usunąć sklep „${shopName}” wraz z produktami, zamówieniami i konfiguracją? Tej operacji NIE MOŻNA cofnąć.\n\nPrzepisz slug sklepu, aby potwierdzić:`
+    );
+    if (typed !== slug) {
+      if (typed !== null) alert("Slug się nie zgadza — usunięcie przerwane.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/ops/shops/${slug}`, { method: "DELETE" });
+      if (!res.ok) {
+        setError("Nie udało się usunąć sklepu.");
+        return;
+      }
+      router.push("/ops/shops");
+      router.refresh();
+    } catch {
+      setError("Nie udało się usunąć sklepu.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section
+      className="rounded-2xl overflow-hidden"
+      style={{ background: "var(--brand-paper)", border: "1px solid var(--brand-rule)" }}
+    >
+      <header
+        className="px-5 py-3"
+        style={{ borderBottom: "1px solid var(--brand-rule)", background: "var(--brand-paper-3)" }}
+      >
+        <h2
+          className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+          style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}
+        >
+          Akcje operatora
+        </h2>
+      </header>
+
+      <div className="px-5 py-4 space-y-4">
+        {error && (
+          <p className="text-xs font-medium" style={{ color: "oklch(45% 0.18 20)" }} role="alert">
+            {error}
+          </p>
+        )}
+
+        {/* Plan */}
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--brand-ink)" }}>
+              Plan właściciela
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
+              Limit produktów: free {PLANS.free.maxProducts} · starter {PLANS.starter.maxProducts} · pro bez limitu
+            </p>
+          </div>
+          <div className="flex gap-1.5 shrink-0">
+            {PLAN_IDS.map((p: PlanId) => (
+              <button
+                key={p}
+                onClick={() => handlePlanChange(p)}
+                disabled={busy}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all disabled:opacity-50"
+                style={
+                  plan === p
+                    ? { background: "var(--brand-ink)", color: "var(--brand-paper)" }
+                    : { border: "1.5px solid var(--brand-rule)", color: "var(--brand-ink-2)" }
+                }
+              >
+                {PLANS[p].label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Suspend / activate */}
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--brand-ink)" }}>
+              {active ? "Sklep aktywny" : "Sklep zawieszony"}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
+              {active
+                ? "Storefront widoczny, zamówienia przyjmowane."
+                : "Storefront zwraca 404, zamówień nie można składać."}
+            </p>
+          </div>
+          <button
+            onClick={handleToggleActive}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
+            style={
+              active
+                ? { color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }
+                : { background: "var(--brand-success, oklch(52% 0.2 158))", color: "#fff" }
+            }
+          >
+            <Power className="w-3.5 h-3.5" strokeWidth={1.75} />
+            {busy ? "…" : active ? "Zawieś sklep" : "Aktywuj sklep"}
+          </button>
+        </div>
+
+        {/* Delete */}
+        <div
+          className="flex items-center justify-between gap-4 pt-4"
+          style={{ borderTop: "1px solid var(--brand-rule)" }}
+        >
+          <div>
+            <p className="text-sm font-medium" style={{ color: "oklch(45% 0.18 20)" }}>
+              Usuń sklep
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
+              Trwale kasuje produkty, zamówienia i konfigurację. Konto właściciela zostaje.
+            </p>
+          </div>
+          <button
+            onClick={handleDelete}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
+            style={{ color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }}
+          >
+            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+            Usuń trwale
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}

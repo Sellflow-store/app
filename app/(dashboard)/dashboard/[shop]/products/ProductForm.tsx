@@ -162,6 +162,8 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         }
       );
       if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data?.error) setValidationError(data.error);
         setSaveState("error");
         setTimeout(() => setSaveState("idle"), 2500);
         return;
