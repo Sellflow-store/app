@@ -1,4 +1,5 @@
 import type { BrandingConfig } from "@/types/shop";
+import { googleFontsHref } from "@/lib/fonts";
 
 /**
  * Per-shop brand override. Emits an inline <style> that rewrites the
@@ -7,17 +8,32 @@ import type { BrandingConfig } from "@/types/shop";
  * resolves to var(--brand-ink) / --brand-accent (bg-ink, text-ink,
  * bg-accent-brand, etc) repaints automatically.
  *
+ * Also loads non-bundled fonts from Google Fonts and applies the display /
+ * body families document-wide — storefront components don't set explicit
+ * font classes, so without these rules the merchant's font choice would
+ * never actually render (the page would stay in the app's default font).
+ *
  * Render inside the (storefront) layout, before any branded markup.
  */
 export default function BrandTheme({ branding }: { branding: BrandingConfig }) {
   const ink = branding.primaryColor || "#0c0c0c";
   const accent = branding.accentColor || "#db00b2";
+  const paper = branding.paperColor || "";
   const fontDisplay = branding.fontFamily || "Space Grotesk";
+  const fontBody = branding.bodyFontFamily || "Inter Tight";
 
   // Pick a readable foreground for any colored surface (used wherever a CTA
   // or dark band sits on top of bg-ink / bg-accent-brand).
   const onInk    = pickReadable(ink);
   const onAccent = pickReadable(accent);
+
+  // Custom page background: derive the secondary surfaces (paper-2 hero band,
+  // paper-3 image placeholders) by nudging the base toward the ink color.
+  const paperVars = paper
+    ? `--brand-paper:${paper};` +
+      `--brand-paper-2:${mix(paper, ink, 0.04)};` +
+      `--brand-paper-3:${mix(paper, ink, 0.07)};`
+    : "";
 
   const css = `:root{` +
     `--brand-ink:${ink};` +
@@ -26,10 +42,26 @@ export default function BrandTheme({ branding }: { branding: BrandingConfig }) {
     `--brand-accent:${accent};` +
     `--brand-on-ink:${onInk};` +
     `--brand-on-accent:${onAccent};` +
+    paperVars +
     `--font-display:'${fontDisplay}',ui-sans-serif,system-ui,sans-serif;` +
-  `}`;
+    `--font-body:'${fontBody}',ui-sans-serif,system-ui,sans-serif;` +
+  `}` +
+  `body{font-family:var(--font-body);}` +
+  `h1,h2,h3,h4{font-family:var(--font-display);}`;
 
-  return <style dangerouslySetInnerHTML={{ __html: css }} />;
+  const fontsHref = googleFontsHref([fontDisplay, fontBody]);
+
+  return (
+    <>
+      {fontsHref && (
+        <>
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link rel="stylesheet" href={fontsHref} />
+        </>
+      )}
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+    </>
+  );
 }
 
 /* ── color helpers (sRGB → relative luminance) ───────────────────────── */

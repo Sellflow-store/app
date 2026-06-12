@@ -20,7 +20,9 @@ export const DEFAULT_BRANDING: BrandingConfig = {
   faviconUrl: "",
   primaryColor: "#171717",
   accentColor: "#737373",
+  paperColor: "",
   fontFamily: "Space Grotesk",
+  bodyFontFamily: "Inter Tight",
 };
 
 export const DEFAULT_HOME: HomeConfig = {

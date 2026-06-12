@@ -139,7 +139,10 @@ export interface BrandingConfig {
   faviconUrl: string;
   primaryColor: string;
   accentColor: string;
-  fontFamily: string;
+  /** "" = domyślne jasne tło; hex nadpisuje --brand-paper na storefroncie */
+  paperColor: string;
+  fontFamily: string; // font nagłówków (display)
+  bodyFontFamily: string; // font tekstu
 }
 
 export interface HomeConfig {

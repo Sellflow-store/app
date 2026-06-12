@@ -163,7 +163,9 @@ function brandingFromBootstrap(shopName: string, b?: StoreBootstrap) {
     faviconUrl: "",
     primaryColor: b?.brand.palette.ink ?? "#12128c",
     accentColor: b?.brand.palette.accent ?? "#db00b2",
+    paperColor: "",
     fontFamily: parseDisplayFont(b?.brand.fonts.display) ?? "Space Grotesk",
+    bodyFontFamily: "Inter Tight",
   };
 }
 

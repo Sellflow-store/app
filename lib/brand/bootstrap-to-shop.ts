@@ -59,7 +59,9 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
       faviconUrl: "",
       primaryColor: brand.palette.ink,
       accentColor: brand.palette.accent,
+      paperColor: "",
       fontFamily: brand.fonts.display,
+      bodyFontFamily: "Inter Tight",
     },
     home: {
       topBar: {

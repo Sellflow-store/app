@@ -12,7 +12,9 @@ const DEFAULT_BRANDING: BrandingConfig = {
   faviconUrl: "",
   primaryColor: "#12128c",
   accentColor: "#db00b2",
+  paperColor: "",
   fontFamily: "Space Grotesk",
+  bodyFontFamily: "Inter Tight",
 };
 
 export default async function BrandingPage({
