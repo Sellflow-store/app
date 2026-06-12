@@ -4,9 +4,8 @@ import { db } from "@/lib/db";
 import { users, shops, shopConfig, products as productsTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { adminEmailAllowlist } from "@/lib/api";
+import { SLUG_RE, findFreeSlug } from "@/lib/slug";
 import type { StoreBootstrap } from "@/lib/brand/types";
-
-const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
 type Body = {
   shopName: string;
@@ -45,11 +44,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Slug uniqueness check.
-  const taken = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
-  if (taken) {
-    return NextResponse.json({ error: "Ten adres jest już zajęty. Wybierz inny." }, { status: 409 });
-  }
+  // Taken slug is never a dead end: pick the first free variant (base-2,
+  // base-3, …). At this point the user may have already signed up — a 409
+  // here would strand them on /onboarding/save with no way to change the
+  // name, so we rename instead and the wizard's name step warns up front.
+  const finalSlug = await findFreeSlug(slug);
 
   // Upsert user against Clerk identity (or dev fallback).
   let email = "dev@sellflow.local";
@@ -77,11 +76,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ shopSlug: existingShop.slug });
   }
 
-  // Create shop.
-  const [shop] = await db
-    .insert(shops)
-    .values({ slug, name: shopName.trim(), ownerId: user.id })
-    .returning();
+  // Create shop. The unique index still guards against a race between
+  // findFreeSlug and the insert — one retry with a random suffix covers it.
+  let shop: typeof shops.$inferSelect;
+  try {
+    [shop] = await db
+      .insert(shops)
+      .values({ slug: finalSlug, name: shopName.trim(), ownerId: user.id })
+      .returning();
+  } catch (e) {
+    const isUnique = e instanceof Error && /unique|duplicate/i.test(e.message);
+    if (!isUnique) throw e;
+    [shop] = await db
+      .insert(shops)
+      .values({
+        slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
+        name: shopName.trim(),
+        ownerId: user.id,
+      })
+      .returning();
+  }
 
   // Seed config — branded if a bootstrap payload was sent, neutral defaults otherwise.
   await db.insert(shopConfig).values(buildConfigRows(shop.id, shopName.trim(), bootstrap));

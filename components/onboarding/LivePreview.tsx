@@ -113,7 +113,7 @@ export default function LivePreview() {
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
-          <span className="ml-3">{previewSlug}.sellflow.app</span>
+          <span className="ml-3">{previewSlug}.sell-flow.store</span>
         </div>
         {iframeFailed ? (
           <MiniPreview />

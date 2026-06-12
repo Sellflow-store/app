@@ -22,10 +22,14 @@ export default function OnboardingSavePage() {
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "missing" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Bumping re-runs the save effect — router.refresh() would NOT re-fire
+  // a client effect, so the old retry button silently did nothing.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(PENDING_KEY);
     if (!raw) { setStatus("missing"); return; }
+    setStatus("loading");
 
     let cancelled = false;
     (async () => {
@@ -59,11 +63,11 @@ export default function OnboardingSavePage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [router]);
+  }, [router, attempt]);
 
   return (
     <div
-      className="min-h-screen grid place-items-center px-6"
+      className="fixed inset-0 grid place-items-center px-6"
       style={{ background: "var(--brand-paper)", fontFamily: "var(--font-body)" }}
     >
       <div className="text-center max-w-md">
@@ -125,14 +129,31 @@ export default function OnboardingSavePage() {
             <p className="text-base mb-6" style={{ color: "var(--brand-ink)" }}>
               {errorMsg ?? "Nie udało się zapisać sklepu."}
             </p>
-            <button
-              type="button"
-              onClick={() => router.refresh()}
-              className="inline-flex items-center rounded-full px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
-              style={{ background: "var(--brand-accent)", color: "var(--brand-paper)" }}
-            >
-              Spróbuj ponownie
-            </button>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setAttempt((a) => a + 1)}
+                className="inline-flex items-center rounded-full px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: "var(--brand-accent)", color: "var(--brand-paper)" }}
+              >
+                Spróbuj ponownie
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/onboarding")}
+                className="inline-flex items-center rounded-full px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
+                style={{
+                  background: "var(--brand-paper)",
+                  color: "var(--brand-ink)",
+                  border: "1.5px solid var(--brand-rule)",
+                }}
+              >
+                Wróć do kreatora
+              </button>
+            </div>
+            <p className="mt-4 text-xs" style={{ color: "var(--brand-ink-2)" }}>
+              Twoje ustawienia z kreatora są zapamiętane — nic nie przepada.
+            </p>
           </>
         )}
       </div>
