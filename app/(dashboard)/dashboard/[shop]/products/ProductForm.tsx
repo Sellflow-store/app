@@ -208,7 +208,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
     : "oklch(56% 0.30 335)";
 
   return (
-    <div className="p-6 lg:p-8 max-w-2xl">
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

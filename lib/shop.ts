@@ -10,8 +10,10 @@ import type {
   AboutConfig,
   FaqConfig,
   LegalConfig,
+  MenuConfig,
   StorefrontProduct,
 } from "@/types/shop";
+import { DEFAULT_MENU_ITEMS } from "@/types/shop";
 
 export const DEFAULT_BRANDING: BrandingConfig = {
   shopName: "Mój sklep",
@@ -111,6 +113,8 @@ export const DEFAULT_FAQ: FaqConfig = { items: [] };
 
 export const DEFAULT_LEGAL: LegalConfig = { content: "" };
 
+export const DEFAULT_MENU: MenuConfig = { items: DEFAULT_MENU_ITEMS };
+
 export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, slug),
@@ -172,6 +176,11 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     ...((configMap.privacy as Partial<LegalConfig>) ?? {}),
   };
 
+  const menuSaved = (configMap.menu as Partial<MenuConfig>)?.items;
+  const menu: MenuConfig = {
+    items: Array.isArray(menuSaved) && menuSaved.length > 0 ? menuSaved : DEFAULT_MENU.items,
+  };
+
   const storefrontProducts: StorefrontProduct[] = shopProducts.map((p) => ({
     id: p.id,
     name: p.name,
@@ -208,6 +217,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     faq,
     terms,
     privacy,
+    menu,
     products: storefrontProducts,
   };
 }

@@ -111,6 +111,24 @@ export interface CheckoutConfig {
   codFee: string; // doliczana do zamówienia, "0" = bez opłaty
 }
 
+export interface MenuItem {
+  label: string;
+  /** Ścieżka względem sklepu, np. "/products"; "/" = strona główna */
+  href: string;
+}
+
+export interface MenuConfig {
+  items: MenuItem[];
+}
+
+/** Domyślne menu — musi być client-safe (importuje je Navbar). */
+export const DEFAULT_MENU_ITEMS: MenuItem[] = [
+  { label: "Sklep", href: "/products" },
+  { label: "O nas", href: "/about" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Kontakt", href: "/contact" },
+];
+
 export interface LegalConfig {
   content: string; // plain text, renderowany z zachowaniem akapitów
 }
@@ -224,5 +242,6 @@ export interface ShopContext {
   faq: FaqConfig;
   terms: LegalConfig;
   privacy: LegalConfig;
+  menu: MenuConfig;
   products: StorefrontProduct[];
 }

@@ -27,7 +27,7 @@ export default async function ProductPage({ params }: Props) {
       <BrandTheme branding={shop.branding} />
       <div className="min-h-screen bg-paper">
         <TopBar config={shop.home} />
-        <Navbar shopSlug={shop.slug} branding={shop.branding} />
+        <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
           {/* Breadcrumb */}

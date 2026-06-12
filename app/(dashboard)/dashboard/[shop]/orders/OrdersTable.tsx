@@ -52,7 +52,7 @@ export default function OrdersTable({ shopSlug, orders }: Props) {
   const visible = filter ? orders.filter((o) => o.status === filter) : orders;
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl">
+    <div className="p-6 lg:p-8 max-w-5xl mx-auto">
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>

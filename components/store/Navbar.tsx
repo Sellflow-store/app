@@ -3,27 +3,26 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
-import type { BrandingConfig } from "@/types/shop";
+import type { BrandingConfig, MenuItem } from "@/types/shop";
+import { DEFAULT_MENU_ITEMS } from "@/types/shop";
 import { useCart } from "@/lib/cart";
 
 interface Props {
   shopSlug: string;
   branding: BrandingConfig;
+  menuItems?: MenuItem[];
 }
 
-export default function Navbar({ shopSlug, branding }: Props) {
+export default function Navbar({ shopSlug, branding, menuItems }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { count: cartCount } = useCart(shopSlug);
 
   const base = `/${shopSlug}`;
 
-  // Blog wraca do nawigacji, gdy MVP dostanie moduł bloga
-  const NAV_ITEMS = [
-    { label: "Sklep", href: `${base}/products` },
-    { label: "O nas", href: `${base}/about` },
-    { label: "FAQ", href: `${base}/faq` },
-    { label: "Kontakt", href: `${base}/contact` },
-  ];
+  const NAV_ITEMS = (menuItems?.length ? menuItems : DEFAULT_MENU_ITEMS).map((item) => ({
+    label: item.label,
+    href: item.href === "/" ? base : `${base}${item.href}`,
+  }));
 
   return (
     <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-rule">

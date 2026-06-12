@@ -1,15 +1,39 @@
-export default function DiscountsPage() {
-  return (
-    <div className="p-6 lg:p-8">
-      <h1
-        className="text-xl font-bold mb-1"
-        style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
-      >
-        Kody rabatowe
-      </h1>
-      <p className="text-sm" style={{ color: "oklch(50% 0 0)" }}>
-        Ta sekcja jest w przygotowaniu.
-      </p>
-    </div>
-  );
+import { db } from "@/lib/db";
+import { discountCodes } from "@/lib/db/schema";
+import { desc, eq } from "drizzle-orm";
+import { getShopAccess } from "@/lib/api";
+import DiscountsManager, { type DiscountRow } from "./DiscountsManager";
+
+export default async function DiscountsPage({
+  params,
+}: {
+  params: Promise<{ shop: string }>;
+}) {
+  const { shop: shopSlug } = await params;
+  let rows: DiscountRow[] = [];
+
+  try {
+    const access = await getShopAccess(shopSlug);
+    if (access) {
+      const codes = await db
+        .select()
+        .from(discountCodes)
+        .where(eq(discountCodes.shopId, access.shopId))
+        .orderBy(desc(discountCodes.createdAt));
+
+      rows = codes.map((c) => ({
+        id: c.id,
+        code: c.code,
+        discountPercent: c.discountPercent,
+        active: c.active,
+        expiresAt: c.expiresAt ? c.expiresAt.toISOString().slice(0, 10) : null,
+        maxUses: c.maxUses,
+        usesCount: c.usesCount,
+      }));
+    }
+  } catch {
+    // DB not configured yet — render empty state
+  }
+
+  return <DiscountsManager shopSlug={shopSlug} initialCodes={rows} />;
 }

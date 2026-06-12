@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Landmark, HandCoins, Check, Copy } from "lucide-react";
+import { ChevronLeft, Landmark, HandCoins, Check, Copy, Tag, X } from "lucide-react";
 import { useCart, formatPln } from "@/lib/cart";
 import type { DeliveryMethod } from "@/types/shop";
 
@@ -52,6 +52,10 @@ export default function CheckoutForm({
   const [notes, setNotes] = useState("");
   const [deliveryId, setDeliveryId] = useState(deliveryMethods[0]?.id ?? "");
   const [payment, setPayment] = useState<"transfer" | "cod">(transferEnabled ? "transfer" : "cod");
+  const [discountInput, setDiscountInput] = useState("");
+  const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -172,7 +176,31 @@ export default function CheckoutForm({
   const shippingFree = !isNaN(freeFrom) && freeFrom > 0 && subtotal >= freeFrom;
   const shippingCost = method ? (shippingFree ? 0 : parseFloat(method.price)) : 0;
   const codFeeValue = payment === "cod" ? parseFloat(codFee) || 0 : 0;
-  const total = subtotal + shippingCost + codFeeValue;
+  const discountAmount = discount ? (subtotal * discount.percent) / 100 : 0;
+  const total = subtotal - discountAmount + shippingCost + codFeeValue;
+
+  async function applyDiscount() {
+    const code = discountInput.trim().toUpperCase();
+    if (!code) return;
+    setCheckingCode(true);
+    setDiscountError(null);
+    try {
+      const res = await fetch(
+        `/api/shops/${shopSlug}/discounts/validate?code=${encodeURIComponent(code)}`
+      );
+      const data = await res.json();
+      if (data.valid) {
+        setDiscount({ code: data.code, percent: data.discountPercent });
+        setDiscountInput("");
+      } else {
+        setDiscountError(data.reason ?? "Niepoprawny kod.");
+      }
+    } catch {
+      setDiscountError("Nie udało się sprawdzić kodu.");
+    } finally {
+      setCheckingCode(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -188,6 +216,7 @@ export default function CheckoutForm({
           items: items.map((i) => ({ productId: i.productId, qty: i.qty })),
           deliveryMethodId: deliveryId,
           paymentMethod: payment,
+          discountCode: discount?.code ?? null,
           notes,
         }),
       });
@@ -377,11 +406,69 @@ export default function CheckoutForm({
             ))}
           </ul>
 
+          {/* Discount code */}
+          <div className="border-t border-rule pt-4 mb-4">
+            {discount ? (
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink">
+                  <Tag className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  {discount.code} (−{discount.percent}%)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setDiscount(null)}
+                  aria-label="Usuń kod rabatowy"
+                  className="p-1 text-ink-2/60 hover:text-ink transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    value={discountInput}
+                    onChange={(e) => setDiscountInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        applyDiscount();
+                      }
+                    }}
+                    placeholder="Kod rabatowy"
+                    className="flex-1 min-w-0 border border-rule rounded-xl px-3 py-2 text-xs text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyDiscount}
+                    disabled={checkingCode || !discountInput.trim()}
+                    className="text-xs font-semibold px-3.5 py-2 rounded-xl border border-rule text-ink hover:border-ink transition-colors disabled:opacity-50 shrink-0"
+                  >
+                    {checkingCode ? "…" : "Zastosuj"}
+                  </button>
+                </div>
+                {discountError && (
+                  <p className="text-[11px] text-red-600 mt-1.5" role="alert">
+                    {discountError}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
           <dl className="space-y-2 border-t border-rule pt-4 text-sm">
             <div className="flex justify-between">
               <dt className="text-ink-2 font-light">Produkty</dt>
               <dd className="text-ink tabular-nums">{formatPln(subtotal)}</dd>
             </div>
+            {discount && (
+              <div className="flex justify-between">
+                <dt className="text-ink-2 font-light">Rabat {discount.code}</dt>
+                <dd className="tabular-nums" style={{ color: "oklch(45% 0.16 158)" }}>
+                  −{formatPln(discountAmount)}
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-ink-2 font-light">Dostawa</dt>
               <dd className="text-ink tabular-nums">{formatPln(shippingCost)}</dd>

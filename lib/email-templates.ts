@@ -10,6 +10,8 @@ interface OrderSummary {
   subtotal: string;
   shippingCost: string;
   codFee: string | null;
+  discountAmount?: string | null;
+  discountCode?: string | null;
   total: string;
 }
 
@@ -66,9 +68,14 @@ function itemsTable(order: OrderSummary): string {
     ? `<tr><td style="padding:6px 0;font-size:13px;color:#666666;">Pobranie</td><td align="right" style="padding:6px 0;font-size:13px;color:#222222;">${pln(order.codFee)}</td></tr>`
     : "";
 
+  const discountRow = order.discountAmount
+    ? `<tr><td style="padding:6px 0;font-size:13px;color:#666666;">Rabat${order.discountCode ? ` (${esc(order.discountCode)})` : ""}</td><td align="right" style="padding:6px 0;font-size:13px;color:#0d7a4f;">−${pln(order.discountAmount)}</td></tr>`
+    : "";
+
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
     ${rows}
     <tr><td style="padding:10px 0 6px;font-size:13px;color:#666666;">Produkty</td><td align="right" style="padding:10px 0 6px;font-size:13px;color:#222222;">${pln(order.subtotal)}</td></tr>
+    ${discountRow}
     <tr><td style="padding:6px 0;font-size:13px;color:#666666;">Dostawa</td><td align="right" style="padding:6px 0;font-size:13px;color:#222222;">${pln(order.shippingCost)}</td></tr>
     ${codRow}
     <tr><td style="padding:12px 0 0;font-size:15px;font-weight:bold;color:#111111;border-top:2px solid #16161d;">Razem</td><td align="right" style="padding:12px 0 0;font-size:15px;font-weight:bold;color:#111111;border-top:2px solid #16161d;">${pln(order.total)}</td></tr>

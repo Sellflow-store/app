@@ -17,7 +17,7 @@ export default function StorefrontShell({
       <BrandTheme branding={shop.branding} />
       <div className="min-h-screen bg-paper flex flex-col">
         <TopBar config={shop.home} />
-        <Navbar shopSlug={shop.slug} branding={shop.branding} />
+        <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />
         <main className="flex-1 w-full">{children}</main>
         <Footer shopSlug={shop.slug} branding={shop.branding} />
       </div>

@@ -97,7 +97,7 @@ export default function AboutForm({ shopSlug, initialConfig }: Props) {
     : "oklch(56% 0.30 335)";
 
   return (
-    <div className="p-6 lg:p-8 max-w-2xl">
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1

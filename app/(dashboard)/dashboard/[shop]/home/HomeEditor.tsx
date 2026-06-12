@@ -205,7 +205,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
     : "oklch(56% 0.30 335)";
 
   return (
-    <div className="p-6 lg:p-8 max-w-2xl">
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -404,6 +404,61 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             onChange={(items) => patch("guarantee", { items })}
             addLabel="Dodaj punkt gwarancji"
           />
+        </div>
+      </Accordion>
+
+      {/* Newsletter popup */}
+      <Accordion title="Popup newslettera" open={!!open.popup} onToggle={() => toggle("popup")}>
+        <div className="space-y-3">
+          <Toggle
+            checked={config.popup.enabled}
+            onChange={(v) => patch("popup", { enabled: v })}
+            label="Pokazuj popup z zapisem do newslettera"
+          />
+          {config.popup.enabled && (
+            <>
+              <Field label="Po ilu sekundach pokazać">
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={config.popup.delaySeconds}
+                  onChange={(e) =>
+                    patch("popup", { delaySeconds: Math.max(0, parseInt(e.target.value) || 0) })
+                  }
+                  style={{ ...inputStyle, width: "8rem" }}
+                  {...focusProps}
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Tytuł">
+                  <input
+                    value={config.popup.title}
+                    onChange={(e) => patch("popup", { title: e.target.value })}
+                    style={inputStyle}
+                    {...focusProps}
+                  />
+                </Field>
+                <Field label="Tekst przycisku">
+                  <input
+                    value={config.popup.buttonLabel}
+                    onChange={(e) => patch("popup", { buttonLabel: e.target.value })}
+                    style={inputStyle}
+                    {...focusProps}
+                  />
+                </Field>
+              </div>
+              <Field label="Opis (np. zachęta / rabat)">
+                <textarea
+                  value={config.popup.description}
+                  onChange={(e) => patch("popup", { description: e.target.value })}
+                  rows={2}
+                  style={{ ...inputStyle, resize: "vertical" }}
+                  {...focusProps}
+                />
+              </Field>
+            </>
+          )}
         </div>
       </Accordion>
     </div>

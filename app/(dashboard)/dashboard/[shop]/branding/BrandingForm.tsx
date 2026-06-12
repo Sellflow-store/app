@@ -142,7 +142,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
     : "oklch(56% 0.30 335)";
 
   return (
-    <div className="p-6 lg:p-8 max-w-2xl">
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       {/* Pełny katalog fontów do podglądu w pickerach */}
       {PICKER_FONTS_HREF && <link rel="stylesheet" href={PICKER_FONTS_HREF} />}
 

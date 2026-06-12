@@ -82,7 +82,7 @@ export default function LegalForm({ shopSlug, shopName, initialTerms, initialPri
   ];
 
   return (
-    <div className="p-6 lg:p-8 max-w-3xl">
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1

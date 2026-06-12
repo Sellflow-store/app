@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { shops, shopConfig, products, orders, customers, users } from "@/lib/db/schema";
+import { shops, shopConfig, products, orders, customers, users, discountCodes } from "@/lib/db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { DEFAULT_DELIVERY, DEFAULT_CHECKOUT } from "@/lib/shop";
+import { checkDiscountCode } from "@/lib/discounts";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationEmail, merchantNewOrderEmail } from "@/lib/email-templates";
 import type { DeliveryConfig, CheckoutConfig } from "@/types/shop";
@@ -15,6 +16,7 @@ interface OrderRequest {
   items: { productId: string; qty: number }[];
   deliveryMethodId: string;
   paymentMethod: "transfer" | "cod";
+  discountCode?: string | null;
   notes?: string;
 }
 
@@ -112,12 +114,23 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const subtotal = orderItems.reduce((sum, i) => sum + parseFloat(i.price) * i.qty, 0);
 
+  // Discount — re-validated server-side, never trusted from the client
+  let discountAmount = 0;
+  let appliedDiscount: { id: string; code: string } | null = null;
+  if (body.discountCode) {
+    const verdict = await checkDiscountCode(shop.id, body.discountCode);
+    if (!verdict.valid) return bad(verdict.reason);
+    discountAmount = Math.round(subtotal * verdict.discountPercent) / 100;
+    appliedDiscount = { id: verdict.row.id, code: verdict.row.code };
+  }
+
+  // Free-shipping threshold uses the pre-discount subtotal (same as checkout UI)
   const freeFrom = parseFloat(delivery.freeShippingFrom);
   const shippingFree = !isNaN(freeFrom) && freeFrom > 0 && subtotal >= freeFrom;
   const shippingCost = shippingFree ? 0 : parseFloat(method.price);
 
   const codFee = body.paymentMethod === "cod" ? parseFloat(checkout.codFee) || 0 : 0;
-  const total = subtotal + shippingCost + codFee;
+  const total = subtotal - discountAmount + shippingCost + codFee;
 
   const shippingAddress = {
     name,
@@ -151,6 +164,8 @@ export async function POST(req: NextRequest, { params }: Params) {
           items: orderItems,
           subtotal: subtotal.toFixed(2),
           shippingCost: shippingCost.toFixed(2),
+          discountAmount: discountAmount.toFixed(2),
+          discountCode: appliedDiscount?.code ?? null,
           total: total.toFixed(2),
           paymentMethod: body.paymentMethod,
           shippingAddress,
@@ -165,6 +180,13 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
   }
   if (!order) return bad("Nie udało się zapisać zamówienia. Spróbuj ponownie.", 500);
+
+  if (appliedDiscount) {
+    await db
+      .update(discountCodes)
+      .set({ usesCount: sql`${discountCodes.usesCount} + 1` })
+      .where(eq(discountCodes.id, appliedDiscount.id));
+  }
 
   // ── Upsert customer aggregate ────────────────────────────────────────────
   await db
@@ -205,6 +227,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     subtotal: subtotal.toFixed(2),
     shippingCost: shippingCost.toFixed(2),
     codFee: codFee > 0 ? codFee.toFixed(2) : null,
+    discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : null,
+    discountCode: appliedDiscount?.code ?? null,
     total: total.toFixed(2),
   };
 
@@ -241,6 +265,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       subtotal: subtotal.toFixed(2),
       shippingCost: shippingCost.toFixed(2),
       codFee: codFee > 0 ? codFee.toFixed(2) : null,
+      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : null,
+      discountCode: appliedDiscount?.code ?? null,
       total: total.toFixed(2),
       paymentMethod: body.paymentMethod,
       transfer:
