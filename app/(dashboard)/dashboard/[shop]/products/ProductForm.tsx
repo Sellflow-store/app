@@ -16,6 +16,7 @@ export interface ProductFormData {
   shortDesc: string;
   description: string;
   images: string[];
+  stock: string; // "" = nie śledzę stanu
 }
 
 const EMPTY: ProductFormData = {
@@ -28,6 +29,7 @@ const EMPTY: ProductFormData = {
   shortDesc: "",
   description: "",
   images: [],
+  stock: "",
 };
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -135,6 +137,17 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       return;
     }
 
+    // Stock: empty → null (nie śledzę); liczba całkowita ≥ 0 wymagana
+    let stock: number | null = null;
+    if (form.stock.trim() !== "") {
+      const n = parseInt(form.stock.replace(/[^\d-]/g, ""), 10);
+      if (isNaN(n) || n < 0) {
+        setValidationError("Stan magazynowy musi być liczbą całkowitą (0 lub więcej).");
+        return;
+      }
+      stock = n;
+    }
+
     setValidationError(null);
     setSaveState("saving");
 
@@ -148,6 +161,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       shortDesc: form.shortDesc.trim() || undefined,
       description: form.description.trim() || undefined,
       images: form.images,
+      stock,
     };
 
     try {
@@ -419,6 +433,26 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             Dodaj
           </button>
         </div>
+      </SectionCard>
+
+      {/* Stock */}
+      <SectionCard title="Stan magazynowy">
+        <Field label="Liczba sztuk na stanie" id="p-stock">
+          <input
+            id="p-stock"
+            value={form.stock}
+            onChange={(e) => patch({ stock: e.target.value })}
+            placeholder="np. 25"
+            inputMode="numeric"
+            style={{ ...inputStyle, maxWidth: "12rem" }}
+            {...focusProps}
+          />
+        </Field>
+        <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+          Zostaw puste, jeśli nie chcesz śledzić stanu — produkt będzie zawsze dostępny.
+          Przy <strong>0</strong> klient zobaczy „Wyprzedane" i nie doda produktu do koszyka.
+          Stan zmniejsza się automatycznie po każdym zamówieniu.
+        </p>
       </SectionCard>
 
       {/* Visibility */}

@@ -101,6 +101,22 @@ export async function POST(req: NextRequest, { params }: Params) {
     return bad("Część produktów z koszyka jest już niedostępna. Odśwież koszyk.", 409);
   }
 
+  // ── Stock guard — block overselling for tracked products ────────────────
+  // Aggregate requested qty per product (the same id can appear twice).
+  const requested = new Map<string, number>();
+  for (const i of body.items) requested.set(i.productId, (requested.get(i.productId) ?? 0) + i.qty);
+  for (const [id, qty] of requested) {
+    const p = productMap.get(id)!;
+    if (p.stock != null && qty > p.stock) {
+      return bad(
+        p.stock <= 0
+          ? `Produkt „${p.name}" jest już wyprzedany. Usuń go z koszyka.`
+          : `Produktu „${p.name}" zostało tylko ${p.stock} szt. Zmniejsz ilość w koszyku.`,
+        409
+      );
+    }
+  }
+
   const orderItems = body.items.map((i) => {
     const p = productMap.get(i.productId)!;
     return {
@@ -186,6 +202,19 @@ export async function POST(req: NextRequest, { params }: Params) {
       .update(discountCodes)
       .set({ usesCount: sql`${discountCodes.usesCount} + 1` })
       .where(eq(discountCodes.id, appliedDiscount.id));
+  }
+
+  // ── Decrement stock for tracked products (floor at 0) ───────────────────
+  // Validated above; the small validate→decrement race is acceptable at MVP
+  // scale and GREATEST() guarantees stock never goes negative.
+  for (const [id, qty] of requested) {
+    const p = productMap.get(id)!;
+    if (p.stock != null) {
+      await db
+        .update(products)
+        .set({ stock: sql`GREATEST(${products.stock} - ${qty}, 0)`, updatedAt: new Date() })
+        .where(and(eq(products.id, id), eq(products.shopId, shop.id)));
+    }
   }
 
   // ── Upsert customer aggregate ────────────────────────────────────────────

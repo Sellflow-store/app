@@ -32,6 +32,7 @@ export default async function ProductsPage({
               price: products.price,
               visible: products.visible,
               badge: products.badge,
+              stock: products.stock,
               images: products.images,
             })
             .from(products)
@@ -45,6 +46,7 @@ export default async function ProductsPage({
             price: r.price,
             visible: r.visible,
             badge: r.badge ?? undefined,
+            stock: r.stock,
             image: ((r.images as string[]) ?? [])[0],
           }));
         }

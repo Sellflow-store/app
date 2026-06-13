@@ -12,6 +12,7 @@ interface Props {
     name: string;
     price: string;
     image: string | null;
+    stock?: number | null;
   };
 }
 
@@ -20,18 +21,41 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
+  const tracked = product.stock != null;
+  const soldOut = tracked && product.stock! <= 0;
+  const max = tracked ? Math.min(99, product.stock!) : 99;
+  const lowStock = tracked && product.stock! > 0 && product.stock! <= 5;
+
   function handleAdd() {
+    if (soldOut) return;
     add(
       {
         productId: product.id,
         name: product.name,
         price: product.price,
         image: product.image,
+        stock: product.stock,
       },
       qty
     );
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
+  }
+
+  if (soldOut) {
+    return (
+      <div>
+        <button
+          disabled
+          className="w-full flex items-center justify-center gap-2 border border-rule text-ink-2 font-semibold text-sm tracking-wide px-8 py-4 rounded-full cursor-not-allowed"
+        >
+          Wyprzedane
+        </button>
+        <p className="text-xs text-ink-2/70 text-center mt-2">
+          Tego produktu chwilowo nie ma na stanie.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -50,9 +74,10 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
             {qty}
           </span>
           <button
-            onClick={() => setQty((q) => Math.min(99, q + 1))}
+            onClick={() => setQty((q) => Math.min(max, q + 1))}
+            disabled={qty >= max}
             aria-label="Zwiększ ilość"
-            className="px-3 py-4 text-ink-2 hover:text-ink transition-colors"
+            className="px-3 py-4 text-ink-2 hover:text-ink transition-colors disabled:opacity-30"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
@@ -75,6 +100,12 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
           )}
         </button>
       </div>
+
+      {lowStock && (
+        <p className="text-xs text-center mt-2" style={{ color: "oklch(45% 0.16 60)" }}>
+          Zostały ostatnie sztuki ({product.stock}).
+        </p>
+      )}
 
       {added && (
         <Link

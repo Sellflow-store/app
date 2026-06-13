@@ -8,6 +8,7 @@ export interface CartItem {
   price: string; // "129.99" — display only; checkout recomputes from DB
   image: string | null;
   qty: number;
+  stock?: number | null; // null/undefined = nieograniczony; cap ilości w koszyku
 }
 
 const EMPTY: CartItem[] = [];
@@ -72,17 +73,22 @@ export function useCart(shopSlug: string) {
     () => EMPTY
   );
 
+  // Górny limit ilości: 99, a gdy produkt śledzi stan — nie więcej niż na stanie.
+  const capFor = (stock: number | null | undefined) =>
+    stock == null ? 99 : Math.max(0, Math.min(99, stock));
+
   const add = useCallback(
     (item: Omit<CartItem, "qty">, qty = 1) => {
       const current = read(shopSlug);
       const existing = current.find((i) => i.productId === item.productId);
+      const cap = capFor(item.stock);
       const next = existing
         ? current.map((i) =>
             i.productId === item.productId
-              ? { ...i, qty: Math.min(99, i.qty + qty) }
+              ? { ...i, stock: item.stock, qty: Math.min(capFor(item.stock), i.qty + qty) }
               : i
           )
-        : [...current, { ...item, qty: Math.min(99, Math.max(1, qty)) }];
+        : [...current, { ...item, qty: Math.min(cap, Math.max(1, qty)) }];
       write(shopSlug, next);
     },
     [shopSlug]
@@ -95,7 +101,7 @@ export function useCart(shopSlug: string) {
         qty <= 0
           ? current.filter((i) => i.productId !== productId)
           : current.map((i) =>
-              i.productId === productId ? { ...i, qty: Math.min(99, qty) } : i
+              i.productId === productId ? { ...i, qty: Math.min(capFor(i.stock), qty) } : i
             );
       write(shopSlug, next);
     },

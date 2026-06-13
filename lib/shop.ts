@@ -191,6 +191,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     rating: p.rating,
     reviews: p.reviews,
     visible: p.visible,
+    stock: p.stock,
     shortDesc: p.shortDesc,
     description: p.description,
     images: (p.images as string[]) ?? [],

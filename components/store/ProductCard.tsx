@@ -17,12 +17,16 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
   const { add } = useCart(shopSlug);
   const [added, setAdded] = useState(false);
 
+  const soldOut = product.stock != null && product.stock <= 0;
+
   function quickAdd() {
+    if (soldOut) return;
     add({
       productId: product.id,
       name: product.name,
       price: product.price,
       image: mainImage,
+      stock: product.stock,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -41,26 +45,34 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
             </div>
           </div>
         )}
-        {product.badge && (
-          <span className="absolute top-3 left-3 bg-ink text-on-ink text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full">
-            {product.badge}
+        {soldOut ? (
+          <span className="absolute top-3 left-3 bg-paper/90 backdrop-blur-sm text-ink-2 text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full">
+            Wyprzedane
           </span>
+        ) : (
+          product.badge && (
+            <span className="absolute top-3 left-3 bg-ink text-on-ink text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full">
+              {product.badge}
+            </span>
+          )
         )}
-        <button
-          onClick={quickAdd}
-          aria-label={`Dodaj ${product.name} do koszyka`}
-          className={`absolute bottom-3 right-3 backdrop-blur-sm p-2.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-sm ${
-            added
-              ? "opacity-100 translate-y-0 bg-ink text-on-ink"
-              : "bg-paper/90 opacity-0 group-hover:opacity-100 hover:bg-ink hover:text-on-ink text-ink-2"
-          }`}
-        >
-          {added ? (
-            <Check className="w-4 h-4" strokeWidth={2} />
-          ) : (
-            <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-          )}
-        </button>
+        {!soldOut && (
+          <button
+            onClick={quickAdd}
+            aria-label={`Dodaj ${product.name} do koszyka`}
+            className={`absolute bottom-3 right-3 backdrop-blur-sm p-2.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-sm ${
+              added
+                ? "opacity-100 translate-y-0 bg-ink text-on-ink"
+                : "bg-paper/90 opacity-0 group-hover:opacity-100 hover:bg-ink hover:text-on-ink text-ink-2"
+            }`}
+          >
+            {added ? (
+              <Check className="w-4 h-4" strokeWidth={2} />
+            ) : (
+              <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Info */}

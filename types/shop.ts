@@ -214,6 +214,7 @@ export interface StorefrontProduct {
   rating: string | null;
   reviews: number | null;
   visible: boolean;
+  stock: number | null; // null = nieograniczony; 0 = wyprzedane
   shortDesc: string | null;
   description: string | null;
   images: string[];

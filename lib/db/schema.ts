@@ -101,6 +101,7 @@ export const products = pgTable(
     rating: numeric("rating", { precision: 3, scale: 1 }).default("5.0"),
     reviews: integer("reviews").default(0),
     visible: boolean("visible").notNull().default(true),
+    stock: integer("stock"), // null = nie śledzę stanu (nieograniczony); liczba = ilość
     shortDesc: text("short_desc"),
     description: text("description"),
     images: jsonb("images").notNull().default([]),   // string[]

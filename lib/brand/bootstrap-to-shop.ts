@@ -34,6 +34,7 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
     rating: "5.0",
     reviews: 0,
     visible: true,
+    stock: null,
     shortDesc: p.description,
     description: p.description,
     images: [],

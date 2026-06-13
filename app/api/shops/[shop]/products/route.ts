@@ -36,6 +36,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     shortDesc?: string;
     description?: string;
     images?: string[];
+    stock?: number | null;
     sortOrder?: number;
   };
 
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       shortDesc: body.shortDesc,
       description: body.description,
       images: body.images ?? [],
+      stock: body.stock ?? null,
       sortOrder: body.sortOrder ?? 0,
     })
     .returning();

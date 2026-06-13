@@ -11,6 +11,7 @@ export interface Product {
   price: string;
   visible: boolean;
   badge?: string;
+  stock?: number | null;
   image?: string;
 }
 
@@ -18,6 +19,30 @@ function formatPrice(price: string): string {
   const n = parseFloat(price);
   if (isNaN(n)) return price;
   return `${n.toFixed(2).replace(".", ",")} zł`;
+}
+
+function StockBadge({ stock }: { stock?: number | null }) {
+  if (stock == null) return null; // nie śledzony — bez badge
+  if (stock === 0) {
+    return (
+      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "oklch(95% 0.05 20)", color: "oklch(45% 0.18 20)" }}>
+        Wyprzedane
+      </span>
+    );
+  }
+  const low = stock <= 5;
+  return (
+    <span
+      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+      style={
+        low
+          ? { background: "oklch(95% 0.09 85)", color: "oklch(40% 0.14 75)" }
+          : { background: "oklch(95% 0 0)", color: "oklch(45% 0 0)" }
+      }
+    >
+      {low ? `Mało: ${stock}` : `Stan: ${stock}`}
+    </span>
+  );
 }
 
 interface Props {
@@ -150,9 +175,12 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] mt-0.5" style={{ color: "oklch(60% 0 0)" }}>
-                  ID: {product.id.slice(0, 8)}…
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+                    ID: {product.id.slice(0, 8)}…
+                  </p>
+                  <StockBadge stock={product.stock} />
+                </div>
               </div>
 
               {/* Category */}
