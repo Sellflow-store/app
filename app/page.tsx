@@ -23,7 +23,7 @@ export default async function RootPage() {
     const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
     if (user) {
       const shop = await db.query.shops.findFirst({ where: eq(shops.ownerId, user.id) });
-      if (shop) redirect(`/dashboard/${shop.slug}/orders`);
+      if (shop) redirect(`/dashboard/${shop.slug}`);
     }
   } catch {
     // DB unreachable — wizard renders without DB so this is still useful.

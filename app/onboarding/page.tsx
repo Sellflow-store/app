@@ -38,7 +38,7 @@ export default async function OnboardingPage() {
   // redirect() throws internally, so it must stay outside the try/catch —
   // …unless they're mid-Save (came back here from /register with a
   // pending payload). /onboarding/save handles that case explicitly.
-  if (existingSlug) redirect(`/dashboard/${existingSlug}/orders`);
+  if (existingSlug) redirect(`/dashboard/${existingSlug}`);
 
   return <Wizard firstName={firstName} />;
 }

@@ -19,6 +19,6 @@ export default async function DashboardResolver() {
     // DB not ready — send to onboarding, which tolerates the same state
   }
 
-  if (shopSlug) redirect(`/dashboard/${shopSlug}/orders`);
+  if (shopSlug) redirect(`/dashboard/${shopSlug}`);
   redirect("/onboarding");
 }

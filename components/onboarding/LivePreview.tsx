@@ -77,7 +77,7 @@ export default function LivePreview() {
         setError(data.error ?? "Nie udało się zapisać sklepu.");
         return;
       }
-      router.push(`/dashboard/${data.shopSlug}/orders`);
+      router.push(`/dashboard/${data.shopSlug}`);
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");
     } finally {
@@ -156,7 +156,7 @@ export default function LivePreview() {
         <p className="mt-3 text-xs" style={{ color: "var(--brand-ink-2)" }}>
           Twój adres:{" "}
           <span style={{ fontFamily: "var(--font-mono)", color: "var(--brand-ink)" }}>
-            {dbSlug}.sellflow.app
+            {dbSlug}.sell-flow.store
           </span>
         </p>
         {error && (

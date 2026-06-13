@@ -6,7 +6,7 @@ import {
   Home, Package, ShoppingBag, Info, HelpCircle, FileText, ShieldCheck, Settings,
   BarChart2, X, ChevronRight, Users, Eye, CreditCard, ClipboardList,
   Truck, Tag, Mail, Palette, Megaphone, Scale, Layers, Store, RotateCcw,
-  MenuIcon,
+  MenuIcon, LayoutDashboard,
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -14,6 +14,7 @@ const NAV_SECTIONS = [
     id: "store-ops",
     title: "Obsługa sklepu",
     items: [
+      { slug: "",          label: "Pulpit",      icon: LayoutDashboard },
       { slug: "orders",    label: "Zamówienia",  icon: ClipboardList },
       { slug: "customers", label: "Klienci",      icon: Users },
       { slug: "stats",     label: "Statystyki",   icon: BarChart2 },
@@ -75,6 +76,7 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
   const base = `/dashboard/${shopSlug}`;
 
   function isActive(slug: string) {
+    if (slug === "") return pathname === base; // Pulpit — only the bare base
     return pathname === `${base}/${slug}` || pathname.startsWith(`${base}/${slug}/`);
   }
 
@@ -132,8 +134,8 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
                 const active = isActive(slug);
                 return (
                   <Link
-                    key={slug}
-                    href={`${base}/${slug}`}
+                    key={slug || "pulpit"}
+                    href={slug ? `${base}/${slug}` : base}
                     onClick={onClose}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-colors mb-0.5"
                     style={

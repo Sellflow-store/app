@@ -55,7 +55,7 @@ export default function OnboardingSavePage() {
         }
 
         sessionStorage.removeItem(PENDING_KEY);
-        router.replace(`/dashboard/${data.shopSlug}/orders`);
+        router.replace(`/dashboard/${data.shopSlug}`);
       } catch {
         if (cancelled) return;
         setErrorMsg("Błąd połączenia.");

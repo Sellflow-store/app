@@ -67,7 +67,7 @@ export default function OnboardingForm({ firstName }: Props) {
         setError(data.error ?? "Wystąpił błąd. Spróbuj ponownie.");
         return;
       }
-      router.push(`/dashboard/${data.shopSlug}/orders`);
+      router.push(`/dashboard/${data.shopSlug}`);
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");
     } finally {

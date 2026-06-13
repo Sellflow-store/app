@@ -27,6 +27,7 @@ export default function AdminShell({ shopSlug, children }: AdminShellProps) {
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header
+          shopSlug={shopSlug}
           section={section}
           onMenuToggle={() => setMobileOpen((v) => !v)}
         />
