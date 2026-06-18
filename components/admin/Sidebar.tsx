@@ -46,6 +46,7 @@ const NAV_SECTIONS = [
       { slug: "home",     label: "Strona główna",       icon: Home },
       { slug: "about",    label: "O nas",               icon: Info },
       { slug: "faq",      label: "FAQ",                 icon: HelpCircle },
+      { slug: "blog",     label: "Blog",                icon: FileText },
       { slug: "menu",     label: "Menu nawigacji",      icon: MenuIcon },
     ],
   },

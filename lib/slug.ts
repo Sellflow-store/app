@@ -4,6 +4,21 @@ import { inArray } from "drizzle-orm";
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
+const PL_MAP: Record<string, string> = {
+  ą: "a", ć: "c", ę: "e", ł: "l", ń: "n", ó: "o", ś: "s", ź: "z", ż: "z",
+};
+
+/** Zamienia tekst na slug: małe litery, polskie znaki → ASCII, reszta → "-". */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[ąćęłńóśźż]/g, (c) => PL_MAP[c] ?? c)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50)
+    .replace(/-+$/g, "");
+}
+
 /**
  * Returns `base` when free, otherwise the first free of base-2…base-30,
  * with a random-suffix fallback. Single DB round-trip for all candidates.

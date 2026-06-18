@@ -124,6 +124,7 @@ export interface MenuConfig {
 /** Domyślne menu — musi być client-safe (importuje je Navbar). */
 export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   { label: "Sklep", href: "/products" },
+  { label: "Blog", href: "/blog" },
   { label: "O nas", href: "/about" },
   { label: "FAQ", href: "/faq" },
   { label: "Kontakt", href: "/contact" },
