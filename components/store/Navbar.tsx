@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
+import { User, ShoppingBag, Menu, X } from "lucide-react";
 import type { BrandingConfig, MenuItem } from "@/types/shop";
 import { DEFAULT_MENU_ITEMS } from "@/types/shop";
 import { useCart } from "@/lib/cart";
+import ProductSearch from "./ProductSearch";
 
 interface Props {
   shopSlug: string;
@@ -53,9 +54,7 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
 
           {/* Icons */}
           <div className="flex items-center gap-5">
-            <button className="text-ink-2 hover:text-ink transition-colors hidden sm:block">
-              <Search className="w-[18px] h-[18px]" strokeWidth={1.5} />
-            </button>
+            <ProductSearch shopSlug={shopSlug} />
             <button className="hidden sm:block text-ink-2 hover:text-ink transition-colors">
               <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
             </button>
