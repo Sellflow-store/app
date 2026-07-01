@@ -9,7 +9,7 @@ const PAGE_LABELS: Record<string, string> = {
   "":         "Pulpit",
   orders:     "Zamówienia",
   customers:  "Klienci",
-  stats:      "Statystyki",
+  stats:      "Analityka",
   products:   "Produkty",
   categories: "Kategorie",
   payments:   "Płatności i VAT",

@@ -11,7 +11,7 @@ interface OrderHit { id: string; orderNumber: string; customerName: string | nul
 const PAGES: { label: string; slug: string }[] = [
   { label: "Zamówienia", slug: "orders" },
   { label: "Klienci", slug: "customers" },
-  { label: "Statystyki", slug: "stats" },
+  { label: "Analityka", slug: "stats" },
   { label: "Produkty", slug: "products" },
   { label: "Kategorie", slug: "categories" },
   { label: "Płatności i VAT", slug: "payments" },

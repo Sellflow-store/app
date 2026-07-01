@@ -17,7 +17,7 @@ const NAV_SECTIONS = [
       { slug: "",          label: "Pulpit",      icon: LayoutDashboard },
       { slug: "orders",    label: "Zamówienia",  icon: ClipboardList },
       { slug: "customers", label: "Klienci",      icon: Users },
-      { slug: "stats",     label: "Statystyki",   icon: BarChart2 },
+      { slug: "stats",     label: "Analityka",    icon: BarChart2 },
     ],
   },
   {

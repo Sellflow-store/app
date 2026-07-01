@@ -247,6 +247,31 @@ export const newsletterSubscribers = pgTable(
   ]
 );
 
+// ─── Visits (storefront traffic + AI visibility) ─────────────────────────────
+// One row per storefront pageview, logged by a lightweight client beacon.
+// source: direct | ai | search | social | referral
+// aiSource: chatgpt | claude | perplexity | gemini | copilot | other (only when source=ai)
+
+export const visits = pgTable(
+  "visits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    path: text("path").notNull().default("/"),
+    source: text("source").notNull().default("direct"),
+    aiSource: text("ai_source"), // null unless source = ai
+    referrerHost: text("referrer_host"),
+    visitorId: text("visitor_id"), // anon cookie id — for unique/returning counts
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("visits_shop_created_idx").on(t.shopId, t.createdAt),
+    index("visits_shop_source_idx").on(t.shopId, t.source),
+  ]
+);
+
 // ─── Panel users (shop staff access) ─────────────────────────────────────────
 
 export const panelUsers = pgTable(
@@ -305,3 +330,5 @@ export type NewOrder = typeof orders.$inferInsert;
 export type Customer = typeof customers.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type DiscountCode = typeof discountCodes.$inferSelect;
+export type Visit = typeof visits.$inferSelect;
+export type NewVisit = typeof visits.$inferInsert;
