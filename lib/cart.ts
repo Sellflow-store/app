@@ -9,6 +9,7 @@ export interface CartItem {
   image: string | null;
   qty: number;
   stock?: number | null; // null/undefined = nieograniczony; cap ilości w koszyku
+  type?: "physical" | "digital" | "service"; // undefined = physical (legacy)
 }
 
 const EMPTY: CartItem[] = [];

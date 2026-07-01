@@ -27,6 +27,7 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
       price: product.price,
       image: mainImage,
       stock: product.stock,
+      type: product.type,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);

@@ -170,12 +170,21 @@ export default function CheckoutForm({
     );
   }
 
+  // ── Type-aware flow ──────────────────────────────────────────────────────
+  // Shipping, address and cash-on-delivery only make sense when the cart holds
+  // a physical product. An all-digital / all-service cart skips them entirely.
+  const hasPhysical = items.some((i) => (i.type ?? "physical") === "physical");
+  const hasDigital = items.some((i) => i.type === "digital");
+  const hasService = items.some((i) => i.type === "service");
+  const codShown = codEnabled && hasPhysical;
+  const effPayment: "transfer" | "cod" = payment === "cod" && !codShown ? "transfer" : payment;
+
   // ── Totals ────────────────────────────────────────────────────────────────
   const method = deliveryMethods.find((m) => m.id === deliveryId) ?? null;
   const freeFrom = parseFloat(freeShippingFrom);
   const shippingFree = !isNaN(freeFrom) && freeFrom > 0 && subtotal >= freeFrom;
-  const shippingCost = method ? (shippingFree ? 0 : parseFloat(method.price)) : 0;
-  const codFeeValue = payment === "cod" ? parseFloat(codFee) || 0 : 0;
+  const shippingCost = hasPhysical && method ? (shippingFree ? 0 : parseFloat(method.price)) : 0;
+  const codFeeValue = effPayment === "cod" ? parseFloat(codFee) || 0 : 0;
   const discountAmount = discount ? (subtotal * discount.percent) / 100 : 0;
   const total = subtotal - discountAmount + shippingCost + codFeeValue;
 
@@ -212,10 +221,10 @@ export default function CheckoutForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: { email, name, phone },
-          address: { street, zip, city },
+          address: hasPhysical ? { street, zip, city } : null,
           items: items.map((i) => ({ productId: i.productId, qty: i.qty })),
-          deliveryMethodId: deliveryId,
-          paymentMethod: payment,
+          deliveryMethodId: hasPhysical ? deliveryId : null,
+          paymentMethod: effPayment,
           discountCode: discount?.code ?? null,
           notes,
         }),
@@ -271,7 +280,8 @@ export default function CheckoutForm({
             </div>
           </section>
 
-          {/* Address */}
+          {/* Address — physical carts only */}
+          {hasPhysical && (
           <section>
             <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">Adres dostawy</h2>
             <div className="space-y-4">
@@ -291,8 +301,25 @@ export default function CheckoutForm({
               </div>
             </div>
           </section>
+          )}
 
-          {/* Delivery */}
+          {/* Non-physical fulfillment note */}
+          {!hasPhysical && (
+            <section>
+              <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">Realizacja</h2>
+              <div className="border border-rule rounded-xl p-4 text-sm text-ink-2 space-y-1.5">
+                {hasDigital && (
+                  <p>📩 Produkty cyfrowe dostarczymy na e-mail podany powyżej — bez wysyłki i adresu.</p>
+                )}
+                {hasService && (
+                  <p>📞 W sprawie realizacji usługi skontaktujemy się z Tobą po złożeniu zamówienia.</p>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Delivery — physical carts only */}
+          {hasPhysical && (
           <section>
             <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">Dostawa</h2>
             <div className="space-y-2.5">
@@ -323,6 +350,7 @@ export default function CheckoutForm({
               )}
             </div>
           </section>
+          )}
 
           {/* Payment */}
           <section>
@@ -331,14 +359,14 @@ export default function CheckoutForm({
               {transferEnabled && (
                 <label
                   className={`flex items-center justify-between gap-3 border rounded-xl px-4 py-3.5 cursor-pointer transition-colors ${
-                    payment === "transfer" ? "border-ink" : "border-rule hover:border-ink-2/40"
+                    effPayment === "transfer" ? "border-ink" : "border-rule hover:border-ink-2/40"
                   }`}
                 >
                   <span className="flex items-center gap-3">
                     <input
                       type="radio"
                       name="payment"
-                      checked={payment === "transfer"}
+                      checked={effPayment === "transfer"}
                       onChange={() => setPayment("transfer")}
                       className="accent-current"
                     />
@@ -348,17 +376,17 @@ export default function CheckoutForm({
                   <span className="text-xs text-ink-2/70">dane po złożeniu zamówienia</span>
                 </label>
               )}
-              {codEnabled && (
+              {codShown && (
                 <label
                   className={`flex items-center justify-between gap-3 border rounded-xl px-4 py-3.5 cursor-pointer transition-colors ${
-                    payment === "cod" ? "border-ink" : "border-rule hover:border-ink-2/40"
+                    effPayment === "cod" ? "border-ink" : "border-rule hover:border-ink-2/40"
                   }`}
                 >
                   <span className="flex items-center gap-3">
                     <input
                       type="radio"
                       name="payment"
-                      checked={payment === "cod"}
+                      checked={effPayment === "cod"}
                       onChange={() => setPayment("cod")}
                       className="accent-current"
                     />
@@ -469,10 +497,12 @@ export default function CheckoutForm({
                 </dd>
               </div>
             )}
-            <div className="flex justify-between">
-              <dt className="text-ink-2 font-light">Dostawa</dt>
-              <dd className="text-ink tabular-nums">{formatPln(shippingCost)}</dd>
-            </div>
+            {hasPhysical && (
+              <div className="flex justify-between">
+                <dt className="text-ink-2 font-light">Dostawa</dt>
+                <dd className="text-ink tabular-nums">{formatPln(shippingCost)}</dd>
+              </div>
+            )}
             {codFeeValue > 0 && (
               <div className="flex justify-between">
                 <dt className="text-ink-2 font-light">Pobranie</dt>
@@ -493,7 +523,7 @@ export default function CheckoutForm({
 
           <button
             type="submit"
-            disabled={submitting || !method || (!transferEnabled && !codEnabled)}
+            disabled={submitting || (hasPhysical && !method) || (!transferEnabled && !codShown)}
             className="w-full mt-6 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {submitting ? "Składanie zamówienia…" : "Zamawiam i płacę"}

@@ -13,6 +13,7 @@ interface Props {
     price: string;
     image: string | null;
     stock?: number | null;
+    type?: "physical" | "digital" | "service";
   };
 }
 
@@ -35,6 +36,7 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
         price: product.price,
         image: product.image,
         stock: product.stock,
+        type: product.type,
       },
       qty
     );

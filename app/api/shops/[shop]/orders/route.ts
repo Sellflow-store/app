@@ -12,9 +12,9 @@ type Params = { params: Promise<{ shop: string }> };
 
 interface OrderRequest {
   customer: { email: string; name: string; phone?: string };
-  address: { street: string; zip: string; city: string };
+  address: { street: string; zip: string; city: string } | null;
   items: { productId: string; qty: number }[];
-  deliveryMethodId: string;
+  deliveryMethodId: string | null;
   paymentMethod: "transfer" | "cod";
   discountCode?: string | null;
   notes?: string;
@@ -47,11 +47,6 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!email || !EMAIL_RE.test(email)) return bad("Podaj poprawny adres e-mail.");
   if (!name) return bad("Podaj imię i nazwisko.");
 
-  const street = body.address?.street?.trim();
-  const zip = body.address?.zip?.trim();
-  const city = body.address?.city?.trim();
-  if (!street || !zip || !city) return bad("Uzupełnij adres dostawy.");
-
   if (!Array.isArray(body.items) || body.items.length === 0) {
     return bad("Koszyk jest pusty.");
   }
@@ -61,6 +56,30 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (body.paymentMethod !== "transfer" && body.paymentMethod !== "cod") {
     return bad("Niepoprawna metoda płatności.");
   }
+
+  // ── Recompute prices from DB — client totals are never trusted ──────────
+  const ids = [...new Set(body.items.map((i) => i.productId))];
+  const dbProducts = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.shopId, shop.id), eq(products.visible, true), inArray(products.id, ids)));
+  const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
+  const missing = ids.filter((id) => !productMap.has(id));
+  if (missing.length > 0) {
+    return bad("Część produktów z koszyka jest już niedostępna. Odśwież koszyk.", 409);
+  }
+
+  // Physical items drive shipping, address and cash-on-delivery.
+  const hasPhysical = dbProducts.some((p) => (p.type ?? "physical") === "physical");
+  const hasDigital = dbProducts.some((p) => p.type === "digital");
+  const hasService = dbProducts.some((p) => p.type === "service");
+
+  // Address required only when something ships.
+  const street = body.address?.street?.trim() ?? "";
+  const zip = body.address?.zip?.trim() ?? "";
+  const city = body.address?.city?.trim() ?? "";
+  if (hasPhysical && (!street || !zip || !city)) return bad("Uzupełnij adres dostawy.");
 
   // ── Load config ─────────────────────────────────────────────────────────
   const configs = await db
@@ -78,27 +97,21 @@ export async function POST(req: NextRequest, { params }: Params) {
     ...((configMap.checkout as Partial<CheckoutConfig>) ?? {}),
   };
 
-  const method = delivery.methods.find((m) => m.id === body.deliveryMethodId && m.enabled);
-  if (!method) return bad("Wybierz metodę dostawy.");
+  // Delivery method required only for physical carts.
+  const method = hasPhysical
+    ? delivery.methods.find((m) => m.id === body.deliveryMethodId && m.enabled) ?? null
+    : null;
+  if (hasPhysical && !method) return bad("Wybierz metodę dostawy.");
 
+  // Cash-on-delivery only makes sense for a physical shipment.
+  if (body.paymentMethod === "cod" && !hasPhysical) {
+    return bad("Za pobraniem jest dostępne tylko dla produktów fizycznych.");
+  }
   if (body.paymentMethod === "transfer" && !checkout.transferEnabled) {
     return bad("Płatność przelewem jest niedostępna w tym sklepie.");
   }
   if (body.paymentMethod === "cod" && !checkout.codEnabled) {
     return bad("Płatność za pobraniem jest niedostępna w tym sklepie.");
-  }
-
-  // ── Recompute prices from DB — client totals are never trusted ──────────
-  const ids = [...new Set(body.items.map((i) => i.productId))];
-  const dbProducts = await db
-    .select()
-    .from(products)
-    .where(and(eq(products.shopId, shop.id), eq(products.visible, true), inArray(products.id, ids)));
-  const productMap = new Map(dbProducts.map((p) => [p.id, p]));
-
-  const missing = ids.filter((id) => !productMap.has(id));
-  if (missing.length > 0) {
-    return bad("Część produktów z koszyka jest już niedostępna. Odśwież koszyk.", 409);
   }
 
   // ── Stock guard — block overselling for tracked products ────────────────
@@ -143,7 +156,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   // Free-shipping threshold uses the pre-discount subtotal (same as checkout UI)
   const freeFrom = parseFloat(delivery.freeShippingFrom);
   const shippingFree = !isNaN(freeFrom) && freeFrom > 0 && subtotal >= freeFrom;
-  const shippingCost = shippingFree ? 0 : parseFloat(method.price);
+  const shippingCost = method ? (shippingFree ? 0 : parseFloat(method.price)) : 0;
 
   const codFee = body.paymentMethod === "cod" ? parseFloat(checkout.codFee) || 0 : 0;
   const total = subtotal - discountAmount + shippingCost + codFee;
@@ -151,11 +164,11 @@ export async function POST(req: NextRequest, { params }: Params) {
   const shippingAddress = {
     name,
     phone,
-    street,
-    zip,
-    city,
-    deliveryMethodId: method.id,
-    deliveryMethod: method.label,
+    street: street || undefined,
+    zip: zip || undefined,
+    city: city || undefined,
+    deliveryMethodId: method?.id,
+    deliveryMethod: method?.label,
     codFee: codFee > 0 ? codFee.toFixed(2) : undefined,
   };
 
@@ -259,7 +272,36 @@ export async function POST(req: NextRequest, { params }: Params) {
     discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : null,
     discountCode: appliedDiscount?.code ?? null,
     total: total.toFixed(2),
+    showShipping: hasPhysical,
   };
+
+  // Customer-facing note for non-physical items.
+  const noteParts: string[] = [];
+  if (hasDigital) noteParts.push("Dostęp do produktów cyfrowych wyślemy na Twój adres e-mail po zaksięgowaniu płatności.");
+  if (hasService) noteParts.push("W sprawie realizacji usługi skontaktujemy się z Tobą wkrótce.");
+  const fulfillmentNote = noteParts.join(" ") || undefined;
+
+  // Merchant-facing fulfillment details: digital access to send + service flags.
+  const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const digitalDetails = dbProducts
+    .filter((p) => p.type === "digital")
+    .map((p) => {
+      const ful = (p.fulfillment ?? {}) as {
+        kind?: string; fileUrl?: string; url?: string; licenseKeys?: string; instructions?: string;
+      };
+      const value =
+        ful.kind === "file" ? ful.fileUrl :
+        ful.kind === "link" ? ful.url :
+        ful.kind === "license" ? ful.licenseKeys : "";
+      const kindLabel = ful.kind === "file" ? "Plik" : ful.kind === "link" ? "Link" : ful.kind === "license" ? "Klucze" : "Dostęp";
+      const instr = ful.instructions ? ` — ${escHtml(ful.instructions)}` : "";
+      return `<p style="margin:0 0 6px;font-size:12px;color:#444444;"><strong>${escHtml(p.name)}</strong> · ${kindLabel}: ${escHtml(value || "—")}${instr}</p>`;
+    })
+    .join("");
+  const serviceDetails = hasService
+    ? `<p style="margin:0;font-size:12px;color:#444444;">Zamówienie zawiera usługę — skontaktuj się z klientem w sprawie realizacji.</p>`
+    : "";
+  const fulfillmentDetails = digitalDetails || serviceDetails ? digitalDetails + serviceDetails : undefined;
 
   try {
     const confirmation = orderConfirmationEmail({
@@ -268,6 +310,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       order: summary,
       paymentMethod: body.paymentMethod,
       transfer: transferDetails,
+      fulfillmentNote,
     });
     await sendEmail({ to: email, ...confirmation });
 
@@ -281,6 +324,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         customerEmail: email,
         paymentMethod: body.paymentMethod,
         orderUrl: `${appUrl}/dashboard/${shop.slug}/orders/${order.id}`,
+        fulfillmentDetails,
       });
       await sendEmail({ to: owner.email, ...notification, replyTo: email });
     }

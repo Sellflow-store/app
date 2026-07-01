@@ -13,6 +13,7 @@ interface OrderSummary {
   discountAmount?: string | null;
   discountCode?: string | null;
   total: string;
+  showShipping?: boolean; // false for all-digital/service orders
 }
 
 interface TransferDetails {
@@ -76,7 +77,7 @@ function itemsTable(order: OrderSummary): string {
     ${rows}
     <tr><td style="padding:10px 0 6px;font-size:13px;color:#666666;">Produkty</td><td align="right" style="padding:10px 0 6px;font-size:13px;color:#222222;">${pln(order.subtotal)}</td></tr>
     ${discountRow}
-    <tr><td style="padding:6px 0;font-size:13px;color:#666666;">Dostawa</td><td align="right" style="padding:6px 0;font-size:13px;color:#222222;">${pln(order.shippingCost)}</td></tr>
+    ${order.showShipping === false ? "" : `<tr><td style="padding:6px 0;font-size:13px;color:#666666;">Dostawa</td><td align="right" style="padding:6px 0;font-size:13px;color:#222222;">${pln(order.shippingCost)}</td></tr>`}
     ${codRow}
     <tr><td style="padding:12px 0 0;font-size:15px;font-weight:bold;color:#111111;border-top:2px solid #16161d;">Razem</td><td align="right" style="padding:12px 0 0;font-size:15px;font-weight:bold;color:#111111;border-top:2px solid #16161d;">${pln(order.total)}</td></tr>
   </table>`;
@@ -88,8 +89,15 @@ export function orderConfirmationEmail(params: {
   order: OrderSummary;
   paymentMethod: "transfer" | "cod";
   transfer: TransferDetails | null;
+  fulfillmentNote?: string; // digital/service delivery note for the customer
 }): { subject: string; html: string } {
-  const { shopName, customerName, order, paymentMethod, transfer } = params;
+  const { shopName, customerName, order, paymentMethod, transfer, fulfillmentNote } = params;
+
+  const fulfillmentBlock = fulfillmentNote
+    ? `<div style="background:#f0f4ff;border-radius:12px;padding:16px 20px;margin:20px 0;">
+        <p style="margin:0;font-size:13px;color:#334155;">${esc(fulfillmentNote)}</p>
+      </div>`
+    : "";
 
   const paymentBlock =
     paymentMethod === "transfer" && transfer
@@ -111,7 +119,8 @@ export function orderConfirmationEmail(params: {
     <p style="margin:0 0 16px;font-size:14px;color:#444444;">przyjęliśmy Twoje zamówienie <strong>${esc(order.orderNumber)}</strong>. Poniżej podsumowanie:</p>
     ${itemsTable(order)}
     ${paymentBlock}
-    <p style="margin:16px 0 0;font-size:13px;color:#666666;">Damy Ci znać, gdy paczka będzie w drodze.</p>`;
+    ${fulfillmentBlock}
+    ${order.showShipping === false ? "" : `<p style="margin:16px 0 0;font-size:13px;color:#666666;">Damy Ci znać, gdy paczka będzie w drodze.</p>`}`;
 
   return {
     subject: `Potwierdzenie zamówienia ${order.orderNumber} — ${shopName}`,
@@ -126,8 +135,15 @@ export function merchantNewOrderEmail(params: {
   customerEmail: string;
   paymentMethod: "transfer" | "cod";
   orderUrl: string;
+  fulfillmentDetails?: string; // HTML block with digital access / service notes
 }): { subject: string; html: string } {
-  const { shopName, order, customerName, customerEmail, paymentMethod, orderUrl } = params;
+  const { shopName, order, customerName, customerEmail, paymentMethod, orderUrl, fulfillmentDetails } = params;
+  const fulfillmentBlock = fulfillmentDetails
+    ? `<div style="background:#f8f8f7;border-radius:12px;padding:16px 20px;margin:16px 0;">
+        <p style="margin:0 0 8px;font-size:12px;font-weight:bold;color:#111111;">Do realizacji</p>
+        ${fulfillmentDetails}
+      </div>`
+    : "";
   const body = `
     <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Nowe zamówienie ${esc(order.orderNumber)} 🎉</h1>
     <p style="margin:0 0 16px;font-size:14px;color:#444444;">
@@ -135,6 +151,7 @@ export function merchantNewOrderEmail(params: {
       <strong>${pln(order.total)}</strong> — płatność: ${paymentMethod === "transfer" ? "przelew" : "za pobraniem"}.
     </p>
     ${itemsTable(order)}
+    ${fulfillmentBlock}
     <p style="margin:20px 0 0;">
       <a href="${orderUrl}" style="display:inline-block;background:#d6009f;color:#ffffff;font-size:13px;font-weight:bold;padding:12px 24px;border-radius:99px;text-decoration:none;">Zobacz zamówienie w panelu</a>
     </p>`;
