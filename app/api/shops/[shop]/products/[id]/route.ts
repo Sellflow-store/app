@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { recordPrice } from "@/lib/price-history";
 
 type Params = { params: Promise<{ shop: string; id: string }> };
 
@@ -48,6 +49,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .returning();
 
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Omnibus: zapisz nowy punkt historii, gdy cena sprzedaży się zmieniła.
+  if (body.price !== undefined) {
+    await recordPrice(access.shopId, updated.id, updated.price);
+  }
+
   return NextResponse.json(updated);
 }
 

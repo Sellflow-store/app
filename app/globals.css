@@ -195,6 +195,61 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ── Panel (admin) tokens ─────────────────────────────────────────────────
+   The dashboard/panel UI reads these instead of hard-coded oklch so the
+   „Motyw" setting (light / dark / system) can repaint it. Dark mode is
+   scoped to the panel by ThemeProvider adding `.dark` on the shell root —
+   the storefront is never affected. New panel UI should use var(--panel-*)
+   (or the utility aliases below) rather than literal colors. */
+:root {
+  --panel-bg:            oklch(97% 0.004 250);
+  --panel-surface:       #ffffff;
+  --panel-surface-2:     oklch(98% 0.004 250);
+  --panel-surface-hover: oklch(96% 0.004 250);
+  --panel-ink:           oklch(11% 0.10 275);
+  --panel-ink-muted:     oklch(45% 0.02 250);
+  --panel-ink-faint:     oklch(60% 0.01 250);
+  --panel-border:        oklch(90% 0.006 250);
+  --panel-border-strong: oklch(85% 0.008 250);
+  --panel-accent:        oklch(56% 0.30 335);
+  --panel-accent-soft:   oklch(96% 0.03 335);
+  --panel-toggle-off:    oklch(80% 0.01 250);
+  --panel-knob:          #ffffff;
+  --panel-knob-border:   oklch(78% 0.01 250);
+  --panel-sidebar:       oklch(14% 0.03 275);
+  --panel-sidebar-ink:   oklch(88% 0.01 250);
+}
+
+.dark {
+  --panel-bg:            oklch(16% 0.015 275);
+  --panel-surface:       oklch(20% 0.018 275);
+  --panel-surface-2:     oklch(23% 0.02 275);
+  --panel-surface-hover: oklch(26% 0.02 275);
+  --panel-ink:           oklch(96% 0.01 275);
+  --panel-ink-muted:     oklch(72% 0.012 275);
+  --panel-ink-faint:     oklch(58% 0.015 275);
+  --panel-border:        oklch(30% 0.02 275);
+  --panel-border-strong: oklch(36% 0.022 275);
+  --panel-accent:        oklch(64% 0.27 335);
+  --panel-accent-soft:   oklch(30% 0.08 335);
+  --panel-toggle-off:    oklch(42% 0.02 275);
+  --panel-knob:          oklch(96% 0.01 275);
+  --panel-knob-border:   oklch(48% 0.02 275);
+  --panel-sidebar:       oklch(12% 0.02 275);
+  --panel-sidebar-ink:   oklch(85% 0.012 275);
+}
+
+@theme inline {
+  --color-panel-bg:            var(--panel-bg);
+  --color-panel-surface:       var(--panel-surface);
+  --color-panel-surface-2:     var(--panel-surface-2);
+  --color-panel-ink:           var(--panel-ink);
+  --color-panel-ink-muted:     var(--panel-ink-muted);
+  --color-panel-ink-faint:     var(--panel-ink-faint);
+  --color-panel-border:        var(--panel-border);
+  --color-panel-accent:        var(--panel-accent);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

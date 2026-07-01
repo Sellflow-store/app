@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { shops, shopConfig, products } from "./db/schema";
 import { eq, and } from "drizzle-orm";
+import { getLowestPrices30 } from "./price-history";
 import type {
   ShopContext,
   HomeConfig,
@@ -11,6 +12,9 @@ import type {
   FaqConfig,
   LegalConfig,
   MenuConfig,
+  AccountConfig,
+  IntegrationsConfig,
+  ComplianceConfig,
   StorefrontProduct,
 } from "@/types/shop";
 import { DEFAULT_MENU_ITEMS } from "@/types/shop";
@@ -115,6 +119,34 @@ export const DEFAULT_LEGAL: LegalConfig = { content: "" };
 
 export const DEFAULT_MENU: MenuConfig = { items: DEFAULT_MENU_ITEMS };
 
+export const DEFAULT_ACCOUNT: AccountConfig = {
+  firstName: "",
+  lastName: "",
+  contactEmail: "",
+  phone: "",
+  company: { name: "", taxId: "", address: "" },
+};
+
+export const DEFAULT_INTEGRATIONS: IntegrationsConfig = {
+  gtmId: "",
+  metaPixelId: "",
+  ga4Id: "",
+  tiktokPixelId: "",
+  googleMerchantId: "",
+};
+
+export const DEFAULT_COMPLIANCE: ComplianceConfig = {
+  cookieBanner: {
+    enabled: true,
+    analytics: true,
+    marketing: true,
+    message:
+      "Używamy plików cookie, aby zapewnić najlepsze działanie sklepu oraz — za Twoją zgodą — do analityki i marketingu.",
+    policyUrl: "/polityka-prywatnosci",
+  },
+  omnibus: { enabled: true },
+};
+
 export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, slug),
@@ -181,12 +213,31 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     items: Array.isArray(menuSaved) && menuSaved.length > 0 ? menuSaved : DEFAULT_MENU.items,
   };
 
+  const integrations: IntegrationsConfig = {
+    ...DEFAULT_INTEGRATIONS,
+    ...((configMap.integrations as Partial<IntegrationsConfig>) ?? {}),
+  };
+
+  const savedCompliance = (configMap.compliance as Partial<ComplianceConfig>) ?? {};
+  const compliance: ComplianceConfig = {
+    cookieBanner: { ...DEFAULT_COMPLIANCE.cookieBanner, ...(savedCompliance.cookieBanner ?? {}) },
+    omnibus: { ...DEFAULT_COMPLIANCE.omnibus, ...(savedCompliance.omnibus ?? {}) },
+  };
+
+  // Omnibus: „najniższa cena z 30 dni" tylko dla produktów w promocji (oldPrice),
+  // i tylko gdy włączone w ustawieniach zgodności.
+  const omnibusIds = compliance.omnibus.enabled
+    ? shopProducts.filter((p) => p.oldPrice).map((p) => p.id)
+    : [];
+  const lowestMap = await getLowestPrices30(omnibusIds);
+
   const storefrontProducts: StorefrontProduct[] = shopProducts.map((p) => ({
     id: p.id,
     name: p.name,
     category: p.category,
     price: p.price,
     oldPrice: p.oldPrice,
+    lowestPrice30: p.oldPrice ? (lowestMap.get(p.id) ?? null) : null,
     badge: p.badge,
     rating: p.rating,
     reviews: p.reviews,
@@ -221,6 +272,8 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     terms,
     privacy,
     menu,
+    integrations,
+    compliance,
     products: storefrontProducts,
   };
 }

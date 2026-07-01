@@ -35,19 +35,19 @@ export default function Header({ shopSlug, section, onMenuToggle }: HeaderProps)
   return (
     <header
       className="h-14 flex items-center gap-4 px-4 sm:px-6 shrink-0"
-      style={{ background: "#fff", borderBottom: "1px solid oklch(92% 0 0)" }}
+      style={{ background: "var(--panel-surface)", borderBottom: "1px solid var(--panel-border)" }}
     >
       <button
         onClick={onMenuToggle}
         className="lg:hidden"
-        style={{ color: "oklch(55% 0 0)" }}
+        style={{ color: "var(--panel-ink-muted)" }}
       >
         <Menu className="w-5 h-5" strokeWidth={1.5} />
       </button>
 
       <h2
         className="text-sm font-semibold hidden sm:block"
-        style={{ color: "oklch(10% 0 0)", fontFamily: "var(--font-display)" }}
+        style={{ color: "var(--panel-ink)", fontFamily: "var(--font-display)" }}
       >
         {PAGE_LABELS[section] ?? "Panel administracyjny"}
       </h2>

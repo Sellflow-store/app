@@ -89,6 +89,11 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
             <span className="text-xs text-ink-2/70 line-through">{product.oldPrice} zł</span>
           )}
         </div>
+        {product.lowestPrice30 && (
+          <p className="text-[10px] text-ink-2/60">
+            Najniższa cena z 30 dni: {product.lowestPrice30} zł
+          </p>
+        )}
       </Link>
     </div>
   );

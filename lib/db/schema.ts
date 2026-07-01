@@ -128,6 +128,26 @@ export const products = pgTable(
   ]
 );
 
+// ─── Price history (Omnibus) ──────────────────────────────────────────────────
+// Jeden wiersz na każdą zmianę ceny sprzedaży produktu. Storefront liczy z tego
+// „najniższą cenę z 30 dni” wymaganą dyrektywą Omnibus przy komunikacji obniżek.
+
+export const priceHistory = pgTable(
+  "price_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+    recordedAt: timestamp("recorded_at").notNull().defaultNow(),
+  },
+  (t) => [index("price_history_product_idx").on(t.productId, t.recordedAt)]
+);
+
 // ─── Blog posts ───────────────────────────────────────────────────────────────
 
 export const blogPosts = pgTable(
@@ -314,8 +334,13 @@ export const shopsRelations = relations(shops, ({ one, many }) => ({
   panelUsers: many(panelUsers),
 }));
 
-export const productsRelations = relations(products, ({ one }) => ({
+export const productsRelations = relations(products, ({ one, many }) => ({
   shop: one(shops, { fields: [products.shopId], references: [shops.id] }),
+  priceHistory: many(priceHistory),
+}));
+
+export const priceHistoryRelations = relations(priceHistory, ({ one }) => ({
+  product: one(products, { fields: [priceHistory.productId], references: [products.id] }),
 }));
 
 export const ordersRelations = relations(orders, ({ one }) => ({

@@ -151,6 +151,47 @@ export interface FaqConfig {
   items: FaqItem[];
 }
 
+// ─── Ustawienia panelu ────────────────────────────────────────────────────────
+
+/** Dane właściciela + firmy (sekcja „Konto i firma"). Email konta jest
+ *  read-only (z users), tutaj trzymamy dane kontaktowe i opcjonalne dane firmy. */
+export interface AccountConfig {
+  firstName: string;
+  lastName: string;
+  contactEmail: string;
+  phone: string;
+  company: {
+    name: string;
+    taxId: string; // NIP
+    address: string;
+  };
+}
+
+/** Piksele / tagi wpinane do storefrontu. Puste = wyłączone. */
+export interface IntegrationsConfig {
+  gtmId: string; // GTM-XXXXXXX
+  metaPixelId: string; // 15–16 cyfr
+  ga4Id: string; // G-XXXXXXXXXX
+  tiktokPixelId: string;
+  googleMerchantId: string; // do meta-tagu weryfikacji
+}
+
+/** Zgoda na cookies + mechanizmy zgodności (RODO / Omnibus). */
+export interface ComplianceConfig {
+  cookieBanner: {
+    enabled: boolean;
+    // granularne kategorie — piksele marketingowe/analityczne ładują się
+    // dopiero po zgodzie w danej kategorii.
+    analytics: boolean; // pokaż checkbox „Analityka"
+    marketing: boolean; // pokaż checkbox „Marketing"
+    message: string;
+    policyUrl: string; // link do polityki prywatności
+  };
+  omnibus: {
+    enabled: boolean; // pokazuj „najniższa cena z 30 dni" przy promocjach
+  };
+}
+
 export interface BrandingConfig {
   shopName: string;
   tagline: string;
@@ -211,6 +252,9 @@ export interface StorefrontProduct {
   category: string | null;
   price: string;
   oldPrice: string | null;
+  /** Najniższa cena z 30 dni (Omnibus). null = nie pokazuj (brak historii,
+   *  brak promocji lub wyłączone w ustawieniach zgodności). */
+  lowestPrice30: string | null;
   badge: string | null;
   rating: string | null;
   reviews: number | null;
@@ -260,5 +304,7 @@ export interface ShopContext {
   terms: LegalConfig;
   privacy: LegalConfig;
   menu: MenuConfig;
+  integrations: IntegrationsConfig;
+  compliance: ComplianceConfig;
   products: StorefrontProduct[];
 }

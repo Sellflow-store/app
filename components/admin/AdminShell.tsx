@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import ThemeProvider from "./ThemeProvider";
 
 interface AdminShellProps {
   shopSlug: string;
@@ -18,26 +19,28 @@ export default function AdminShell({ shopSlug, children }: AdminShellProps) {
   const section = pathname.split("/")[3] ?? "";
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ fontFamily: "var(--font-body)" }}>
-      <Sidebar
-        shopSlug={shopSlug}
-        mobileOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-      />
-
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <Header
+    <ThemeProvider>
+      <div className="flex h-screen overflow-hidden" style={{ fontFamily: "var(--font-body)" }}>
+        <Sidebar
           shopSlug={shopSlug}
-          section={section}
-          onMenuToggle={() => setMobileOpen((v) => !v)}
+          mobileOpen={mobileOpen}
+          onClose={() => setMobileOpen(false)}
         />
-        <main
-          className="flex-1 overflow-y-auto"
-          style={{ background: "oklch(97% 0.004 250)" }}
-        >
-          {children}
-        </main>
+
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <Header
+            shopSlug={shopSlug}
+            section={section}
+            onMenuToggle={() => setMobileOpen((v) => !v)}
+          />
+          <main
+            className="flex-1 overflow-y-auto"
+            style={{ background: "var(--panel-bg)" }}
+          >
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }

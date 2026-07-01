@@ -4,6 +4,7 @@ import { products, shops } from "@/lib/db/schema";
 import { asc, count, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { planLimits } from "@/lib/plans";
+import { recordPrice } from "@/lib/price-history";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -87,6 +88,9 @@ export async function POST(req: NextRequest, { params }: Params) {
       sortOrder: body.sortOrder ?? 0,
     })
     .returning();
+
+  // Omnibus: zapisz punkt startowy historii cen.
+  await recordPrice(access.shopId, product.id, product.price);
 
   return NextResponse.json(product, { status: 201 });
 }
