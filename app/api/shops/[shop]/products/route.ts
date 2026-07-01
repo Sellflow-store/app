@@ -39,6 +39,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     specs?: { key: string; value: string }[];
     stock?: number | null;
     sortOrder?: number;
+    type?: string;
+    fulfillment?: Record<string, unknown>;
   };
 
   if (!body.name?.trim() || !body.price) {
@@ -80,6 +82,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       images: body.images ?? [],
       specs: body.specs ?? [],
       stock: body.stock ?? null,
+      type: body.type ?? "physical",
+      fulfillment: body.fulfillment ?? {},
       sortOrder: body.sortOrder ?? 0,
     })
     .returning();

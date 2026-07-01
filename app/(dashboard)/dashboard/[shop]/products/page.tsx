@@ -34,6 +34,7 @@ export default async function ProductsPage({
               badge: products.badge,
               stock: products.stock,
               images: products.images,
+              type: products.type,
             })
             .from(products)
             .where(eq(products.shopId, shop.id))
@@ -48,6 +49,7 @@ export default async function ProductsPage({
             badge: r.badge ?? undefined,
             stock: r.stock,
             image: ((r.images as string[]) ?? [])[0],
+            type: r.type as Product["type"],
           }));
         }
       }

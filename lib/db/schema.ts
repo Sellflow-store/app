@@ -113,6 +113,11 @@ export const products = pgTable(
     sizeChart: jsonb("size_chart").default([]),      // { eu, uk, us, cm }[]
     faq: jsonb("faq").default([]),                   // { q, a }[]
     deliveryInfo: jsonb("delivery_info").default([]),// string[]
+    type: text("type").notNull().default("physical"), // physical | digital | service
+    // type-specific data:
+    //   digital  → { kind: "file"|"link"|"license", fileUrl?, url?, licenseKeys?, instructions? }
+    //   service  → { duration?, mode?: "online"|"onsite"|"both", details? }
+    fulfillment: jsonb("fulfillment").default({}),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

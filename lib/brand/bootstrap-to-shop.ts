@@ -47,6 +47,8 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
     faq: [],
     deliveryInfo: [],
     sortOrder: i,
+    type: "physical",
+    fulfillment: {},
   }));
 
   return {

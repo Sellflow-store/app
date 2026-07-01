@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Trash2, Plus, X, ImageIcon } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Plus, X, ImageIcon, Package, Download, Briefcase } from "lucide-react";
 import Link from "next/link";
 import ImageUpload from "@/components/admin/ImageUpload";
 import RichTextEditor from "@/components/admin/RichTextEditor";
@@ -12,6 +12,10 @@ export interface ProductSpec {
   key: string;
   value: string;
 }
+
+export type ProductType = "physical" | "digital" | "service";
+export type DigitalKind = "file" | "link" | "license";
+export type ServiceMode = "online" | "onsite" | "both";
 
 export interface ProductFormData {
   name: string;
@@ -25,6 +29,17 @@ export interface ProductFormData {
   images: string[];
   stock: string; // "" = nie śledzę stanu
   specs: ProductSpec[];
+  type: ProductType;
+  // digital
+  digitalKind: DigitalKind;
+  digitalFileUrl: string;
+  digitalUrl: string;
+  digitalLicenseKeys: string;
+  digitalInstructions: string;
+  // service
+  serviceDuration: string;
+  serviceMode: ServiceMode;
+  serviceDetails: string;
 }
 
 const EMPTY: ProductFormData = {
@@ -39,7 +54,22 @@ const EMPTY: ProductFormData = {
   images: [],
   stock: "",
   specs: [],
+  type: "physical",
+  digitalKind: "file",
+  digitalFileUrl: "",
+  digitalUrl: "",
+  digitalLicenseKeys: "",
+  digitalInstructions: "",
+  serviceDuration: "",
+  serviceMode: "online",
+  serviceDetails: "",
 };
+
+const TYPE_OPTIONS: { value: ProductType; label: string; hint: string; icon: typeof Package }[] = [
+  { value: "physical", label: "Fizyczny", hint: "Wysyłka i stan magazynowy", icon: Package },
+  { value: "digital", label: "Cyfrowy", hint: "Plik, link lub klucz — e-mailem", icon: Download },
+  { value: "service", label: "Usługa", hint: "Realizacja bez wysyłki", icon: Briefcase },
+];
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -174,6 +204,24 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
     setValidationError(null);
     setSaveState("saving");
 
+    // Type-specific fulfillment payload; only the active type contributes.
+    let fulfillment: Record<string, unknown> = {};
+    if (form.type === "digital") {
+      fulfillment = {
+        kind: form.digitalKind,
+        fileUrl: form.digitalKind === "file" ? form.digitalFileUrl.trim() : undefined,
+        url: form.digitalKind === "link" ? form.digitalUrl.trim() : undefined,
+        licenseKeys: form.digitalKind === "license" ? form.digitalLicenseKeys.trim() : undefined,
+        instructions: form.digitalInstructions.trim() || undefined,
+      };
+    } else if (form.type === "service") {
+      fulfillment = {
+        duration: form.serviceDuration.trim() || undefined,
+        mode: form.serviceMode,
+        details: form.serviceDetails.trim() || undefined,
+      };
+    }
+
     const payload = {
       name: form.name.trim(),
       category: form.category.trim() || undefined,
@@ -184,10 +232,13 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       shortDesc: form.shortDesc.trim() || undefined,
       description: htmlIsEmpty(form.description) ? undefined : form.description,
       images: form.images,
-      stock,
+      // Stock only applies to physical products; others are unlimited.
+      stock: form.type === "physical" ? stock : null,
       specs: form.specs
         .map((s) => ({ key: s.key.trim(), value: s.value.trim() }))
         .filter((s) => s.key || s.value),
+      type: form.type,
+      fulfillment,
     };
 
     try {
@@ -292,6 +343,40 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         </div>
       )}
 
+      {/* Product type */}
+      <SectionCard title="Typ produktu">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {TYPE_OPTIONS.map((opt) => {
+            const active = form.type === opt.value;
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => patch({ type: opt.value })}
+                className="flex flex-col items-start gap-1.5 rounded-xl p-3.5 text-left transition-all"
+                style={{
+                  border: active ? "1.5px solid oklch(56% 0.30 335)" : "1.5px solid oklch(90% 0 0)",
+                  background: active ? "oklch(56% 0.30 335 / 0.06)" : "#fff",
+                }}
+              >
+                <Icon
+                  className="w-5 h-5"
+                  style={{ color: active ? "oklch(56% 0.30 335)" : "oklch(45% 0 0)" }}
+                  strokeWidth={1.75}
+                />
+                <span className="text-sm font-semibold" style={{ color: active ? "oklch(30% 0.20 335)" : "oklch(20% 0 0)" }}>
+                  {opt.label}
+                </span>
+                <span className="text-[11px] leading-tight" style={{ color: "oklch(55% 0 0)" }}>
+                  {opt.hint}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </SectionCard>
+
       {/* Basic info */}
       <SectionCard title="Podstawowe informacje">
         <Field label="Nazwa produktu" id="p-name">
@@ -375,6 +460,136 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           Po podaniu ceny przed obniżką klient zobaczy ją przekreśloną obok aktualnej.
         </p>
       </SectionCard>
+
+      {/* Digital delivery */}
+      {form.type === "digital" && (
+        <SectionCard title="Dostarczanie cyfrowe">
+          <Field label="Sposób dostarczenia" id="p-dkind">
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { v: "file", l: "Plik" },
+                { v: "link", l: "Link" },
+                { v: "license", l: "Klucz licencyjny" },
+              ] as { v: DigitalKind; l: string }[]).map((k) => {
+                const active = form.digitalKind === k.v;
+                return (
+                  <button
+                    key={k.v}
+                    type="button"
+                    onClick={() => patch({ digitalKind: k.v })}
+                    className="rounded-lg py-2 text-xs font-semibold transition-all"
+                    style={{
+                      border: active ? "1.5px solid oklch(56% 0.30 335)" : "1.5px solid oklch(88% 0 0)",
+                      background: active ? "oklch(56% 0.30 335 / 0.06)" : "#fff",
+                      color: active ? "oklch(30% 0.20 335)" : "oklch(35% 0 0)",
+                    }}
+                  >
+                    {k.l}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          {form.digitalKind === "file" && (
+            <Field label="Adres pliku (URL)" id="p-dfile">
+              <input
+                id="p-dfile"
+                value={form.digitalFileUrl}
+                onChange={(e) => patch({ digitalFileUrl: e.target.value })}
+                placeholder="https://…/ebook.pdf"
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+          )}
+          {form.digitalKind === "link" && (
+            <Field label="Link do dostępu / produktu" id="p-durl">
+              <input
+                id="p-durl"
+                value={form.digitalUrl}
+                onChange={(e) => patch({ digitalUrl: e.target.value })}
+                placeholder="https://…"
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+          )}
+          {form.digitalKind === "license" && (
+            <Field label="Klucze licencyjne (jeden na linię)" id="p-dlic">
+              <textarea
+                id="p-dlic"
+                value={form.digitalLicenseKeys}
+                onChange={(e) => patch({ digitalLicenseKeys: e.target.value })}
+                rows={4}
+                placeholder={"XXXX-YYYY-ZZZZ\nAAAA-BBBB-CCCC"}
+                style={{ ...inputStyle, resize: "vertical" }}
+                {...focusProps}
+              />
+            </Field>
+          )}
+
+          <Field label="Instrukcja dla klienta (opcjonalnie)" id="p-dinstr">
+            <textarea
+              id="p-dinstr"
+              value={form.digitalInstructions}
+              onChange={(e) => patch({ digitalInstructions: e.target.value })}
+              rows={3}
+              placeholder="Np. jak pobrać plik, jak aktywować klucz…"
+              style={{ ...inputStyle, resize: "vertical" }}
+              {...focusProps}
+            />
+          </Field>
+          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+            Produkt cyfrowy nie wymaga wysyłki ani adresu — klient otrzyma dostęp e-mailem.
+          </p>
+        </SectionCard>
+      )}
+
+      {/* Service details */}
+      {form.type === "service" && (
+        <SectionCard title="Szczegóły usługi">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+            <Field label="Czas trwania" id="p-sdur">
+              <input
+                id="p-sdur"
+                value={form.serviceDuration}
+                onChange={(e) => patch({ serviceDuration: e.target.value })}
+                placeholder="np. 60 min"
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+            <Field label="Forma realizacji" id="p-smode">
+              <select
+                id="p-smode"
+                value={form.serviceMode}
+                onChange={(e) => patch({ serviceMode: e.target.value as ServiceMode })}
+                style={inputStyle}
+              >
+                <option value="online">Online</option>
+                <option value="onsite">Stacjonarnie</option>
+                <option value="both">Online lub stacjonarnie</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Opis realizacji (opcjonalnie)" id="p-sdet">
+            <textarea
+              id="p-sdet"
+              value={form.serviceDetails}
+              onChange={(e) => patch({ serviceDetails: e.target.value })}
+              rows={3}
+              placeholder="Jak przebiega usługa, co klient dostaje, jak się umawiacie…"
+              style={{ ...inputStyle, resize: "vertical" }}
+              {...focusProps}
+            />
+          </Field>
+          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+            Usługa nie wymaga wysyłki ani adresu — po zamówieniu skontaktujesz się z klientem
+            w sprawie realizacji.
+          </p>
+        </SectionCard>
+      )}
 
       {/* Parameters (specs) */}
       <SectionCard title="Parametry">
@@ -505,7 +720,8 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         </div>
       </SectionCard>
 
-      {/* Stock */}
+      {/* Stock — physical only */}
+      {form.type === "physical" && (
       <SectionCard title="Stan magazynowy">
         <Field label="Liczba sztuk na stanie" id="p-stock">
           <input
@@ -524,6 +740,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           Stan zmniejsza się automatycznie po każdym zamówieniu.
         </p>
       </SectionCard>
+      )}
 
       {/* Visibility */}
       <SectionCard title="Widoczność">

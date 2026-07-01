@@ -3,7 +3,12 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
-import ProductForm, { type ProductFormData } from "../ProductForm";
+import ProductForm, {
+  type ProductFormData,
+  type ProductType,
+  type DigitalKind,
+  type ServiceMode,
+} from "../ProductForm";
 
 export default async function EditProductPage({
   params,
@@ -24,6 +29,8 @@ export default async function EditProductPage({
   });
   if (!product) notFound();
 
+  const f = (product.fulfillment ?? {}) as Record<string, unknown>;
+
   const initial: ProductFormData = {
     name: product.name,
     category: product.category ?? "",
@@ -36,6 +43,15 @@ export default async function EditProductPage({
     images: (product.images as string[]) ?? [],
     stock: product.stock != null ? String(product.stock) : "",
     specs: (product.specs as { key: string; value: string }[]) ?? [],
+    type: (product.type as ProductType) ?? "physical",
+    digitalKind: (f.kind as DigitalKind) ?? "file",
+    digitalFileUrl: (f.fileUrl as string) ?? "",
+    digitalUrl: (f.url as string) ?? "",
+    digitalLicenseKeys: (f.licenseKeys as string) ?? "",
+    digitalInstructions: (f.instructions as string) ?? "",
+    serviceDuration: (f.duration as string) ?? "",
+    serviceMode: (f.mode as ServiceMode) ?? "online",
+    serviceDetails: (f.details as string) ?? "",
   };
 
   return <ProductForm shopSlug={shop} productId={product.id} initial={initial} />;

@@ -228,6 +228,21 @@ export interface StorefrontProduct {
   faq: ProductFaq[];
   deliveryInfo: string[];
   sortOrder: number;
+  type: ProductType;
+  fulfillment: ProductFulfillment;
+}
+
+export type ProductType = "physical" | "digital" | "service";
+
+export interface ProductFulfillment {
+  kind?: "file" | "link" | "license";
+  fileUrl?: string;
+  url?: string;
+  licenseKeys?: string;
+  instructions?: string;
+  duration?: string;
+  mode?: "online" | "onsite" | "both";
+  details?: string;
 }
 
 // ─── Full shop context (assembled from DB for storefront rendering) ────────────

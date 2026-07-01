@@ -13,6 +13,20 @@ export interface Product {
   badge?: string;
   stock?: number | null;
   image?: string;
+  type?: "physical" | "digital" | "service";
+}
+
+function TypeBadge({ type }: { type?: string }) {
+  if (!type || type === "physical") return null;
+  const label = type === "digital" ? "Cyfrowy" : "Usługa";
+  return (
+    <span
+      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+      style={{ background: "oklch(93% 0.03 250)", color: "oklch(45% 0.12 260)" }}
+    >
+      {label}
+    </span>
+  );
 }
 
 function formatPrice(price: string): string {
@@ -174,6 +188,7 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
                       {product.badge}
                     </span>
                   )}
+                  <TypeBadge type={product.type} />
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>

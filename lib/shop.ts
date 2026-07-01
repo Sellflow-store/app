@@ -204,6 +204,8 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     faq: (p.faq as StorefrontProduct["faq"]) ?? [],
     deliveryInfo: (p.deliveryInfo as string[]) ?? [],
     sortOrder: p.sortOrder,
+    type: (p.type as StorefrontProduct["type"]) ?? "physical",
+    fulfillment: (p.fulfillment as StorefrontProduct["fulfillment"]) ?? {},
   }));
 
   return {

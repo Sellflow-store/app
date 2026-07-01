@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Check } from "lucide-react";
+import { ChevronLeft, Check, Download, Clock } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
 import BrandTheme from "@/components/store/BrandTheme";
 import TopBar from "@/components/store/TopBar";
@@ -70,6 +70,45 @@ export default async function ProductPage({ params }: Props) {
                   </span>
                 )}
               </div>
+
+              {product.type === "digital" && (
+                <div className="flex items-center gap-2 mb-6 text-sm text-ink-2">
+                  <Download className="w-4 h-4 text-ink shrink-0" strokeWidth={1.5} />
+                  <span>Produkt cyfrowy — dostęp e-mailem po zakupie, bez wysyłki</span>
+                </div>
+              )}
+
+              {product.type === "service" && (
+                <div className="mb-6 rounded-xl border border-rule p-4">
+                  <div className="flex items-center gap-2 text-ink font-medium text-sm mb-1.5">
+                    <Clock className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                    Usługa
+                  </div>
+                  <dl className="space-y-0.5 text-sm text-ink-2">
+                    {product.fulfillment.duration && (
+                      <div className="flex gap-2">
+                        <dt className="text-ink-2/70">Czas trwania:</dt>
+                        <dd className="text-ink">{product.fulfillment.duration}</dd>
+                      </div>
+                    )}
+                    {product.fulfillment.mode && (
+                      <div className="flex gap-2">
+                        <dt className="text-ink-2/70">Forma:</dt>
+                        <dd className="text-ink">
+                          {product.fulfillment.mode === "online"
+                            ? "Online"
+                            : product.fulfillment.mode === "onsite"
+                            ? "Stacjonarnie"
+                            : "Online lub stacjonarnie"}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                  <p className="text-xs text-ink-2/70 mt-2">
+                    Po zamówieniu skontaktujemy się w sprawie realizacji.
+                  </p>
+                </div>
+              )}
 
               {product.shortDesc && (
                 <p className="text-sm text-ink-2 font-light leading-relaxed mb-8">
