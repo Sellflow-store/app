@@ -8,6 +8,7 @@ import Navbar from "@/components/store/Navbar";
 import Footer from "@/components/store/Footer";
 import ProductGallery from "@/components/store/ProductGallery";
 import AddToCartButton from "@/components/store/AddToCartButton";
+import { toSafeHtml } from "@/lib/sanitize";
 
 interface Props {
   params: Promise<{ shop: string; id: string }>;
@@ -108,9 +109,17 @@ export default async function ProductPage({ params }: Props) {
                   <h2 className="text-sm font-semibold tracking-wide text-ink mb-3">
                     Opis produktu
                   </h2>
-                  <p className="text-sm text-ink-2 font-light leading-relaxed whitespace-pre-line">
-                    {product.description}
-                  </p>
+                  <div
+                    className="rte-render text-sm text-ink-2 font-light leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: toSafeHtml(product.description) }}
+                  />
+                  <style>{`
+                    .rte-render p { margin: 0.5rem 0; }
+                    .rte-render ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+                    .rte-render ol { list-style: decimal; padding-left: 1.25rem; margin: 0.5rem 0; }
+                    .rte-render a { color: var(--brand-accent, currentColor); text-decoration: underline; }
+                    .rte-render strong, .rte-render b { font-weight: 600; }
+                  `}</style>
                 </div>
               )}
 

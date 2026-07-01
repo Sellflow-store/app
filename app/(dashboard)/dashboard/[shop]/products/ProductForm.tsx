@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Trash2, Plus, X, ImageIcon } from "lucide-react";
 import Link from "next/link";
 import ImageUpload from "@/components/admin/ImageUpload";
+import RichTextEditor from "@/components/admin/RichTextEditor";
+import { htmlIsEmpty } from "@/lib/sanitize";
+
+export interface ProductSpec {
+  key: string;
+  value: string;
+}
 
 export interface ProductFormData {
   name: string;
@@ -17,6 +24,7 @@ export interface ProductFormData {
   description: string;
   images: string[];
   stock: string; // "" = nie śledzę stanu
+  specs: ProductSpec[];
 }
 
 const EMPTY: ProductFormData = {
@@ -30,6 +38,7 @@ const EMPTY: ProductFormData = {
   description: "",
   images: [],
   stock: "",
+  specs: [],
 };
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -121,6 +130,20 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
     patch({ images: form.images.filter((_, i) => i !== index) });
   }
 
+  function addSpec() {
+    patch({ specs: [...form.specs, { key: "", value: "" }] });
+  }
+
+  function updateSpec(index: number, updates: Partial<ProductSpec>) {
+    patch({
+      specs: form.specs.map((s, i) => (i === index ? { ...s, ...updates } : s)),
+    });
+  }
+
+  function removeSpec(index: number) {
+    patch({ specs: form.specs.filter((_, i) => i !== index) });
+  }
+
   async function handleSave() {
     if (!form.name.trim()) {
       setValidationError("Podaj nazwę produktu.");
@@ -159,9 +182,12 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       badge: form.badge.trim() || undefined,
       visible: form.visible,
       shortDesc: form.shortDesc.trim() || undefined,
-      description: form.description.trim() || undefined,
+      description: htmlIsEmpty(form.description) ? undefined : form.description,
       images: form.images,
       stock,
+      specs: form.specs
+        .map((s) => ({ key: s.key.trim(), value: s.value.trim() }))
+        .filter((s) => s.key || s.value),
     };
 
     try {
@@ -311,14 +337,10 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           />
         </Field>
         <Field label="Pełny opis" id="p-desc">
-          <textarea
-            id="p-desc"
+          <RichTextEditor
             value={form.description}
-            onChange={(e) => patch({ description: e.target.value })}
-            rows={5}
+            onChange={(html) => patch({ description: html })}
             placeholder="Materiały, wymiary, pielęgnacja…"
-            style={{ ...inputStyle, resize: "vertical" }}
-            {...focusProps}
           />
         </Field>
       </SectionCard>
@@ -352,6 +374,54 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
           Po podaniu ceny przed obniżką klient zobaczy ją przekreśloną obok aktualnej.
         </p>
+      </SectionCard>
+
+      {/* Parameters (specs) */}
+      <SectionCard title="Parametry">
+        {form.specs.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {form.specs.map((spec, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  value={spec.key}
+                  onChange={(e) => updateSpec(i, { key: e.target.value })}
+                  placeholder="Nazwa, np. Materiał"
+                  style={{ ...inputStyle, flex: "0 0 40%", width: "auto" }}
+                  {...focusProps}
+                />
+                <input
+                  value={spec.value}
+                  onChange={(e) => updateSpec(i, { value: e.target.value })}
+                  placeholder="Wartość, np. 100% bawełna"
+                  style={{ ...inputStyle, flex: 1, width: "auto" }}
+                  {...focusProps}
+                />
+                <button
+                  onClick={() => removeSpec(i)}
+                  aria-label="Usuń parametr"
+                  className="shrink-0 p-2 rounded-lg transition-colors"
+                  style={{ color: "oklch(45% 0 0)", border: "1.5px solid oklch(88% 0 0)" }}
+                >
+                  <X className="w-4 h-4" strokeWidth={2} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {form.specs.length === 0 && (
+          <p className="text-[11px] mb-3" style={{ color: "oklch(60% 0 0)" }}>
+            Dodaj dowolne parametry (np. Materiał, Waga, Pojemność) — pokażą się jako
+            tabela „Specyfikacja" na stronie produktu.
+          </p>
+        )}
+        <button
+          onClick={addSpec}
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+          style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+        >
+          <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+          Dodaj parametr
+        </button>
       </SectionCard>
 
       {/* Images */}

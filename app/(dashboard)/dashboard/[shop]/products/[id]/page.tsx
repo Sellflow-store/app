@@ -35,6 +35,7 @@ export default async function EditProductPage({
     description: product.description ?? "",
     images: (product.images as string[]) ?? [],
     stock: product.stock != null ? String(product.stock) : "",
+    specs: (product.specs as { key: string; value: string }[]) ?? [],
   };
 
   return <ProductForm shopSlug={shop} productId={product.id} initial={initial} />;
