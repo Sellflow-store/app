@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { shops, newsletterSubscribers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -11,8 +12,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(req: NextRequest, { params }: Params) {
   const { shop: shopSlug } = await params;
 
+  // Throttle per IP — stops newsletter sign-up spam.
+  const limited = checkRateLimit(req, `newsletter:${shopSlug}`, 10, 60_000);
+  if (limited) return limited;
+
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
-  if (!shop || !shop.active) {
+  if (!shop || !shop.active || shop.suspended) {
     return NextResponse.json({ error: "Shop not found" }, { status: 404 });
   }
 

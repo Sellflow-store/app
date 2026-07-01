@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users, shops, shopConfig, products as productsTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { adminEmailAllowlist } from "@/lib/api";
+import { clerkConfigured } from "@/lib/auth-env";
 import { SLUG_RE, findFreeSlug } from "@/lib/slug";
 import type { StoreBootstrap } from "@/lib/brand/types";
 
@@ -17,10 +18,10 @@ type Body = {
 };
 
 export async function POST(req: NextRequest) {
-  const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const clerkOn = clerkConfigured();
   let clerkId: string | null = null;
 
-  if (clerkConfigured) {
+  if (clerkOn) {
     const session = await auth();
     clerkId = session.userId;
     if (!clerkId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,15 +54,22 @@ export async function POST(req: NextRequest) {
   // Upsert user against Clerk identity (or dev fallback).
   let email = "dev@sellflow.local";
   let name: string | undefined = "Dev User";
-  if (clerkConfigured) {
+  // Only a *verified primary* email may unlock the admin role — the allowlist
+  // grants access to every shop, so we must not trust an unverified or merely
+  // first-in-the-array address the user could have attached without proving it.
+  let primaryVerified = false;
+  if (clerkOn) {
     const clerkUser = await currentUser();
-    email = clerkUser?.emailAddresses[0]?.emailAddress ?? email;
+    const primary = clerkUser?.primaryEmailAddress;
+    email = primary?.emailAddress ?? clerkUser?.emailAddresses?.[0]?.emailAddress ?? email;
+    primaryVerified = primary?.verification?.status === "verified";
     name = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || undefined;
   }
 
-  // Promote Sellflow staff to admin on first sign-up if their email is in
-  // SELLFLOW_ADMIN_EMAILS. Existing users get promoted on next save too.
-  const role = adminEmailAllowlist().includes(email.toLowerCase()) ? "admin" : "merchant";
+  // Promote Sellflow staff to admin on first sign-up if their verified primary
+  // email is in SELLFLOW_ADMIN_EMAILS. Existing users get promoted on next save.
+  const role =
+    primaryVerified && adminEmailAllowlist().includes(email.toLowerCase()) ? "admin" : "merchant";
 
   let user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
   if (!user) {

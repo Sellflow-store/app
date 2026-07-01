@@ -6,6 +6,7 @@ import { DEFAULT_DELIVERY, DEFAULT_CHECKOUT } from "@/lib/shop";
 import { checkDiscountCode } from "@/lib/discounts";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationEmail, merchantNewOrderEmail } from "@/lib/email-templates";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { DeliveryConfig, CheckoutConfig } from "@/types/shop";
 
 type Params = { params: Promise<{ shop: string }> };
@@ -30,8 +31,13 @@ function bad(error: string, status = 400) {
 export async function POST(req: NextRequest, { params }: Params) {
   const { shop: shopSlug } = await params;
 
+  // Throttle order placement per IP — blocks order spam and denial-of-inventory
+  // (each order can decrement stock) from a single source.
+  const limited = checkRateLimit(req, `orders:${shopSlug}`, 10, 60_000);
+  if (limited) return limited;
+
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
-  if (!shop || !shop.active) return bad("Shop not found", 404);
+  if (!shop || !shop.active || shop.suspended) return bad("Shop not found", 404);
 
   let body: OrderRequest;
   try {

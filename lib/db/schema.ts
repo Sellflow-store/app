@@ -39,7 +39,11 @@ export const shops = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    // `active` = merchant's own on/off switch (self-disable). `suspended` =
+    // operator suspension, writable ONLY via /ops. Kept separate so a merchant
+    // can't re-enable a shop the platform suspended by flipping their own flag.
     active: boolean("active").notNull().default(true),
+    suspended: boolean("suspended").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

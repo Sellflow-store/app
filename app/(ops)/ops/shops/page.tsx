@@ -27,6 +27,7 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
       slug: shops.slug,
       name: shops.name,
       active: shops.active,
+      suspended: shops.suspended,
       createdAt: shops.createdAt,
       ownerEmail: sql<string>`(SELECT email FROM users WHERE id = ${shops.ownerId})`,
       ownerPlan: sql<string>`(SELECT plan FROM users WHERE id = ${shops.ownerId})`,
@@ -136,7 +137,9 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
                     </span>
                   </Td>
                   <Td>
-                    {r.active ? (
+                    {r.suspended ? (
+                      <StatusPill label="Zawieszony" color="muted" />
+                    ) : r.active ? (
                       <StatusPill label="Aktywny" color="success" />
                     ) : (
                       <StatusPill label="Wyłączony" color="muted" />

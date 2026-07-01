@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { shops, visits } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { classifyVisit } from "@/lib/traffic";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -11,11 +12,16 @@ type Params = { params: Promise<{ shop: string }> };
 export async function POST(req: NextRequest, { params }: Params) {
   const { shop: shopSlug } = await params;
 
+  // Throttle per IP — generous (normal browsing hits several pages) but caps
+  // unbounded analytics-row insertion, which would bloat the DB and cost.
+  const limited = checkRateLimit(req, `track:${shopSlug}`, 60, 60_000);
+  if (limited) return limited;
+
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, shopSlug),
-    columns: { id: true, active: true },
+    columns: { id: true, active: true, suspended: true },
   });
-  if (!shop || !shop.active) {
+  if (!shop || !shop.active || shop.suspended) {
     return NextResponse.json({ error: "Shop not found" }, { status: 404 });
   }
 

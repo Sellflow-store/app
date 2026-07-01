@@ -69,42 +69,51 @@ export default function StorefrontScripts({
   const consent: Consent | null = banner.enabled ? stored : { analytics: true, marketing: true };
   const decided = !banner.enabled || stored !== null;
 
-  const analyticsOn = consent?.analytics && (integrations.gtmId || integrations.ga4Id);
-  const marketingOn = consent?.marketing && (integrations.metaPixelId || integrations.tiktokPixelId);
+  // Sanitize IDs before they land in inline <Script> template literals: keep
+  // only the characters real pixel/tag IDs use. Defense in depth — the config
+  // PATCH scrubs these on write, but merchant text must never reach JS raw.
+  const sanId = (v: string | undefined) => (v ? v.replace(/[^\w.\-]/g, "").slice(0, 64) : "");
+  const gtmId = sanId(integrations.gtmId);
+  const ga4Id = sanId(integrations.ga4Id);
+  const metaPixelId = sanId(integrations.metaPixelId);
+  const tiktokPixelId = sanId(integrations.tiktokPixelId);
+
+  const analyticsOn = consent?.analytics && (gtmId || ga4Id);
+  const marketingOn = consent?.marketing && (metaPixelId || tiktokPixelId);
 
   return (
     <>
       {/* ── Analytics ─────────────────────────────────────────── */}
-      {analyticsOn && integrations.gtmId && (
+      {analyticsOn && gtmId && (
         <Script id="sf-gtm" strategy="afterInteractive">{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
           var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
           j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','${integrations.gtmId}');
+          })(window,document,'script','dataLayer','${gtmId}');
         `}</Script>
       )}
-      {analyticsOn && integrations.ga4Id && (
+      {analyticsOn && ga4Id && (
         <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${integrations.ga4Id}`} strategy="afterInteractive" />
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`} strategy="afterInteractive" />
           <Script id="sf-ga4" strategy="afterInteractive">{`
             window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
-            gtag('js',new Date());gtag('config','${integrations.ga4Id}');
+            gtag('js',new Date());gtag('config','${ga4Id}');
           `}</Script>
         </>
       )}
 
       {/* ── Marketing ─────────────────────────────────────────── */}
-      {marketingOn && integrations.metaPixelId && (
+      {marketingOn && metaPixelId && (
         <Script id="sf-meta-pixel" strategy="afterInteractive">{`
           !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
           n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
           n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
           t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
           'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init','${integrations.metaPixelId}');fbq('track','PageView');
+          fbq('init','${metaPixelId}');fbq('track','PageView');
         `}</Script>
       )}
-      {marketingOn && integrations.tiktokPixelId && (
+      {marketingOn && tiktokPixelId && (
         <Script id="sf-tiktok-pixel" strategy="afterInteractive">{`
           !function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
           ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];
@@ -113,7 +122,7 @@ export default function StorefrontScripts({
           ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};
           ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=r;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};
           var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=r+"?sdkid="+e+"&lib="+t;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
-          ttq.load('${integrations.tiktokPixelId}');ttq.page();}(window,document,'ttq');
+          ttq.load('${tiktokPixelId}');ttq.page();}(window,document,'ttq');
         `}</Script>
       )}
 

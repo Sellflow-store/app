@@ -17,15 +17,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
   if (!shop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = (await req.json()) as Partial<{ active: boolean; plan: string }>;
+  const body = (await req.json()) as Partial<{ suspended: boolean; plan: string }>;
 
-  if (body.active !== undefined) {
-    if (typeof body.active !== "boolean") {
-      return NextResponse.json({ error: "Invalid active flag" }, { status: 400 });
+  if (body.suspended !== undefined) {
+    if (typeof body.suspended !== "boolean") {
+      return NextResponse.json({ error: "Invalid suspended flag" }, { status: 400 });
     }
+    // Operator-only suspension. Merchants cannot clear this (their PATCH only
+    // touches `active`), so a suspended shop stays down until ops lifts it.
     await db
       .update(shops)
-      .set({ active: body.active, updatedAt: new Date() })
+      .set({ suspended: body.suspended, updatedAt: new Date() })
       .where(eq(shops.id, shop.id));
   }
 

@@ -112,8 +112,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
         <Stat label="Plan" value={shop.owner.plan ?? "free"} mono />
         <Stat
           label="Status"
-          value={shop.active ? "Aktywny" : "Wyłączony"}
-          tone={shop.active ? "success" : "muted"}
+          value={shop.suspended ? "Zawieszony" : shop.active ? "Aktywny" : "Wyłączony"}
+          tone={shop.suspended || !shop.active ? "muted" : "success"}
         />
       </section>
 
@@ -121,7 +121,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
       <ShopActions
         slug={shop.slug}
         shopName={shop.name}
-        active={shop.active}
+        suspended={shop.suspended}
         plan={shop.owner.plan ?? "free"}
       />
 

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { shopConfig } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { CONFIG_KEYS, MAX_CONFIG_BYTES, scrubConfigValue } from "@/lib/config-validation";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -29,18 +30,29 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!key || value === undefined) {
     return NextResponse.json({ error: "key and value required" }, { status: 400 });
   }
+  if (!CONFIG_KEYS.has(key)) {
+    return NextResponse.json({ error: "Nieznany klucz konfiguracji." }, { status: 400 });
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return NextResponse.json({ error: "Wartość musi być obiektem." }, { status: 400 });
+  }
+  if (JSON.stringify(value).length > MAX_CONFIG_BYTES) {
+    return NextResponse.json({ error: "Konfiguracja jest zbyt duża." }, { status: 413 });
+  }
+
+  const clean = scrubConfigValue(key, value as Record<string, unknown>);
 
   await db
     .insert(shopConfig)
     .values({
       shopId: access.shopId,
       key,
-      value: value as Record<string, unknown>,
+      value: clean,
       updatedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: [shopConfig.shopId, shopConfig.key],
-      set: { value: value as Record<string, unknown>, updatedAt: new Date() },
+      set: { value: clean, updatedAt: new Date() },
     });
 
   return NextResponse.json({ ok: true });

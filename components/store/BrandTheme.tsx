@@ -15,12 +15,22 @@ import { googleFontsHref } from "@/lib/fonts";
  *
  * Render inside the (storefront) layout, before any branded markup.
  */
+// Values land inside an inline <style>; anything that isn't a plain hex color
+// or a bare font name is dropped to a safe default so a merchant can't break
+// out of the CSS context (defense in depth — the config PATCH also scrubs).
+const HEX = /^#[0-9a-fA-F]{3,8}$/;
+const FONT = /^[\w \-]{1,64}$/;
+const hex = (v: string | undefined, fallback: string) =>
+  v && HEX.test(v.trim()) ? v.trim() : fallback;
+const font = (v: string | undefined, fallback: string) =>
+  v && FONT.test(v.trim()) ? v.trim() : fallback;
+
 export default function BrandTheme({ branding }: { branding: BrandingConfig }) {
-  const ink = branding.primaryColor || "#0c0c0c";
-  const accent = branding.accentColor || "#db00b2";
-  const paper = branding.paperColor || "";
-  const fontDisplay = branding.fontFamily || "Space Grotesk";
-  const fontBody = branding.bodyFontFamily || "Inter Tight";
+  const ink = hex(branding.primaryColor, "#0c0c0c");
+  const accent = hex(branding.accentColor, "#db00b2");
+  const paper = hex(branding.paperColor, "");
+  const fontDisplay = font(branding.fontFamily, "Space Grotesk");
+  const fontBody = font(branding.bodyFontFamily, "Inter Tight");
 
   // Pick a readable foreground for any colored surface (used wherever a CTA
   // or dark band sits on top of bg-ink / bg-accent-brand).

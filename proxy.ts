@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { clerkConfigured } from "@/lib/auth-env";
 
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isAuthRoute = createRouteMatcher(["/login(.*)", "/register(.*)"]);
@@ -46,8 +47,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // Skip auth guard in dev when Clerk keys are not configured. Role check
   // for /ops lives in app/(ops)/ops/layout.tsx — middleware would need DB
   // access at the edge, so we keep it to a plain signed-in gate here.
-  const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (clerkConfigured && (isDashboardRoute(req) || isOpsRoute(req))) {
+  // Fail closed in production: a missing Clerk key there must not skip the gate.
+  if (clerkConfigured() && (isDashboardRoute(req) || isOpsRoute(req))) {
     await auth.protect();
   }
 });

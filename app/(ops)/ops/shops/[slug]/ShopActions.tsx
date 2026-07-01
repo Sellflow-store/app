@@ -8,16 +8,16 @@ import { PLANS, PLAN_IDS, type PlanId } from "@/lib/plans";
 interface Props {
   slug: string;
   shopName: string;
-  active: boolean;
+  suspended: boolean;
   plan: string;
 }
 
-export default function ShopActions({ slug, shopName, active, plan }: Props) {
+export default function ShopActions({ slug, shopName, suspended, plan }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function patch(body: { active?: boolean; plan?: string }): Promise<boolean> {
+  async function patch(body: { suspended?: boolean; plan?: string }): Promise<boolean> {
     setBusy(true);
     setError(null);
     try {
@@ -42,12 +42,12 @@ export default function ShopActions({ slug, shopName, active, plan }: Props) {
 
   async function handleToggleActive() {
     if (
-      active &&
+      !suspended &&
       !confirm(`Zawiesić sklep „${shopName}”? Klienci zobaczą stronę „nie znaleziono”, panel merchanta pozostanie dostępny.`)
     ) {
       return;
     }
-    await patch({ active: !active });
+    await patch({ suspended: !suspended });
   }
 
   async function handlePlanChange(next: string) {
@@ -137,12 +137,12 @@ export default function ShopActions({ slug, shopName, active, plan }: Props) {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium" style={{ color: "var(--brand-ink)" }}>
-              {active ? "Sklep aktywny" : "Sklep zawieszony"}
+              {suspended ? "Sklep zawieszony" : "Sklep aktywny"}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
-              {active
-                ? "Storefront widoczny, zamówienia przyjmowane."
-                : "Storefront zwraca 404, zamówień nie można składać."}
+              {suspended
+                ? "Storefront zwraca 404, zamówień nie można składać."
+                : "Storefront widoczny, zamówienia przyjmowane."}
             </p>
           </div>
           <button
@@ -150,13 +150,13 @@ export default function ShopActions({ slug, shopName, active, plan }: Props) {
             disabled={busy}
             className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
             style={
-              active
-                ? { color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }
-                : { background: "var(--brand-success, oklch(52% 0.2 158))", color: "#fff" }
+              suspended
+                ? { background: "var(--brand-success, oklch(52% 0.2 158))", color: "#fff" }
+                : { color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }
             }
           >
             <Power className="w-3.5 h-3.5" strokeWidth={1.75} />
-            {busy ? "…" : active ? "Zawieś sklep" : "Aktywuj sklep"}
+            {busy ? "…" : suspended ? "Aktywuj sklep" : "Zawieś sklep"}
           </button>
         </div>
 

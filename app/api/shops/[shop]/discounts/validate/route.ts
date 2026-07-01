@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { shops } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkDiscountCode } from "@/lib/discounts";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -10,8 +11,12 @@ type Params = { params: Promise<{ shop: string }> };
 export async function GET(req: NextRequest, { params }: Params) {
   const { shop: shopSlug } = await params;
 
+  // Throttle per IP — stops brute-force enumeration of discount codes.
+  const limited = checkRateLimit(req, `discount:${shopSlug}`, 30, 60_000);
+  if (limited) return limited;
+
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
-  if (!shop || !shop.active) {
+  if (!shop || !shop.active || shop.suspended) {
     return NextResponse.json({ error: "Shop not found" }, { status: 404 });
   }
 
