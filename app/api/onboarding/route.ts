@@ -72,6 +72,16 @@ export async function POST(req: NextRequest) {
     primaryVerified && adminEmailAllowlist().includes(email.toLowerCase()) ? "admin" : "merchant";
 
   let user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+  if (!user && clerkOn && primaryVerified) {
+    // Auth-provider migration (e.g. dev → production Clerk instance): the
+    // account re-registers under a new Clerk id but proves ownership of the
+    // same mailbox via email-code verification, so re-link the existing row
+    // instead of creating a duplicate user with no shop.
+    const byEmail = await db.query.users.findFirst({ where: eq(users.email, email) });
+    if (byEmail) {
+      [user] = await db.update(users).set({ clerkId }).where(eq(users.id, byEmail.id)).returning();
+    }
+  }
   if (!user) {
     [user] = await db.insert(users).values({ clerkId, email, name, role }).returning();
   } else if (role === "admin" && user.role !== "admin") {
