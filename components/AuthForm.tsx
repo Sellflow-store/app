@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
 import { Eye, EyeOff, ArrowRight, Mail, Loader2 } from "lucide-react";
 
@@ -22,6 +23,10 @@ function clerkMsg(err: unknown): string {
     e?.errors?.[0]?.message ??
     "Wystąpił błąd. Spróbuj ponownie."
   );
+}
+
+function clerkCode(err: unknown): string | undefined {
+  return (err as { errors?: { code?: string }[] })?.errors?.[0]?.code;
 }
 
 // ── Sellflow logo ──────────────────────────────────────────────────────────────
@@ -96,6 +101,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
   const afterRegister = safeRedirect(searchParams.get("redirect_url"), "/onboarding");
   const { signIn, setActive: setSignInActive, isLoaded: siLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: suLoaded } = useSignUp();
+  const { isSignedIn, isLoaded: authLoaded } = useAuth();
 
   const [mode, setMode]         = useState<Mode>(defaultMode);
   const [phase, setPhase]       = useState<Phase>("form");
@@ -108,6 +114,16 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
 
   const isLogin   = mode === "login";
   const isLoading = phase === "loading";
+
+  // Already signed in (e.g. bounced here after a server-side 401 while the
+  // client still holds a session) — signing in/up again would only produce
+  // Clerk's session_exists error, so route them to their destination instead.
+  // Gated to the idle form phase so it can't fire mid sign-up/verification.
+  useEffect(() => {
+    if (authLoaded && isSignedIn && phase === "form") {
+      router.replace(afterLogin);
+    }
+  }, [authLoaded, isSignedIn, phase, router, afterLogin]);
 
   function switchMode(m: Mode) {
     setMode(m);
@@ -129,8 +145,15 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       if (result.status === "complete") {
         await setSignInActive!({ session: result.createdSessionId });
         router.push(afterLogin);
+      } else {
+        setError("Logowanie wymaga dodatkowego kroku, którego ta forma nie obsługuje. Spróbuj przez Google lub skontaktuj się z nami.");
+        setPhase("form");
       }
     } catch (err) {
+      if (clerkCode(err) === "session_exists") {
+        router.replace(afterLogin);
+        return;
+      }
       setError(clerkMsg(err));
       setPhase("form");
     }
@@ -153,6 +176,10 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       await signUp!.prepareEmailAddressVerification({ strategy: "email_code" });
       setPhase("verifying");
     } catch (err) {
+      if (clerkCode(err) === "session_exists") {
+        router.replace(afterRegister);
+        return;
+      }
       setError(clerkMsg(err));
       setPhase("form");
     }
@@ -169,6 +196,11 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       if (result.status === "complete") {
         await setSignUpActive!({ session: result.createdSessionId });
         router.push(afterRegister);
+      } else {
+        // e.g. missing_requirements — without this branch the form hung on a
+        // spinner forever, which reads as "registration is broken".
+        setError("Nie udało się dokończyć rejestracji. Spróbuj ponownie lub użyj logowania przez Google.");
+        setPhase("verifying");
       }
     } catch (err) {
       setError(clerkMsg(err));
@@ -404,6 +436,12 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
                     {error}
                   </p>
                 )}
+
+                {/* Clerk mounts its bot-protection widget here; the instance has
+                    smart CAPTCHA enabled and custom sign-up flows must provide
+                    this element or signUp.create() can fail with
+                    captcha_missing_token for users behind adblockers. */}
+                {!isLogin && <div id="clerk-captcha" />}
 
                 <button
                   type="submit"

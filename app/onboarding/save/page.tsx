@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 const PENDING_KEY = "sellflow_pending_onboarding";
+const BOUNCE_KEY  = "sellflow_save_auth_bounced";
 
 /**
  * Auto-finalizer for anonymous → signed-up onboarding flow.
@@ -44,9 +45,18 @@ export default function OnboardingSavePage() {
         if (cancelled) return;
 
         if (!res.ok) {
-          // Still 401? Clerk session hasn't propagated yet — bounce back to login.
+          // Still 401? Clerk session hasn't propagated yet — bounce back to
+          // login, but only once: /login redirects signed-in users straight
+          // back here, so a second 401 means the server genuinely can't see
+          // the session and bouncing again would just loop forever.
           if (res.status === 401) {
-            router.push(`/login?redirect_url=${encodeURIComponent("/onboarding/save")}`);
+            if (!sessionStorage.getItem(BOUNCE_KEY)) {
+              sessionStorage.setItem(BOUNCE_KEY, "1");
+              router.push(`/login?redirect_url=${encodeURIComponent("/onboarding/save")}`);
+              return;
+            }
+            setErrorMsg("Nie udało się potwierdzić Twojej sesji. Odśwież stronę i spróbuj ponownie — Twoje ustawienia z kreatora są zapamiętane.");
+            setStatus("error");
             return;
           }
           setErrorMsg(data.error ?? "Nie udało się zapisać sklepu.");
@@ -54,6 +64,7 @@ export default function OnboardingSavePage() {
           return;
         }
 
+        sessionStorage.removeItem(BOUNCE_KEY);
         sessionStorage.removeItem(PENDING_KEY);
         router.replace(`/dashboard/${data.shopSlug}`);
       } catch {
