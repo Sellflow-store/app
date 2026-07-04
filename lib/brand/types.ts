@@ -1,13 +1,8 @@
 // Brand + onboarding state types. Ported from Sellflow-store/www onboarding
 // + shop-v2 bootstrap. Single source of truth in Sellflow-app.
 
-export type Sliders = {
-  minimal_expressive: number
-  soft_sharp: number
-  modern_classic: number
-  mono_color: number
-  industrial_organic: number
-}
+/** Jeden z czterech gotowych stylów sklepu — patrz lib/brand/presets.ts. */
+export type StylePresetId = 'pastel' | 'vivid' | 'mono' | 'earth'
 
 export type Business = {
   sells: string
@@ -20,7 +15,7 @@ export type Business = {
 export type Brand = {
   traits: string[]
   tone: string[]
-  sliders: Sliders
+  preset: StylePresetId
 }
 
 export type OnboardingState = {
@@ -41,19 +36,15 @@ export type Inferred = {
   font_pair: { display: string; body: string }
 }
 
-export const STORAGE_KEY = 'sellflow_onboarding_v1'
+// v2: brand.sliders → brand.preset. Stary klucz v1 zostaje zignorowany,
+// draft z suwakami nie da się sensownie zmapować na preset.
+export const STORAGE_KEY = 'sellflow_onboarding_v2'
 
-export const DEFAULT_SLIDERS: Sliders = {
-  minimal_expressive: 50,
-  soft_sharp: 50,
-  modern_classic: 50,
-  mono_color: 50,
-  industrial_organic: 50,
-}
+export const DEFAULT_PRESET: StylePresetId = 'mono'
 
 export const INITIAL_STATE: OnboardingState = {
   business: { sells: '', name: '', logoDataUrl: null, problem: '', edge: '' },
-  brand: { traits: [], tone: [], sliders: { ...DEFAULT_SLIDERS } },
+  brand: { traits: [], tone: [], preset: DEFAULT_PRESET },
   previewSeen: false,
 }
 
@@ -90,5 +81,7 @@ export type StoreBootstrap = {
     fonts: { display: string; body: string }
     traits: string[]
     tone: string[]
+    /** Optional: payloady sprzed wprowadzenia presetów go nie mają. */
+    preset?: StylePresetId
   }
 }

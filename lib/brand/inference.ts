@@ -1,4 +1,5 @@
-import type { Brand, Business, Inferred, Sliders } from './types'
+import type { Brand, Business, Inferred } from './types'
+import { getStylePreset } from './presets'
 
 /**
  * Local heuristic "AI" — deterministic, no network. Acceptance criteria
@@ -156,48 +157,6 @@ export function suggestNames(sells: string): string[] {
     if (out.length >= 10) break
   }
   return out.slice(0, 10)
-}
-
-/* ── Palette / typography / layout / copy ────────────────────────────────── */
-
-type Palette = [string, string, string] // [paper, ink, accent]
-
-const CATEGORY_PALETTES: Record<Category, Palette[]> = {
-  candles:    [['#F5EBDD', '#2A2624', '#A89178'], ['#EEE6DA', '#1C1A18', '#7E6A55']],
-  home_decor: [['#F4EFE7', '#23211E', '#9A8B73'], ['#EFEAE2', '#1E1C19', '#7E715D']],
-  jewelry:    [['#F8F5EE', '#1A1916', '#B89968'], ['#F2EDE2', '#16140F', '#8C7141']],
-  apparel:    [['#F2F0EC', '#111111', '#5A5A5A'], ['#EAE7E1', '#0C0C0C', '#2E2E2E']],
-  beauty:     [['#F8EFE9', '#2A2120', '#C28B73'], ['#F1E5DD', '#21181A', '#A66C58']],
-  coffee:     [['#EFE6D8', '#2A1D12', '#7A4A22'], ['#E7DCC9', '#1E140A', '#5B341A']],
-  food:       [['#F4ECD9', '#231D14', '#A08148'], ['#E9DDC4', '#1A1410', '#7C5E2E']],
-  art:        [['#F6F4EF', '#0F0F0E', '#C24B1F'], ['#EFECE5', '#0A0A0A', '#1E5BC2']],
-  digital:    [['#F7F8FA', '#0C0F1A', '#3145FF'], ['#F0F2F8', '#070A14', '#1FB5A6']],
-  plants:     [['#EEF1E7', '#1A2014', '#5C7A3A'], ['#E4EAD9', '#121810', '#3F5D26']],
-  accessories:[['#F2EFE9', '#1A1714', '#7A5A3C'], ['#ECE8E0', '#13110E', '#5B3F26']],
-  kids:       [['#FFF5EC', '#1F1B1A', '#F08A4B'], ['#FFEBE0', '#181412', '#E36B2E']],
-  pets:       [['#F4EFE5', '#1E1A14', '#7A5A3C'], ['#EFEADE', '#16120D', '#5C3E22']],
-  lifestyle:  [['#F4F2EC', '#171513', '#5C5A55'], ['#EDEAE2', '#0F0E0C', '#34322E']],
-}
-
-export function inferPalette(category: Category, _brand: Brand, sliders: Sliders): Palette {
-  const set = CATEGORY_PALETTES[category]
-  // Pick warm palette (index 0) when industrial_organic > 50, otherwise the cooler/sharper sibling.
-  const idx = sliders.industrial_organic >= 50 ? 0 : 1
-  return set[idx] ?? set[0]
-}
-
-export function inferLayoutType(sliders: Sliders): Inferred['layout_type'] {
-  // High minimal + classic → editorial. Low minimal → card. Default → grid.
-  if (sliders.minimal_expressive <= 35 && sliders.modern_classic >= 55) return 'editorial'
-  if (sliders.minimal_expressive >= 70) return 'card'
-  return 'grid'
-}
-
-export function inferFontPair(sliders: Sliders): Inferred['font_pair'] {
-  // modern_classic > 65 → serif display, else sans display.
-  const display = sliders.modern_classic >= 65 ? `"Playfair Display", Georgia, serif` : `"Space Grotesk", system-ui, sans-serif`
-  const body = `"Inter Tight", "Inter", system-ui, sans-serif`
-  return { display, body }
 }
 
 /* ── Audience ────────────────────────────────────────────────────────────── */
@@ -482,19 +441,19 @@ export function fillBusinessDefaults(input: Business): Business {
 export function inferBrand(business: Business, brand: Brand): Inferred {
   const filled = fillBusinessDefaults(business)
   const category = inferCategory(filled.sells)
-  const palette = inferPalette(category, brand, brand.sliders)
-  const layout_type = inferLayoutType(brand.sliders)
-  const font_pair = inferFontPair(brand.sliders)
+  // Paleta, fonty i layout pochodzą w całości z wybranego presetu stylu;
+  // kategoria steruje tylko copy, produktami i audience.
+  const preset = getStylePreset(brand.preset)
   const headline = pickByTone(brand.tone, COPY[category].headlines)
   const sub = pickByTone(brand.tone, COPY[category].subs)
   return {
     category,
     audience: AUDIENCE[category],
-    palette,
-    layout_type,
+    palette: [preset.palette.paper, preset.palette.ink, preset.palette.accent],
+    layout_type: preset.layout_type,
     hero_headline: headline,
     hero_sub: sub,
     effective_name: filled.name,
-    font_pair,
+    font_pair: preset.fontStacks,
   }
 }

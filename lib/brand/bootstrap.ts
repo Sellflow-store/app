@@ -32,6 +32,7 @@ export function buildBootstrap(business: Business, brand: Brand): StoreBootstrap
       fonts: inf.font_pair,
       traits: brand.traits,
       tone: brand.tone,
+      preset: brand.preset,
     },
   };
 }

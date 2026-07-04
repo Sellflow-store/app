@@ -3,8 +3,8 @@ import { db } from "@/lib/db";
 import { shops, shopConfig, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
-import { DEFAULT_ACCOUNT, DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE } from "@/lib/shop";
-import type { AccountConfig, IntegrationsConfig, ComplianceConfig } from "@/types/shop";
+import { DEFAULT_ACCOUNT, DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE, DEFAULT_BRANDING } from "@/lib/shop";
+import type { AccountConfig, IntegrationsConfig, ComplianceConfig, BrandingConfig } from "@/types/shop";
 import SettingsPanel from "./SettingsPanel";
 
 export default async function SettingsPage({
@@ -35,6 +35,12 @@ export default async function SettingsPage({
     ...DEFAULT_INTEGRATIONS,
     ...((configMap.integrations as Partial<IntegrationsConfig>) ?? {}),
   };
+  const branding: BrandingConfig = {
+    ...DEFAULT_BRANDING,
+    ...((configMap.branding as Partial<BrandingConfig>) ?? {}),
+    shopName: (configMap.branding as BrandingConfig)?.shopName ?? shop.name,
+  };
+  const brand = (configMap.brand as Record<string, unknown>) ?? null;
   const savedCompliance = (configMap.compliance as Partial<ComplianceConfig>) ?? {};
   const compliance: ComplianceConfig = {
     cookieBanner: { ...DEFAULT_COMPLIANCE.cookieBanner, ...(savedCompliance.cookieBanner ?? {}) },
@@ -55,6 +61,8 @@ export default async function SettingsPage({
       storeUrl={`https://${shop.slug}.${appDomain}`}
       integrations={integrations}
       compliance={compliance}
+      branding={branding}
+      brand={brand}
     />
   );
 }

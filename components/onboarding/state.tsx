@@ -15,14 +15,15 @@ import {
   type Brand,
   type Business,
   type OnboardingState,
-  type Sliders,
+  type StylePresetId,
 } from "@/lib/brand/types";
+import { isStylePresetId } from "@/lib/brand/presets";
 
 type Action =
   | { type: "business/patch"; patch: Partial<Business> }
   | { type: "brand/setTraits"; traits: string[] }
   | { type: "brand/setTone"; tone: string[] }
-  | { type: "brand/setSliders"; sliders: Sliders }
+  | { type: "brand/setPreset"; preset: StylePresetId }
   | { type: "brand/patch"; patch: Partial<Brand> }
   | { type: "preview/seen" }
   | { type: "reset" }
@@ -36,17 +37,14 @@ function reducer(state: OnboardingState, action: Action): OnboardingState {
       return { ...state, brand: { ...state.brand, traits: action.traits } };
     case "brand/setTone":
       return { ...state, brand: { ...state.brand, tone: action.tone } };
-    case "brand/setSliders":
-      return { ...state, brand: { ...state.brand, sliders: action.sliders } };
+    case "brand/setPreset":
+      return { ...state, brand: { ...state.brand, preset: action.preset } };
     case "brand/patch":
       return { ...state, brand: { ...state.brand, ...action.patch } };
     case "preview/seen":
       return state.previewSeen ? state : { ...state, previewSeen: true };
     case "reset":
-      return {
-        ...INITIAL_STATE,
-        brand: { ...INITIAL_STATE.brand, sliders: { ...INITIAL_STATE.brand.sliders } },
-      };
+      return { ...INITIAL_STATE, brand: { ...INITIAL_STATE.brand } };
     case "hydrate":
       return action.state;
     default:
@@ -59,7 +57,7 @@ type Ctx = {
   patchBusiness: (patch: Partial<Business>) => void;
   setTraits: (traits: string[]) => void;
   setTone: (tone: string[]) => void;
-  setSliders: (sliders: Sliders) => void;
+  setPreset: (preset: StylePresetId) => void;
   markPreviewSeen: () => void;
   reset: () => void;
 };
@@ -77,7 +75,9 @@ function loadFromStorage(): OnboardingState | null {
       brand: {
         ...INITIAL_STATE.brand,
         ...(parsed.brand ?? {}),
-        sliders: { ...INITIAL_STATE.brand.sliders, ...(parsed.brand?.sliders ?? {}) },
+        preset: isStylePresetId(parsed.brand?.preset)
+          ? parsed.brand.preset
+          : INITIAL_STATE.brand.preset,
       },
       previewSeen: !!parsed.previewSeen,
     };
@@ -103,7 +103,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       patchBusiness: (patch) => dispatch({ type: "business/patch", patch }),
       setTraits: (traits) => dispatch({ type: "brand/setTraits", traits }),
       setTone: (tone) => dispatch({ type: "brand/setTone", tone }),
-      setSliders: (sliders) => dispatch({ type: "brand/setSliders", sliders }),
+      setPreset: (preset) => dispatch({ type: "brand/setPreset", preset }),
       markPreviewSeen: () => dispatch({ type: "preview/seen" }),
       reset: () => {
         try { localStorage.removeItem(STORAGE_KEY); } catch {}

@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import {
-  UserCircle, Receipt, Palette, Store, Globe, Users, Sparkles, ShieldCheck,
+  UserCircle, Receipt, Palette, Store, Globe, Users, Sparkles, ShieldCheck, Paintbrush,
 } from "lucide-react";
-import type { AccountConfig, IntegrationsConfig, ComplianceConfig } from "@/types/shop";
+import type { AccountConfig, IntegrationsConfig, ComplianceConfig, BrandingConfig } from "@/types/shop";
 import { P } from "./ui";
 import AccountSection from "./sections/AccountSection";
 import PlanSection from "./sections/PlanSection";
 import ThemeSection from "./sections/ThemeSection";
 import ShopSection from "./sections/ShopSection";
+import StyleSection from "./sections/StyleSection";
 import DomainSection from "./sections/DomainSection";
 import TeamSection from "./sections/TeamSection";
 import IntegrationsSection from "./sections/IntegrationsSection";
@@ -17,7 +18,7 @@ import ComplianceSection from "./sections/ComplianceSection";
 
 type SectionId =
   | "account" | "plan" | "theme"
-  | "shop" | "domain" | "team" | "integrations" | "compliance";
+  | "shop" | "style" | "domain" | "team" | "integrations" | "compliance";
 
 const NAV: { group: string; items: { id: SectionId; label: string; icon: React.ElementType }[] }[] = [
   {
@@ -32,6 +33,7 @@ const NAV: { group: string; items: { id: SectionId; label: string; icon: React.E
     group: "Sklep",
     items: [
       { id: "shop", label: "Sklep", icon: Store },
+      { id: "style", label: "Styl sklepu", icon: Paintbrush },
       { id: "domain", label: "Własna domena", icon: Globe },
       { id: "team", label: "Zespół", icon: Users },
       { id: "integrations", label: "Integracje", icon: Sparkles },
@@ -51,6 +53,8 @@ interface Props {
   storeUrl: string;
   integrations: IntegrationsConfig;
   compliance: ComplianceConfig;
+  branding: BrandingConfig;
+  brand: Record<string, unknown> | null;
 }
 
 export default function SettingsPanel(props: Props) {
@@ -108,6 +112,9 @@ export default function SettingsPanel(props: Props) {
           {active === "theme" && <ThemeSection />}
           {active === "shop" && (
             <ShopSection shopSlug={props.shopSlug} initialName={props.shopName} initialActive={props.active} />
+          )}
+          {active === "style" && (
+            <StyleSection shopSlug={props.shopSlug} initialBranding={props.branding} initialBrand={props.brand} />
           )}
           {active === "domain" && <DomainSection storeUrl={props.storeUrl} />}
           {active === "team" && <TeamSection ownerEmail={props.accountEmail} />}

@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { Check } from "lucide-react";
 import { useOnboarding } from "../state";
 import StepFooter from "../StepFooter";
 import MiniPreview from "../MiniPreview";
-import type { Sliders } from "@/lib/brand/types";
+import { STYLE_PRESETS, PRESET_FONT_FAMILIES, type StylePreset } from "@/lib/brand/presets";
+import { googleFontsHref } from "@/lib/fonts";
 
 type Props = { onNext: () => void; onBack: () => void };
 
@@ -19,19 +21,11 @@ const TONE_OPTIONS = [
   "Profesjonalny", "Zabawny", "Pewny siebie",
 ] as const;
 
-const SLIDER_DEFS: Array<{ key: keyof Sliders; left: string; right: string }> = [
-  { key: "minimal_expressive", left: "Minimalistyczna", right: "Ekspresyjna" },
-  { key: "soft_sharp",         left: "Miękka",          right: "Ostra" },
-  { key: "modern_classic",     left: "Nowoczesna",      right: "Klasyczna" },
-  { key: "mono_color",         left: "Monochromat",     right: "Kolor" },
-  { key: "industrial_organic", left: "Industrialna",    right: "Organiczna" },
-];
-
 const TRAIT_MAX = 5;
 const TONE_MAX = 3;
 
 export default function Brand({ onNext, onBack }: Props) {
-  const { state, setTraits, setTone, setSliders } = useOnboarding();
+  const { state, setTraits, setTone, setPreset } = useOnboarding();
 
   const traitsSet = useMemo(() => new Set(state.brand.traits), [state.brand.traits]);
   const toneSet   = useMemo(() => new Set(state.brand.tone),   [state.brand.tone]);
@@ -46,12 +40,12 @@ export default function Brand({ onNext, onBack }: Props) {
     else if (state.brand.tone.length < TONE_MAX) setTone([...state.brand.tone, t]);
   }, [toneSet, state.brand.tone, setTone]);
 
-  const onSlider = (key: keyof Sliders, value: number) => {
-    setSliders({ ...state.brand.sliders, [key]: value });
-  };
+  // Fonty presetów — bez nich miniatury stylów i podgląd renderują fallbacki.
+  const presetFontsHref = googleFontsHref(PRESET_FONT_FAMILIES);
 
   return (
     <div className="grid lg:grid-cols-[1fr_420px] gap-8">
+      {presetFontsHref && <link rel="stylesheet" href={presetFontsHref} />}
       {/* Left — controls */}
       <div className="space-y-6">
         <section
@@ -100,35 +94,20 @@ export default function Brand({ onNext, onBack }: Props) {
         >
           <h2 className="text-xl font-bold tracking-tight mb-1"
               style={{ fontFamily: "var(--font-display)", color: "var(--brand-ink)" }}>
-            Estetyka
+            Styl sklepu
           </h2>
           <p className="text-sm mb-5" style={{ color: "var(--brand-ink-2)" }}>
-            Każdy suwak — wpływ na kompozycję, paletę i kroje pisma.
+            Wybierz jeden z czterech stylów — paletę, typografię i układ.
+            Później możesz go zmienić w panelu.
           </p>
-          <div className="space-y-5">
-            {SLIDER_DEFS.map(({ key, left, right }) => (
-              <div key={key}>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={state.brand.sliders[key]}
-                    onChange={(e) => onSlider(key, Number(e.target.value))}
-                    aria-label={`${left} ↔ ${right}`}
-                    className="flex-1 accent-[var(--brand-accent)]"
-                  />
-                  <span className="text-xs font-mono w-9 text-right"
-                        style={{ color: "var(--brand-ink-2)" }}>
-                    {state.brand.sliders[key]}
-                  </span>
-                </div>
-                <div className="flex justify-between mt-1.5 text-[11px] tracking-wide"
-                     style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
-                  <span>{left}</span>
-                  <span>{right}</span>
-                </div>
-              </div>
+          <div className="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Styl sklepu">
+            {STYLE_PRESETS.map((p) => (
+              <PresetCard
+                key={p.id}
+                preset={p}
+                selected={state.brand.preset === p.id}
+                onSelect={() => setPreset(p.id)}
+              />
             ))}
           </div>
         </section>
@@ -164,6 +143,90 @@ export default function Brand({ onNext, onBack }: Props) {
       </div>
     </div>
   );
+}
+
+function PresetCard({
+  preset, selected, onSelect,
+}: {
+  preset: StylePreset;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { paper, ink, accent } = preset.palette;
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className="text-left rounded-2xl overflow-hidden transition-all focus-visible:outline-2"
+      style={{
+        border: selected
+          ? "2px solid var(--brand-accent)"
+          : "1.5px solid var(--brand-rule)",
+        boxShadow: selected ? "0 0 0 3px color-mix(in srgb, var(--brand-accent) 18%, transparent)" : "none",
+      }}
+    >
+      {/* Miniatura stylu — mikro-makieta sklepu w palecie presetu */}
+      <div style={{ background: paper, padding: "16px 16px 14px" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            <span style={{ width: 10, height: 10, borderRadius: preset.id === "pastel" ? 999 : 2, background: accent, display: "inline-block" }} />
+            <span style={{ fontFamily: preset.fontStacks.display, fontWeight: 700, fontSize: 12, color: ink }}>
+              Marka
+            </span>
+          </div>
+          <div className="flex gap-1">
+            {[paper, ink, accent].map((c, i) => (
+              <span key={i} style={{
+                width: 12, height: 12, borderRadius: 999, background: c,
+                border: "1px solid rgba(0,0,0,0.12)", display: "inline-block",
+              }} />
+            ))}
+          </div>
+        </div>
+        <div style={{ fontFamily: preset.fontStacks.display, color: ink, fontSize: 17, lineHeight: 1.15, fontWeight: 700, letterSpacing: "-0.01em" }}>
+          Dobre rzeczy,<br />robione powoli
+        </div>
+        <div className="mt-2 space-y-1">
+          <div style={{ height: 4, width: "82%", borderRadius: 2, background: ink, opacity: 0.22 }} />
+          <div style={{ height: 4, width: "60%", borderRadius: 2, background: ink, opacity: 0.22 }} />
+        </div>
+        <span style={{
+          display: "inline-block", marginTop: 10, padding: "5px 12px",
+          background: accent, color: pickReadable(accent),
+          borderRadius: preset.id === "mono" ? 0 : 999,
+          fontSize: 10, fontWeight: 700, fontFamily: preset.fontStacks.body,
+        }}>
+          Kup teraz
+        </span>
+      </div>
+      <div
+        className="px-4 py-2.5"
+        style={{ background: "var(--brand-paper)", borderTop: "1px solid var(--brand-rule)" }}
+      >
+        <p className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: "var(--brand-ink)" }}>
+          {preset.name}
+          {selected && <Check className="w-3.5 h-3.5" style={{ color: "var(--brand-accent)" }} strokeWidth={3} />}
+        </p>
+        <p className="text-[11px] mt-0.5 leading-snug" style={{ color: "var(--brand-ink-2)" }}>
+          {preset.tagline}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+/** Czytelny kolor tekstu na kolorowym tle (ta sama heurystyka co BrandTheme). */
+function pickReadable(hex: string): string {
+  const h = hex.replace("#", "");
+  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(v, 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((x) => {
+    const c = x / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.45 ? "#0c0c0c" : "#ffffff";
 }
 
 function Pills({

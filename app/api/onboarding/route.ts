@@ -160,6 +160,7 @@ function buildConfigRows(shopId: string, shopName: string, bootstrap?: StoreBoot
       value: {
         traits: bootstrap.brand.traits,
         tone: bootstrap.brand.tone,
+        preset: bootstrap.brand.preset ?? null,
         palette: bootstrap.brand.palette,
         fonts: bootstrap.brand.fonts,
         layout_type: bootstrap.store.layout_type,
@@ -181,9 +182,11 @@ function brandingFromBootstrap(shopName: string, b?: StoreBootstrap) {
     faviconUrl: "",
     primaryColor: b?.brand.palette.ink ?? "#12128c",
     accentColor: b?.brand.palette.accent ?? "#db00b2",
-    paperColor: "",
+    // Papier jest częścią tożsamości presetu (pastel/naturalny bez niego
+    // tracą charakter), więc persystujemy go zamiast zostawiać "auto".
+    paperColor: b?.brand.palette.paper ?? "",
     fontFamily: parseDisplayFont(b?.brand.fonts.display) ?? "Space Grotesk",
-    bodyFontFamily: "Inter Tight",
+    bodyFontFamily: parseDisplayFont(b?.brand.fonts.body) ?? "Inter Tight",
   };
 }
 

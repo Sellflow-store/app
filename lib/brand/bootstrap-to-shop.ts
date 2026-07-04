@@ -63,9 +63,11 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
       faviconUrl: "",
       primaryColor: brand.palette.ink,
       accentColor: brand.palette.accent,
-      paperColor: "",
-      fontFamily: brand.fonts.display,
-      bodyFontFamily: "Inter Tight",
+      paperColor: brand.palette.paper,
+      // BrandTheme przyjmuje pojedynczą nazwę rodziny (walidacja regexem),
+      // a bootstrap niesie pełne stacki CSS — bierzemy głowę stacka.
+      fontFamily: headFamily(brand.fonts.display),
+      bodyFontFamily: headFamily(brand.fonts.body),
     },
     home: {
       topBar: {
@@ -127,6 +129,10 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
     compliance: DEFAULT_COMPLIANCE,
     products,
   };
+}
+
+function headFamily(stack: string): string {
+  return stack.split(",")[0].trim().replace(/^["']|["']$/g, "");
 }
 
 function humanizeCategory(cat: string): string {
