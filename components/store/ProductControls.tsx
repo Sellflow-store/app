@@ -38,7 +38,7 @@ export default function ProductControls({ sort, hideUnavailable }: Props) {
         <select
           value={sort}
           onChange={(e) => update("sort", e.target.value === "polecane" ? null : e.target.value)}
-          className="bg-paper border border-rule rounded-lg px-3 py-1.5 text-sm text-ink focus:outline-none focus:border-ink/40"
+          className="bg-paper border border-rule rounded-input px-3 py-1.5 text-sm text-ink focus:outline-none focus:border-ink/40"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>

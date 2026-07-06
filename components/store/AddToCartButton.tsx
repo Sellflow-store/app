@@ -49,7 +49,7 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
       <div>
         <button
           disabled
-          className="w-full flex items-center justify-center gap-2 border border-rule text-ink-2 font-semibold text-sm tracking-wide px-8 py-4 rounded-full cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 border border-rule text-ink-2 font-semibold text-sm tracking-wide px-8 py-4 rounded-button cursor-not-allowed"
         >
           Wyprzedane
         </button>
@@ -64,7 +64,7 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
     <div>
       <div className="flex gap-3">
         {/* Qty stepper */}
-        <div className="flex items-center border border-rule rounded-full">
+        <div className="flex items-center border border-rule rounded-input">
           <button
             onClick={() => setQty((q) => Math.max(1, q - 1))}
             aria-label="Zmniejsz ilość"
@@ -87,7 +87,7 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
 
         <button
           onClick={handleAdd}
-          className="flex-1 flex items-center justify-center gap-2 bg-accent-brand text-on-accent font-semibold text-sm tracking-wide px-8 py-4 rounded-full hover:opacity-90 transition-opacity"
+          className="flex-1 flex items-center justify-center gap-2 bg-accent-brand text-on-accent font-semibold text-sm tracking-wide px-8 py-4 rounded-button hover:opacity-90 transition-opacity"
         >
           {added ? (
             <>

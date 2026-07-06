@@ -63,11 +63,13 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
       faviconUrl: "",
       primaryColor: brand.palette.ink,
       accentColor: brand.palette.accent,
+      secondaryColor: brand.palette.secondary,
       paperColor: brand.palette.paper,
       // BrandTheme przyjmuje pojedynczą nazwę rodziny (walidacja regexem),
       // a bootstrap niesie pełne stacki CSS — bierzemy głowę stacka.
       fontFamily: headFamily(brand.fonts.display),
       bodyFontFamily: headFamily(brand.fonts.body),
+      ...(brand.radius ? { radius: brand.radius } : {}),
     },
     home: {
       topBar: {

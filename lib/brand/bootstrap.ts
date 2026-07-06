@@ -1,4 +1,5 @@
 import { fillBusinessDefaults, inferBrand, inferProducts } from "./inference";
+import { getStylePreset } from "./presets";
 import type { Brand, Business, StoreBootstrap } from "./types";
 
 /**
@@ -10,6 +11,7 @@ import type { Brand, Business, StoreBootstrap } from "./types";
 export function buildBootstrap(business: Business, brand: Brand): StoreBootstrap {
   const filled = fillBusinessDefaults(business);
   const inf = inferBrand(business, brand);
+  const preset = getStylePreset(brand.preset);
   const products = inferProducts(inf.category as Parameters<typeof inferProducts>[0]);
 
   return {
@@ -28,8 +30,14 @@ export function buildBootstrap(business: Business, brand: Brand): StoreBootstrap
       products,
     },
     brand: {
-      palette: { paper: inf.palette[0], ink: inf.palette[1], accent: inf.palette[2] },
+      palette: {
+        paper: inf.palette[0],
+        ink: inf.palette[1],
+        accent: inf.palette[2],
+        secondary: preset.palette.secondary,
+      },
       fonts: inf.font_pair,
+      radius: preset.radius,
       traits: brand.traits,
       tone: brand.tone,
       preset: brand.preset,

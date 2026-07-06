@@ -152,7 +152,7 @@ function PresetCard({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const { paper, ink, accent } = preset.palette;
+  const { paper, ink, accent, secondary } = preset.palette;
   return (
     <button
       type="button"
@@ -171,13 +171,13 @@ function PresetCard({
       <div style={{ background: paper, padding: "16px 16px 14px" }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
-            <span style={{ width: 10, height: 10, borderRadius: preset.id === "pastel" ? 999 : 2, background: accent, display: "inline-block" }} />
+            <span style={{ width: 10, height: 10, borderRadius: Math.min(preset.radius.button, 999), background: secondary, display: "inline-block" }} />
             <span style={{ fontFamily: preset.fontStacks.display, fontWeight: 700, fontSize: 12, color: ink }}>
               Marka
             </span>
           </div>
           <div className="flex gap-1">
-            {[paper, ink, accent].map((c, i) => (
+            {[ink, secondary, accent].map((c, i) => (
               <span key={i} style={{
                 width: 12, height: 12, borderRadius: 999, background: c,
                 border: "1px solid rgba(0,0,0,0.12)", display: "inline-block",
@@ -195,7 +195,7 @@ function PresetCard({
         <span style={{
           display: "inline-block", marginTop: 10, padding: "5px 12px",
           background: accent, color: pickReadable(accent),
-          borderRadius: preset.id === "mono" ? 0 : 999,
+          borderRadius: preset.radius.button,
           fontSize: 10, fontWeight: 700, fontFamily: preset.fontStacks.body,
         }}>
           Kup teraz

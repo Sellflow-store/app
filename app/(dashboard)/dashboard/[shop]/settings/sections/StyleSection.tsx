@@ -48,15 +48,18 @@ export default function StyleSection({ shopSlug, initialBranding, initialBrand }
       ...branding,
       primaryColor: p.palette.ink,
       accentColor: p.palette.accent,
+      secondaryColor: p.palette.secondary,
       paperColor: p.palette.paper,
       fontFamily: p.fonts.display,
       bodyFontFamily: p.fonts.body,
+      radius: p.radius,
     };
     const nextBrand = {
       ...(brand ?? {}),
       preset: p.id,
       palette: p.palette,
       fonts: p.fontStacks,
+      radius: p.radius,
       layout_type: p.layout_type,
     };
 
@@ -114,7 +117,7 @@ function PresetTile({
   disabled: boolean;
   onClick: () => void;
 }) {
-  const { paper, ink, accent } = preset.palette;
+  const { paper, ink, accent, secondary } = preset.palette;
   return (
     <button
       type="button"
@@ -151,7 +154,7 @@ function PresetTile({
               padding: "4px 10px",
               background: accent,
               color: readableOn(accent),
-              borderRadius: preset.id === "mono" ? 0 : 999,
+              borderRadius: preset.radius.button,
               fontSize: 9,
               fontWeight: 700,
               fontFamily: preset.fontStacks.body,
@@ -160,7 +163,7 @@ function PresetTile({
             Kup teraz
           </span>
           <span className="flex gap-1">
-            {[paper, ink, accent].map((c, i) => (
+            {[ink, secondary, accent].map((c, i) => (
               <span
                 key={i}
                 style={{

@@ -75,7 +75,7 @@ export default function NewsletterPopup({ shopSlug, config }: Props) {
       aria-label={config.title}
     >
       <div
-        className="relative w-full max-w-md bg-paper rounded-2xl p-8 shadow-xl"
+        className="relative w-full max-w-md bg-paper rounded-card p-8 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -104,12 +104,12 @@ export default function NewsletterPopup({ shopSlug, config }: Props) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={config.placeholder || "Twój adres e-mail"}
-                className="w-full border border-rule rounded-xl px-4 py-3 text-sm text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors"
+                className="w-full border border-rule rounded-input px-4 py-3 text-sm text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors"
               />
               <button
                 type="submit"
                 disabled={state === "sending"}
-                className="w-full bg-accent-brand text-on-accent text-sm font-semibold px-6 py-3.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-60"
+                className="w-full bg-accent-brand text-on-accent text-sm font-semibold px-6 py-3.5 rounded-button hover:opacity-90 transition-opacity disabled:opacity-60"
               >
                 {state === "sending" ? "Zapisywanie…" : config.buttonLabel || "Zapisz się"}
               </button>

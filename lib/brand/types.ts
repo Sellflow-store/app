@@ -2,7 +2,7 @@
 // + shop-v2 bootstrap. Single source of truth in Sellflow-app.
 
 /** Jeden z czterech gotowych stylów sklepu — patrz lib/brand/presets.ts. */
-export type StylePresetId = 'pastel' | 'vivid' | 'mono' | 'earth'
+export type StylePresetId = 'minimal' | 'warm' | 'bold' | 'elegant'
 
 export type Business = {
   sells: string
@@ -40,7 +40,7 @@ export type Inferred = {
 // draft z suwakami nie da się sensownie zmapować na preset.
 export const STORAGE_KEY = 'sellflow_onboarding_v2'
 
-export const DEFAULT_PRESET: StylePresetId = 'mono'
+export const DEFAULT_PRESET: StylePresetId = 'minimal'
 
 export const INITIAL_STATE: OnboardingState = {
   business: { sells: '', name: '', logoDataUrl: null, problem: '', edge: '' },
@@ -77,8 +77,10 @@ export type StoreBootstrap = {
     products: BootstrapProduct[]
   }
   brand: {
-    palette: { paper: string; ink: string; accent: string }
+    palette: { paper: string; ink: string; accent: string; secondary: string }
     fonts: { display: string; body: string }
+    /** Skala zaokrągleń presetu (px); payloady sprzed presetów jej nie mają. */
+    radius?: { input: number; card: number; button: number }
     traits: string[]
     tone: string[]
     /** Optional: payloady sprzed wprowadzenia presetów go nie mają. */

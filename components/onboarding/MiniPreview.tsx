@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useOnboarding } from "./state";
 import { inferBrand } from "@/lib/brand/inference";
+import { getStylePreset } from "@/lib/brand/presets";
 
 type Props = { compact?: boolean };
 
@@ -16,6 +17,9 @@ export default function MiniPreview({ compact = false }: Props) {
   const inf = useMemo(() => inferBrand(state.business, state.brand), [state.business, state.brand]);
 
   const [paper, ink, accent] = inf.palette;
+  const preset = getStylePreset(state.brand.preset);
+  const radius = preset.radius;
+  const pop = preset.palette.secondary; // kolor „pop" na tinty/akcenty
   const muted = mix(paper, ink, 0.08);
   const rule = mix(paper, ink, 0.12);
 
@@ -120,7 +124,7 @@ export default function MiniPreview({ compact = false }: Props) {
                 padding: "10px 18px",
                 background: ink,
                 color: paper,
-                borderRadius: 999,
+                borderRadius: radius.button,
                 fontSize: compact ? 12 : 13,
                 fontWeight: 600,
               }}>
@@ -130,15 +134,15 @@ export default function MiniPreview({ compact = false }: Props) {
           </div>
           <div style={{
             aspectRatio: "4 / 5",
-            background: `linear-gradient(180deg, ${mix(paper, ink, 0.05)}, ${mix(accent, ink, 0.15)})`,
-            borderRadius: 12,
+            background: `linear-gradient(180deg, ${mix(paper, ink, 0.05)}, ${mix(pop, ink, 0.15)})`,
+            borderRadius: radius.card,
             border: `1px solid ${rule}`,
           }} />
         </div>
       ) : (
         <div style={{
           padding: heroPadding,
-          background: mix(paper, accent, 0.18),
+          background: mix(paper, pop, 0.18),
           textAlign: inf.layout_type === "card" ? "center" : "left",
         }}>
           <h1 style={{
@@ -175,17 +179,17 @@ export default function MiniPreview({ compact = false }: Props) {
           {Array.from({ length: productCount }).map((_, i) => (
             <div key={i} style={{
               border: `1px solid ${rule}`,
-              borderRadius: 12,
+              borderRadius: radius.card,
               overflow: "hidden",
               background: paper,
             }}>
               <div style={{
                 aspectRatio: "1 / 1",
                 background: i === 0
-                  ? mix(paper, accent, 0.45)
+                  ? mix(paper, pop, 0.45)
                   : i === 1
                   ? mix(paper, ink, 0.10)
-                  : mix(paper, accent, 0.28),
+                  : mix(paper, pop, 0.28),
               }} />
               <div style={{ padding: compact ? "10px 12px" : "14px 16px" }}>
                 <div style={{ fontSize: compact ? 12 : 14, fontWeight: 600 }}>

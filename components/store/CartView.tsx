@@ -26,7 +26,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
         </p>
         <Link
           href={`/${shopSlug}`}
-          className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-button hover:opacity-90 transition-opacity"
         >
           Wróć do sklepu
         </Link>
@@ -48,7 +48,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
             {/* Thumbnail */}
             <Link
               href={`/${shopSlug}/products/${item.productId}`}
-              className="w-20 h-20 bg-paper-3 rounded-xl overflow-hidden shrink-0"
+              className="w-20 h-20 bg-paper-3 rounded-input overflow-hidden shrink-0"
             >
               {item.image ? (
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
@@ -71,7 +71,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
             </div>
 
             {/* Qty stepper */}
-            <div className="flex items-center border border-rule rounded-full shrink-0">
+            <div className="flex items-center border border-rule rounded-input shrink-0">
               <button
                 onClick={() => setQty(item.productId, item.qty - 1)}
                 aria-label="Zmniejsz ilość"
@@ -122,7 +122,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
         <p className="text-[11px] text-ink-2/70">Koszt dostawy zostanie doliczony w następnym kroku.</p>
         <Link
           href={`/${shopSlug}/checkout`}
-          className="inline-flex items-center gap-2 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-full hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-button hover:opacity-90 transition-opacity"
         >
           Przejdź do zamówienia
           <ArrowRight className="w-4 h-4" strokeWidth={1.5} />

@@ -199,10 +199,14 @@ export interface BrandingConfig {
   faviconUrl: string;
   primaryColor: string;
   accentColor: string;
+  /** Kolor „pop" marki (badge'e/akcenty). "" = użyj accentu. */
+  secondaryColor?: string;
   /** "" = domyślne jasne tło; hex nadpisuje --brand-paper na storefroncie */
   paperColor: string;
   fontFamily: string; // font nagłówków (display)
   bodyFontFamily: string; // font tekstu
+  /** Skala zaokrągleń narożników (px). Brak = domyślne z globals.css. */
+  radius?: { input: number; card: number; button: number };
 }
 
 export interface HomeConfig {

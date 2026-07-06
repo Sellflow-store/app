@@ -28,14 +28,30 @@ const font = (v: string | undefined, fallback: string) =>
 export default function BrandTheme({ branding }: { branding: BrandingConfig }) {
   const ink = hex(branding.primaryColor, "#0c0c0c");
   const accent = hex(branding.accentColor, "#db00b2");
+  // Kolor „pop" — puste/nieprawidłowe spada na accent (zachowanie sprzed
+  // presetów Michała, gdzie secondary nie istniał).
+  const secondary = hex(branding.secondaryColor, accent);
   const paper = hex(branding.paperColor, "");
   const fontDisplay = font(branding.fontFamily, "Space Grotesk");
   const fontBody = font(branding.bodyFontFamily, "Inter Tight");
 
   // Pick a readable foreground for any colored surface (used wherever a CTA
   // or dark band sits on top of bg-ink / bg-accent-brand).
-  const onInk    = pickReadable(ink);
-  const onAccent = pickReadable(accent);
+  const onInk       = pickReadable(ink);
+  const onAccent    = pickReadable(accent);
+  const onSecondary = pickReadable(secondary);
+
+  // Skala narożników — wartości numeryczne, tu domykane do bezpiecznych
+  // liczb (obrona przed wstrzyknięciem w inline <style>). Brak = domyślne
+  // zbliżone do dotychczasowego wyglądu (pełny pill CTA, 16px karty).
+  const rad = branding.radius;
+  const clampRadius = (n: unknown, fallback: number) =>
+    typeof n === "number" && Number.isFinite(n)
+      ? Math.max(0, Math.min(9999, Math.round(n)))
+      : fallback;
+  const rInput  = clampRadius(rad?.input, 8);
+  const rCard   = clampRadius(rad?.card, 16);
+  const rButton = clampRadius(rad?.button, 9999);
 
   // Custom page background: derive the secondary surfaces (paper-2 hero band,
   // paper-3 image placeholders) by nudging the base toward the ink color.
@@ -50,8 +66,13 @@ export default function BrandTheme({ branding }: { branding: BrandingConfig }) {
     `--brand-ink-2:${mix(ink, onInk, 0.35)};` +
     `--brand-rule:${mix(ink, onInk, 0.85)};` +
     `--brand-accent:${accent};` +
+    `--brand-secondary:${secondary};` +
     `--brand-on-ink:${onInk};` +
     `--brand-on-accent:${onAccent};` +
+    `--brand-on-secondary:${onSecondary};` +
+    `--brand-radius-input:${rInput}px;` +
+    `--brand-radius-card:${rCard}px;` +
+    `--brand-radius-button:${rButton}px;` +
     paperVars +
     `--font-display:'${fontDisplay}',ui-sans-serif,system-ui,sans-serif;` +
     `--font-body:'${fontBody}',ui-sans-serif,system-ui,sans-serif;` +

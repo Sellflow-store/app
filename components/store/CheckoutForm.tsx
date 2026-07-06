@@ -23,7 +23,7 @@ interface Confirmation {
 }
 
 const inputClass =
-  "w-full border border-rule rounded-xl px-4 py-3 text-sm text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors";
+  "w-full border border-rule rounded-input px-4 py-3 text-sm text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors";
 
 function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor: string }) {
   return (
@@ -79,7 +79,7 @@ export default function CheckoutForm({
         </p>
 
         {confirmation.paymentMethod === "transfer" && confirmation.transfer && (
-          <div className="text-left border border-rule rounded-2xl p-6 mb-8">
+          <div className="text-left border border-rule rounded-card p-6 mb-8">
             <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">
               Dane do przelewu
             </h2>
@@ -131,7 +131,7 @@ export default function CheckoutForm({
         )}
 
         {confirmation.paymentMethod === "cod" && (
-          <div className="text-left border border-rule rounded-2xl p-6 mb-8">
+          <div className="text-left border border-rule rounded-card p-6 mb-8">
             <p className="text-sm text-ink-2">
               Płatność przy odbiorze:{" "}
               <span className="font-bold text-ink">{formatPln(parseFloat(confirmation.total))}</span>{" "}
@@ -142,7 +142,7 @@ export default function CheckoutForm({
 
         <Link
           href={`/${shopSlug}`}
-          className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-button hover:opacity-90 transition-opacity"
         >
           Wróć do sklepu
         </Link>
@@ -162,7 +162,7 @@ export default function CheckoutForm({
         </p>
         <Link
           href={`/${shopSlug}`}
-          className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-button hover:opacity-90 transition-opacity"
         >
           Wróć do sklepu
         </Link>
@@ -307,7 +307,7 @@ export default function CheckoutForm({
           {!hasPhysical && (
             <section>
               <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">Realizacja</h2>
-              <div className="border border-rule rounded-xl p-4 text-sm text-ink-2 space-y-1.5">
+              <div className="border border-rule rounded-input p-4 text-sm text-ink-2 space-y-1.5">
                 {hasDigital && (
                   <p>📩 Produkty cyfrowe dostarczymy na e-mail podany powyżej — bez wysyłki i adresu.</p>
                 )}
@@ -326,7 +326,7 @@ export default function CheckoutForm({
               {deliveryMethods.map((m) => (
                 <label
                   key={m.id}
-                  className={`flex items-center justify-between gap-3 border rounded-xl px-4 py-3.5 cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between gap-3 border rounded-input px-4 py-3.5 cursor-pointer transition-colors ${
                     deliveryId === m.id ? "border-ink" : "border-rule hover:border-ink-2/40"
                   }`}
                 >
@@ -358,7 +358,7 @@ export default function CheckoutForm({
             <div className="space-y-2.5">
               {transferEnabled && (
                 <label
-                  className={`flex items-center justify-between gap-3 border rounded-xl px-4 py-3.5 cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between gap-3 border rounded-input px-4 py-3.5 cursor-pointer transition-colors ${
                     effPayment === "transfer" ? "border-ink" : "border-rule hover:border-ink-2/40"
                   }`}
                 >
@@ -378,7 +378,7 @@ export default function CheckoutForm({
               )}
               {codShown && (
                 <label
-                  className={`flex items-center justify-between gap-3 border rounded-xl px-4 py-3.5 cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between gap-3 border rounded-input px-4 py-3.5 cursor-pointer transition-colors ${
                     effPayment === "cod" ? "border-ink" : "border-rule hover:border-ink-2/40"
                   }`}
                 >
@@ -418,7 +418,7 @@ export default function CheckoutForm({
         </div>
 
         {/* ── Right: summary ── */}
-        <aside className="border border-rule rounded-2xl p-6 lg:sticky lg:top-24">
+        <aside className="border border-rule rounded-card p-6 lg:sticky lg:top-24">
           <h2 className="text-sm font-semibold tracking-wide text-ink mb-5">Podsumowanie</h2>
 
           <ul className="space-y-3 mb-5">
@@ -464,13 +464,13 @@ export default function CheckoutForm({
                       }
                     }}
                     placeholder="Kod rabatowy"
-                    className="flex-1 min-w-0 border border-rule rounded-xl px-3 py-2 text-xs text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors uppercase"
+                    className="flex-1 min-w-0 border border-rule rounded-input px-3 py-2 text-xs text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors uppercase"
                   />
                   <button
                     type="button"
                     onClick={applyDiscount}
                     disabled={checkingCode || !discountInput.trim()}
-                    className="text-xs font-semibold px-3.5 py-2 rounded-xl border border-rule text-ink hover:border-ink transition-colors disabled:opacity-50 shrink-0"
+                    className="text-xs font-semibold px-3.5 py-2 rounded-input border border-rule text-ink hover:border-ink transition-colors disabled:opacity-50 shrink-0"
                   >
                     {checkingCode ? "…" : "Zastosuj"}
                   </button>
@@ -524,7 +524,7 @@ export default function CheckoutForm({
           <button
             type="submit"
             disabled={submitting || (hasPhysical && !method) || (!transferEnabled && !codShown)}
-            className="w-full mt-6 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full mt-6 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-button hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {submitting ? "Składanie zamówienia…" : "Zamawiam i płacę"}
           </button>

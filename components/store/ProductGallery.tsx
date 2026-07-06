@@ -12,7 +12,7 @@ export default function ProductGallery({ images, name }: Props) {
 
   if (images.length === 0) {
     return (
-      <div className="aspect-[4/5] bg-paper-3 rounded-2xl flex items-center justify-center">
+      <div className="aspect-[4/5] bg-paper-3 rounded-card flex items-center justify-center">
         <div className="w-16 h-16 border-2 border-dashed border-rule rounded-xl flex items-center justify-center">
           <span className="text-2xl font-light text-ink-2/60">✦</span>
         </div>
@@ -22,7 +22,7 @@ export default function ProductGallery({ images, name }: Props) {
 
   return (
     <div>
-      <div className="aspect-[4/5] bg-paper-3 rounded-2xl overflow-hidden">
+      <div className="aspect-[4/5] bg-paper-3 rounded-card overflow-hidden">
         <img
           src={images[active]}
           alt={name}
@@ -36,7 +36,7 @@ export default function ProductGallery({ images, name }: Props) {
               key={`${url}-${i}`}
               onClick={() => setActive(i)}
               aria-label={`Zdjęcie ${i + 1}`}
-              className={`w-16 h-16 rounded-xl overflow-hidden bg-paper-3 transition-all ${
+              className={`w-16 h-16 rounded-input overflow-hidden bg-paper-3 transition-all ${
                 i === active ? "ring-2 ring-ink" : "opacity-70 hover:opacity-100"
               }`}
             >

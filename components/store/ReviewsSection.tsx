@@ -36,7 +36,7 @@ export default function ReviewsSection({ config }: Props) {
           {config.items.map((review, i) => (
             <div
               key={i}
-              className="border border-rule rounded-2xl p-6 hover:border-rule transition-colors duration-300"
+              className="border border-rule rounded-card p-6 hover:border-rule transition-colors duration-300"
             >
               <div className="flex gap-0.5 mb-4">
                 {Array.from({ length: 5 }).map((_, s) => (

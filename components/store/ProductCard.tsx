@@ -36,7 +36,7 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
   return (
     <div className="group">
       {/* Image */}
-      <div className="relative aspect-[4/5] bg-paper-3 rounded-2xl overflow-hidden mb-4">
+      <div className="relative aspect-[4/5] bg-paper-3 rounded-card overflow-hidden mb-4">
         {mainImage ? (
           <img src={mainImage} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -52,7 +52,7 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
           </span>
         ) : (
           product.badge && (
-            <span className="absolute top-3 left-3 bg-ink text-on-ink text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full">
+            <span className="absolute top-3 left-3 bg-secondary-brand text-on-secondary text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full">
               {product.badge}
             </span>
           )

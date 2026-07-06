@@ -40,11 +40,22 @@
      --brand-accent + --brand-ink to repaint the storefront. */
   --brand-accent:     var(--brand-magenta);
 
-  /* Foreground that sits on bg-ink / bg-accent-brand. BrandTheme picks
-     based on contrast of the active palette; defaults assume dark ink +
-     vivid accent so both want white. */
-  --brand-on-ink:     #ffffff;
-  --brand-on-accent:  #ffffff;
+  /* Per-shop „pop" secondary (badge'e/akcenty). Defaults to accent, so
+     sklepy sprzed presetów Michała wyglądają jak dawniej. */
+  --brand-secondary:  var(--brand-accent);
+
+  /* Foreground that sits on bg-ink / bg-accent-brand / bg-secondary-brand.
+     BrandTheme picks based on contrast of the active palette; defaults
+     assume dark ink + vivid accent so both want white. */
+  --brand-on-ink:       #ffffff;
+  --brand-on-accent:    #ffffff;
+  --brand-on-secondary: #ffffff;
+
+  /* Corner-radius scale (px) — per-shop overridable by BrandTheme z presetu
+     stylu. Defaults zbliżone do dotychczasowego wyglądu storefrontu. */
+  --brand-radius-input:  8px;
+  --brand-radius-card:   16px;
+  --brand-radius-button: 9999px;
 
   /* Type */
   --font-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -74,11 +85,18 @@
   --color-aqua-2:      var(--brand-aqua-2);
   --color-magenta:     var(--brand-magenta);
   --color-magenta-2:   var(--brand-magenta-2);
-  --color-accent-brand:  var(--brand-accent);
-  --color-on-ink:        var(--brand-on-ink);
-  --color-on-accent:     var(--brand-on-accent);
+  --color-accent-brand:    var(--brand-accent);
+  --color-secondary-brand: var(--brand-secondary);
+  --color-on-ink:          var(--brand-on-ink);
+  --color-on-accent:       var(--brand-on-accent);
+  --color-on-secondary:    var(--brand-on-secondary);
   --color-success-brand: var(--brand-success);
   --color-warning-brand: var(--brand-warning);
+  /* Per-shop corner radius → utilities rounded-input / rounded-card /
+     rounded-button (BrandTheme nadpisuje --brand-radius-* z presetu). */
+  --radius-input:  var(--brand-radius-input);
+  --radius-card:   var(--brand-radius-card);
+  --radius-button: var(--brand-radius-button);
   --font-display: var(--font-display);
   --font-body:    var(--font-body);
 

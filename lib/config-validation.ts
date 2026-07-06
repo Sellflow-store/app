@@ -38,15 +38,39 @@ export function safeTrackingId(v: unknown): string {
   return typeof v === "string" ? v.trim().replace(/[^\w.\-]/g, "").slice(0, 64) : "";
 }
 
+/** Radius scale (px) — reaches an inline <style> via BrandTheme, so coerce to
+ *  clamped integers. Returns null when the shape is invalid (caller drops it). */
+export function safeRadius(
+  v: unknown,
+): { input: number; card: number; button: number } | null {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const o = v as Record<string, unknown>;
+  const n = (x: unknown) =>
+    typeof x === "number" && Number.isFinite(x)
+      ? Math.max(0, Math.min(9999, Math.round(x)))
+      : null;
+  const input = n(o.input);
+  const card = n(o.card);
+  const button = n(o.button);
+  if (input === null || card === null || button === null) return null;
+  return { input, card, button };
+}
+
 /** Scrub the values whose key feeds an HTML/CSS/JS sink on the storefront. */
 export function scrubConfigValue(key: string, value: Record<string, unknown>): Record<string, unknown> {
   if (key === "branding") {
     const v = { ...value };
     if ("primaryColor" in v) v.primaryColor = safeColor(v.primaryColor, "#0c0c0c");
     if ("accentColor" in v) v.accentColor = safeColor(v.accentColor, "#db00b2");
+    if ("secondaryColor" in v && v.secondaryColor) v.secondaryColor = safeColor(v.secondaryColor, "");
     if ("paperColor" in v && v.paperColor) v.paperColor = safeColor(v.paperColor, "");
     if ("fontFamily" in v && v.fontFamily) v.fontFamily = safeFont(v.fontFamily, "Space Grotesk");
     if ("bodyFontFamily" in v && v.bodyFontFamily) v.bodyFontFamily = safeFont(v.bodyFontFamily, "Inter Tight");
+    if ("radius" in v) {
+      const r = safeRadius(v.radius);
+      if (r) v.radius = r;
+      else delete v.radius;
+    }
     return v;
   }
   if (key === "integrations") {

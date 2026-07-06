@@ -29,14 +29,14 @@ export default function HeroSection({ config, shopSlug }: Props) {
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
                 href={`/${shopSlug}/products`}
-                className="bg-ink text-on-ink px-8 py-3.5 text-sm tracking-wide hover:bg-ink transition-colors duration-200 flex items-center justify-center gap-2 group"
+                className="bg-ink text-on-ink px-8 py-3.5 text-sm tracking-wide rounded-button hover:bg-ink transition-colors duration-200 flex items-center justify-center gap-2 group"
               >
                 {config.ctaPrimary}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={1.5} />
               </Link>
               <a
                 href="#sklep"
-                className="border border-rule text-ink-2 px-8 py-3.5 text-sm tracking-wide hover:border-ink hover:text-ink transition-all duration-200 flex items-center justify-center"
+                className="border border-rule text-ink-2 px-8 py-3.5 text-sm tracking-wide rounded-button hover:border-ink hover:text-ink transition-all duration-200 flex items-center justify-center"
               >
                 {config.ctaSecondary}
               </a>
@@ -52,11 +52,11 @@ export default function HeroSection({ config, shopSlug }: Props) {
                 <img
                   src={config.image}
                   alt="Hero"
-                  className="w-full h-full object-cover rounded-3xl"
+                  className="w-full h-full object-cover rounded-card"
                 />
               ) : (
                 <>
-                  <div className="absolute inset-0 bg-paper-3/60 rounded-3xl" />
+                  <div className="absolute inset-0 bg-paper-3/60 rounded-card" />
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-ink-2/70">
                     <div className="w-24 h-24 border-2 border-dashed border-rule rounded-2xl flex items-center justify-center mb-4">
                       <span className="text-3xl font-light">✦</span>
