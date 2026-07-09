@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { decodeBootstrap } from "@/lib/brand/bootstrap";
 import { bootstrapToShopContext } from "@/lib/brand/bootstrap-to-shop";
 import type { ShopContext } from "@/types/shop";
@@ -25,6 +25,42 @@ import Footer from "@/components/store/Footer";
 export default function PreviewShopPage() {
   const [shop, setShop] = useState<ShopContext | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [noticeVisible, setNoticeVisible] = useState(false);
+  const noticeTimer = useRef<number | null>(null);
+
+  const showPreviewNotice = () => {
+    setNoticeVisible(true);
+    if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
+    noticeTimer.current = window.setTimeout(() => setNoticeVisible(false), 2500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
+    };
+  }, []);
+
+  // The preview shop doesn't exist in the DB yet, so every /{slug}/... route
+  // its links point at would 404. Block navigation at the root instead of
+  // threading a previewMode prop through every storefront component; pure
+  // hash links (#sklep) still scroll. next/link skips routing when
+  // defaultPrevented is set, and propagation continues so e.g. the mobile
+  // menu still closes itself.
+  const handleClickCapture = (e: React.MouseEvent) => {
+    const anchor = (e.target as HTMLElement).closest?.("a");
+    if (!anchor) return;
+    const href = anchor.getAttribute("href") ?? "";
+    if (href.startsWith("#")) return;
+    e.preventDefault();
+    showPreviewNotice();
+  };
+
+  // ProductSearch submits via router.push — same problem, same treatment.
+  const handleSubmitCapture = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showPreviewNotice();
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -47,7 +83,11 @@ export default function PreviewShopPage() {
   return (
     <>
       <BrandTheme branding={shop.branding} />
-      <div className="min-h-screen bg-paper">
+      <div
+        className="min-h-screen bg-paper"
+        onClickCapture={handleClickCapture}
+        onSubmitCapture={handleSubmitCapture}
+      >
         <TopBar config={shop.home} />
         <Navbar shopSlug={shop.slug} branding={shop.branding} />
         <HeroSection config={shop.home.hero} shopSlug={shop.slug} />
@@ -60,6 +100,18 @@ export default function PreviewShopPage() {
         <GuaranteeSection config={shop.home.guarantee} />
         <Footer shopSlug={shop.slug} branding={shop.branding} />
       </div>
+      {noticeVisible && (
+        <div
+          role="status"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-full text-sm shadow-lg"
+          style={{
+            background: "var(--brand-ink, #111)",
+            color: "var(--brand-paper, #fff)",
+          }}
+        >
+          To podgląd — podstrony sklepu odblokujesz po zapisaniu.
+        </div>
+      )}
     </>
   );
 }
