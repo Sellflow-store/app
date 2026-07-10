@@ -76,6 +76,14 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
   const pathname = usePathname();
   const base = `/dashboard/${shopSlug}`;
 
+  // Preview opens the live storefront on the shop's own subdomain
+  // ({slug}.sell-flow.store), not app.sell-flow.store/{slug}. On localhost
+  // there's no wildcard, so fall back to the path form the dev server serves.
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const isLocal = appUrl.includes("localhost") || appUrl.includes("127.0.0.1");
+  const previewUrl = isLocal ? `/${shopSlug}` : `https://${shopSlug}.${appDomain}`;
+
   function isActive(slug: string) {
     if (slug === "") return pathname === base; // Pulpit — only the bare base
     return pathname === `${base}/${slug}` || pathname.startsWith(`${base}/${slug}/`);
@@ -173,7 +181,7 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
           style={{ borderTop: "1px solid oklch(18% 0 0)" }}
         >
           <Link
-            href={`/${shopSlug}`}
+            href={previewUrl}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-2 text-[11px] transition-colors"
