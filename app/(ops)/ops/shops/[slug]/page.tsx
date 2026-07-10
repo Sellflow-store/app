@@ -40,6 +40,9 @@ export default async function ShopDetailPage({ params }: PageProps) {
     | undefined;
 
   const storefrontUrl = `https://${shop.slug}.sell-flow.store`;
+  // Absolute so "act as owner" opens the merchant dashboard on the app host
+  // even when ops is being used from admin.<domain>.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
   return (
     <div className="max-w-4xl space-y-8">
@@ -92,8 +95,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
             Otwórz storefront
           </a>
           {!shop.deletedAt && (
-            <Link
-              href={`/dashboard/${shop.slug}/orders`}
+            <a
+              href={`${appUrl}/dashboard/${shop.slug}/orders`}
               className="inline-flex items-center gap-1.5 text-sm font-semibold rounded-full px-4 py-2 transition-colors"
               style={{
                 background: "var(--brand-accent)",
@@ -102,7 +105,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
             >
               <LogIn className="w-4 h-4" strokeWidth={1.75} />
               Zaloguj jako właściciel
-            </Link>
+            </a>
           )}
         </div>
       </header>

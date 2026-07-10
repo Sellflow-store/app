@@ -23,9 +23,29 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
   const isVercelPreview = hostname.endsWith(".vercel.app");
   const isMainDomain = hostname === appDomain || hostname === `www.${appDomain}` || isPlatform || isVercelPreview;
-  const hasSubdomain = !isLocalhost && !isMainDomain && hostname.endsWith(`.${appDomain}`);
+  // admin.<domain> is the operator panel (app/(ops)/ops/*), not a shop.
+  const isAdminHost = hostname === `admin.${appDomain}`;
+  const hasSubdomain = !isLocalhost && !isMainDomain && !isAdminHost && hostname.endsWith(`.${appDomain}`);
 
-  if (hasSubdomain) {
+  // ── Operator panel on admin.<domain> ─────────────────────────────────────
+  // Serve the existing /ops routes here. Bare + shorthand paths get the /ops
+  // prefix so admin.<domain> and admin.<domain>/shops both resolve; the /ops
+  // links the panel already emits, plus auth/dashboard/api, pass through.
+  // Role gate stays in app/(ops)/ops/layout.tsx; the auth guard below runs on
+  // the pass-through /ops paths.
+  if (isAdminHost) {
+    const p = url.pathname;
+    const passthrough =
+      p.startsWith("/ops") ||
+      p.startsWith("/dashboard") ||
+      p.startsWith("/api") ||
+      /^\/(login|register|sso-callback)(\/|$)/.test(p);
+    if (!passthrough) {
+      const rewriteUrl = url.clone();
+      rewriteUrl.pathname = p === "/" ? "/ops" : `/ops${p}`;
+      return NextResponse.rewrite(rewriteUrl);
+    }
+  } else if (hasSubdomain) {
     const shopSlug = hostname.replace(`.${appDomain}`, "");
     const rewriteUrl = url.clone();
     // Storefront links are path-based (/{slug}/...), so client-side navigation
