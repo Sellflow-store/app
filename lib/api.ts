@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "./db";
 import { users, shops } from "./db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 export interface ShopAccess {
   userId: string;
@@ -28,14 +28,18 @@ export async function getShopAccess(shopSlug: string): Promise<ShopAccess | null
   });
   if (!user) return null;
 
+  // Soft-deleted shops are offline — neither owner nor ops can open the
+  // dashboard until the shop is restored (from /ops).
   if (user.role === "admin") {
-    const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
+    const shop = await db.query.shops.findFirst({
+      where: and(eq(shops.slug, shopSlug), isNull(shops.deletedAt)),
+    });
     if (!shop) return null;
     return { userId: user.id, shopId: shop.id, asAdmin: true };
   }
 
   const shop = await db.query.shops.findFirst({
-    where: and(eq(shops.slug, shopSlug), eq(shops.ownerId, user.id)),
+    where: and(eq(shops.slug, shopSlug), eq(shops.ownerId, user.id), isNull(shops.deletedAt)),
   });
   if (!shop) return null;
 

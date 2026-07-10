@@ -2,22 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Power, Trash2 } from "lucide-react";
+import { Power, Trash2, RotateCcw } from "lucide-react";
 import { PLANS, PLAN_IDS, type PlanId } from "@/lib/plans";
 
 interface Props {
   slug: string;
   shopName: string;
   suspended: boolean;
+  deleted: boolean;
   plan: string;
 }
 
-export default function ShopActions({ slug, shopName, suspended, plan }: Props) {
+export default function ShopActions({ slug, shopName, suspended, deleted, plan }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function patch(body: { suspended?: boolean; plan?: string }): Promise<boolean> {
+  async function patch(body: { suspended?: boolean; plan?: string; restore?: boolean }): Promise<boolean> {
     setBusy(true);
     setError(null);
     try {
@@ -57,7 +58,7 @@ export default function ShopActions({ slug, shopName, suspended, plan }: Props) 
 
   async function handleDelete() {
     const typed = prompt(
-      `Trwale usunąć sklep „${shopName}” wraz z produktami, zamówieniami i konfiguracją? Tej operacji NIE MOŻNA cofnąć.\n\nPrzepisz slug sklepu, aby potwierdzić:`
+      `Usunąć sklep „${shopName}”? Storefront zniknie z sieci, ale slug (subdomena) pozostaje zarezerwowany, a produkty, zamówienia i faktury są zachowane. Sklep można później przywrócić.\n\nPrzepisz slug sklepu, aby potwierdzić:`
     );
     if (typed !== slug) {
       if (typed !== null) alert("Slug się nie zgadza — usunięcie przerwane.");
@@ -71,13 +72,19 @@ export default function ShopActions({ slug, shopName, suspended, plan }: Props) 
         setError("Nie udało się usunąć sklepu.");
         return;
       }
-      router.push("/ops/shops");
       router.refresh();
     } catch {
       setError("Nie udało się usunąć sklepu.");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleRestore() {
+    if (!confirm(`Przywrócić sklep „${shopName}”? Storefront wróci do sieci pod tym samym adresem.`)) {
+      return;
+    }
+    await patch({ restore: true });
   }
 
   return (
@@ -160,28 +167,52 @@ export default function ShopActions({ slug, shopName, suspended, plan }: Props) 
           </button>
         </div>
 
-        {/* Delete */}
+        {/* Delete / restore */}
         <div
           className="flex items-center justify-between gap-4 pt-4"
           style={{ borderTop: "1px solid var(--brand-rule)" }}
         >
-          <div>
-            <p className="text-sm font-medium" style={{ color: "oklch(45% 0.18 20)" }}>
-              Usuń sklep
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
-              Trwale kasuje produkty, zamówienia i konfigurację. Konto właściciela zostaje.
-            </p>
-          </div>
-          <button
-            onClick={handleDelete}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
-            style={{ color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }}
-          >
-            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-            Usuń trwale
-          </button>
+          {deleted ? (
+            <>
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--brand-ink)" }}>
+                  Sklep usunięty
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
+                  Storefront offline, slug zarezerwowany, dane zachowane. Można przywrócić.
+                </p>
+              </div>
+              <button
+                onClick={handleRestore}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
+                style={{ background: "var(--brand-success, oklch(52% 0.2 158))", color: "#fff" }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.75} />
+                {busy ? "…" : "Przywróć sklep"}
+              </button>
+            </>
+          ) : (
+            <>
+              <div>
+                <p className="text-sm font-medium" style={{ color: "oklch(45% 0.18 20)" }}>
+                  Usuń sklep
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
+                  Zdejmuje storefront z sieci. Slug pozostaje zarezerwowany, dane zachowane. Odwracalne.
+                </p>
+              </div>
+              <button
+                onClick={handleDelete}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
+                style={{ color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }}
+              >
+                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                Usuń sklep
+              </button>
+            </>
+          )}
         </div>
       </div>
     </section>

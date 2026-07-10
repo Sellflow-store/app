@@ -42,6 +42,8 @@ export function slugify(text: string): string {
  */
 export async function findFreeSlug(base: string): Promise<string> {
   const candidates = [base, ...Array.from({ length: 29 }, (_, i) => `${base}-${i + 2}`)];
+  // Deliberately NOT filtered by deleted_at: a soft-deleted shop keeps its
+  // slug reserved so the freed subdomain can't be re-registered and hijacked.
   const taken = await db
     .select({ slug: shops.slug })
     .from(shops)

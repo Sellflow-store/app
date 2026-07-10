@@ -17,7 +17,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, slug) });
   if (!shop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = (await req.json()) as Partial<{ suspended: boolean; plan: string }>;
+  const body = (await req.json()) as Partial<{ suspended: boolean; plan: string; restore: boolean }>;
+
+  if (body.restore === true) {
+    // Undo a soft delete: bring the shop back online. Slug was reserved the
+    // whole time (row never left), so nothing to reclaim.
+    await db
+      .update(shops)
+      .set({ deletedAt: null, updatedAt: new Date() })
+      .where(eq(shops.id, shop.id));
+  }
 
   if (body.suspended !== undefined) {
     if (typeof body.suspended !== "boolean") {
@@ -44,8 +53,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   return NextResponse.json({ ok: true });
 }
 
-/** Permanently delete a shop — products, orders, config etc. go with it
- *  via ON DELETE CASCADE. The owner account stays. */
+/** Soft-delete a shop: take the storefront + dashboard offline but keep the
+ *  row so the slug/subdomain stays reserved (no hijacking) and order/invoice
+ *  history is retained (PL tax: 5 lat). Reversible via PATCH { restore: true }.
+ *  Products/orders/config are NOT touched. */
 export async function DELETE(_req: NextRequest, { params }: Params) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,7 +64,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const { slug } = await params;
 
   const [deleted] = await db
-    .delete(shops)
+    .update(shops)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
     .where(eq(shops.slug, slug))
     .returning({ id: shops.id });
 

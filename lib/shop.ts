@@ -152,9 +152,9 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     where: eq(shops.slug, slug),
   });
 
-  // Storefront is visible only when the merchant has it on AND ops hasn't
-  // suspended it. The two flags are independent (see schema).
-  if (!shop || !shop.active || shop.suspended) return null;
+  // Storefront is visible only when the merchant has it on, ops hasn't
+  // suspended it, and it isn't soft-deleted. The flags are independent (schema).
+  if (!shop || !shop.active || shop.suspended || shop.deletedAt) return null;
 
   const [configs, shopProducts] = await Promise.all([
     db.select().from(shopConfig).where(eq(shopConfig.shopId, shop.id)),

@@ -44,6 +44,12 @@ export const shops = pgTable(
     // can't re-enable a shop the platform suspended by flipping their own flag.
     active: boolean("active").notNull().default(true),
     suspended: boolean("suspended").notNull().default(false),
+    // Soft delete. Set (not row-deleted) so the slug stays reserved via the
+    // unique index below — prevents a freed subdomain from being re-registered
+    // and hijacked — and order/invoice history is retained (PL tax: 5 lat).
+    // Reversible: clear to restore. Storefront + dashboard treat non-null as
+    // offline; findFreeSlug still counts the slug as taken.
+    deletedAt: timestamp("deleted_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

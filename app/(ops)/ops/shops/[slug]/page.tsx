@@ -91,17 +91,19 @@ export default async function ShopDetailPage({ params }: PageProps) {
             <ExternalLink className="w-4 h-4" strokeWidth={1.75} />
             Otwórz storefront
           </a>
-          <Link
-            href={`/dashboard/${shop.slug}/orders`}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold rounded-full px-4 py-2 transition-colors"
-            style={{
-              background: "var(--brand-accent)",
-              color: "var(--brand-on-accent)",
-            }}
-          >
-            <LogIn className="w-4 h-4" strokeWidth={1.75} />
-            Zaloguj jako właściciel
-          </Link>
+          {!shop.deletedAt && (
+            <Link
+              href={`/dashboard/${shop.slug}/orders`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold rounded-full px-4 py-2 transition-colors"
+              style={{
+                background: "var(--brand-accent)",
+                color: "var(--brand-on-accent)",
+              }}
+            >
+              <LogIn className="w-4 h-4" strokeWidth={1.75} />
+              Zaloguj jako właściciel
+            </Link>
+          )}
         </div>
       </header>
 
@@ -112,8 +114,13 @@ export default async function ShopDetailPage({ params }: PageProps) {
         <Stat label="Plan" value={shop.owner.plan ?? "free"} mono />
         <Stat
           label="Status"
-          value={shop.suspended ? "Zawieszony" : shop.active ? "Aktywny" : "Wyłączony"}
-          tone={shop.suspended || !shop.active ? "muted" : "success"}
+          value={
+            shop.deletedAt ? "Usunięty"
+            : shop.suspended ? "Zawieszony"
+            : shop.active ? "Aktywny"
+            : "Wyłączony"
+          }
+          tone={shop.deletedAt || shop.suspended || !shop.active ? "muted" : "success"}
         />
       </section>
 
@@ -122,6 +129,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
         slug={shop.slug}
         shopName={shop.name}
         suspended={shop.suspended}
+        deleted={!!shop.deletedAt}
         plan={shop.owner.plan ?? "free"}
       />
 
@@ -136,6 +144,9 @@ export default async function ShopDetailPage({ params }: PageProps) {
         <Row label="Własna domena" value={shop.customDomain ?? "—"} mono />
         <Row label="Utworzono" value={new Date(shop.createdAt).toLocaleString("pl-PL")} mono />
         <Row label="Ostatnia zmiana" value={new Date(shop.updatedAt).toLocaleString("pl-PL")} mono />
+        {shop.deletedAt && (
+          <Row label="Usunięto" value={new Date(shop.deletedAt).toLocaleString("pl-PL")} mono />
+        )}
       </section>
 
       <section
