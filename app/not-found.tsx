@@ -20,6 +20,7 @@ export default async function NotFound() {
   const appSubdomain = process.env.NEXT_PUBLIC_APP_SUBDOMAIN ?? "app";
   const isPlatform =
     host === `${appSubdomain}.${appDomain}` ||
+    host === `admin.${appDomain}` ||
     host === appDomain ||
     host === `www.${appDomain}`;
 

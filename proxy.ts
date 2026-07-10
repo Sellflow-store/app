@@ -36,13 +36,17 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   if (isAdminHost) {
     const p = url.pathname;
     const passthrough =
-      p.startsWith("/ops") ||
-      p.startsWith("/dashboard") ||
+      p === "/ops" ||
+      p.startsWith("/ops/") ||
       p.startsWith("/api") ||
       /^\/(login|register|sso-callback)(\/|$)/.test(p);
     if (!passthrough) {
+      // Everything else on the admin host is the panel: "/", the post-login
+      // "/onboarding" landing, and any stray path all render /ops. Rewrite (not
+      // redirect) to the panel root so the ops layout does the logged-out →
+      // /login bounce, instead of auth.protect() 404-ing a /ops/<stray> path.
       const rewriteUrl = url.clone();
-      rewriteUrl.pathname = p === "/" ? "/ops" : `/ops${p}`;
+      rewriteUrl.pathname = "/ops";
       return NextResponse.rewrite(rewriteUrl);
     }
   } else if (hasSubdomain) {
