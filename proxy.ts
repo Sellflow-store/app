@@ -28,7 +28,12 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   if (hasSubdomain) {
     const shopSlug = hostname.replace(`.${appDomain}`, "");
     const rewriteUrl = url.clone();
-    rewriteUrl.pathname = `/${shopSlug}${url.pathname}`;
+    // Storefront links are path-based (/{slug}/...), so client-side navigation
+    // on a subdomain already carries the slug — prepending again would give
+    // /{slug}/{slug}/... and 404 on every click past the homepage.
+    const alreadyPrefixed =
+      url.pathname === `/${shopSlug}` || url.pathname.startsWith(`/${shopSlug}/`);
+    rewriteUrl.pathname = alreadyPrefixed ? url.pathname : `/${shopSlug}${url.pathname}`;
     return NextResponse.rewrite(rewriteUrl);
   }
 
