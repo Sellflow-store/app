@@ -16,8 +16,13 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
   const { userId: clerkId } = await auth();
   if (!clerkId) redirect("/login");
 
+  // Non-admins are bounced to the app platform. Must be an ABSOLUTE app-host
+  // URL, not "/": on admin.<domain> the middleware rewrites "/" back to /ops,
+  // so a relative redirect here would loop (ERR_TOO_MANY_REDIRECTS).
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user || user.role !== "admin") redirect("/");
+  if (!user || user.role !== "admin") {
+    redirect(process.env.NEXT_PUBLIC_APP_URL || "/");
+  }
 
   const clerkUser = await currentUser();
   const displayName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ")
