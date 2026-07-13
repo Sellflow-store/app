@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, ShieldCheck } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import GlobalSearch from "./GlobalSearch";
 import NotificationsBell from "./NotificationsBell";
@@ -28,10 +28,12 @@ const PAGE_LABELS: Record<string, string> = {
 interface HeaderProps {
   shopSlug: string;
   section: string;
+  /** Set for Sellflow staff only: URL of the operator panel. */
+  adminHref?: string | null;
   onMenuToggle: () => void;
 }
 
-export default function Header({ shopSlug, section, onMenuToggle }: HeaderProps) {
+export default function Header({ shopSlug, section, adminHref = null, onMenuToggle }: HeaderProps) {
   return (
     <header
       className="h-14 flex items-center gap-4 px-4 sm:px-6 shrink-0"
@@ -55,6 +57,22 @@ export default function Header({ shopSlug, section, onMenuToggle }: HeaderProps)
       <div className="flex-1 flex justify-end sm:justify-center">
         <GlobalSearch shopSlug={shopSlug} />
       </div>
+
+      {adminHref && (
+        <a
+          href={adminHref}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors hover:opacity-90"
+          style={{
+            background: "oklch(22% 0.24 270)",
+            color: "#fff",
+            fontFamily: "var(--font-mono)",
+          }}
+          title="Przejdź do panelu operatora Sellflow"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2} />
+          <span className="hidden sm:inline">Panel admina</span>
+        </a>
+      )}
 
       <NotificationsBell shopSlug={shopSlug} />
 

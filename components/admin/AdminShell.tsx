@@ -9,9 +9,11 @@ import ThemeProvider from "./ThemeProvider";
 interface AdminShellProps {
   shopSlug: string;
   children: React.ReactNode;
+  /** Non-null only for Sellflow staff: URL of the operator panel to switch to. */
+  adminHref?: string | null;
 }
 
-export default function AdminShell({ shopSlug, children }: AdminShellProps) {
+export default function AdminShell({ shopSlug, children, adminHref = null }: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -31,6 +33,7 @@ export default function AdminShell({ shopSlug, children }: AdminShellProps) {
           <Header
             shopSlug={shopSlug}
             section={section}
+            adminHref={adminHref}
             onMenuToggle={() => setMobileOpen((v) => !v)}
           />
           <main

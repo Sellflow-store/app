@@ -4,7 +4,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { LayoutGrid, Store, LogOut } from "lucide-react";
+import { LayoutGrid, Store, LogOut, ExternalLink } from "lucide-react";
 
 /**
  * Defence-in-depth role gate. Middleware already requires a Clerk session
@@ -28,6 +28,13 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
   const displayName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ")
     || user.email
     || "Admin";
+
+  // Where "Przejdź do sklepu" sends an admin back to the merchant app. On the
+  // deployed hosts these are separate subdomains; in local dev it's the root.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    || (process.env.NEXT_PUBLIC_APP_DOMAIN
+        ? `https://${process.env.NEXT_PUBLIC_APP_SUBDOMAIN || "app"}.${process.env.NEXT_PUBLIC_APP_DOMAIN}`
+        : "/");
 
   return (
     <div
@@ -76,6 +83,19 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
           <NavLink href="/ops/shops" icon={<Store className="w-4 h-4" strokeWidth={1.75} />}>
             Sklepy
           </NavLink>
+
+          <div className="pt-2 mt-2" style={{ borderTop: "1px solid var(--brand-rule)" }}>
+            <a
+              href={appUrl}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
+              style={{ color: "var(--brand-ink-2)" }}
+            >
+              <span style={{ color: "var(--brand-ink-2)" }}>
+                <ExternalLink className="w-4 h-4" strokeWidth={1.75} />
+              </span>
+              Przejdź do sklepu
+            </a>
+          </div>
         </nav>
 
         <div
