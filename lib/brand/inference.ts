@@ -162,20 +162,20 @@ export function suggestNames(sells: string): string[] {
 /* ── Audience ────────────────────────────────────────────────────────────── */
 
 const AUDIENCE: Record<Category, string> = {
-  candles:    'Gift-buyers and home-aesthetic women 25–45, mid-to-premium spend',
-  home_decor: 'Aesthetic-minded apartment dwellers 28–50, mid-to-premium spend',
-  jewelry:    'Self-gifters and gift-shoppers 22–45, mid-premium spend',
-  apparel:    'Style-conscious adults 22–40, mid-tier spend',
-  beauty:     'Skincare-curious women 25–45, premium spend',
-  coffee:     'Home brewers and gift-buyers 28–55, mid-premium spend',
-  food:       'Foodies and gift-buyers 28–55, mid spend',
-  art:        'Renters and first-home buyers 25–45, mid spend',
-  digital:    'Operators and creators 25–45 who buy templates and tools',
-  plants:     'Urban plant parents 25–40, mid spend',
-  accessories:'Daily-carry-minded professionals 25–45, mid-premium',
-  kids:       'Parents 28–42 buying for kids and gifts',
-  pets:       'Pet owners 25–50, mid spend',
-  lifestyle:  'Discerning adults 25–45 who value quiet, well-made things',
+  candles:    'Kupujący prezenty i ceniące estetykę domu kobiety 25–45, budżet średni–premium',
+  home_decor: 'Osoby z gustem urządzające mieszkanie 28–50, budżet średni–premium',
+  jewelry:    'Kupujący dla siebie i na prezent 22–45, budżet średni–premium',
+  apparel:    'Świadomi stylu dorośli 22–40, budżet średni',
+  beauty:     'Kobiety ciekawe pielęgnacji 25–45, budżet premium',
+  coffee:     'Domowi baryści i kupujący prezenty 28–55, budżet średni–premium',
+  food:       'Smakosze i kupujący prezenty 28–55, budżet średni',
+  art:        'Wynajmujący i pierwsi właściciele mieszkań 25–45, budżet średni',
+  digital:    'Operatorzy i twórcy 25–45, kupujący szablony i narzędzia',
+  plants:     'Miejscy rodzice roślin 25–40, budżet średni',
+  accessories:'Profesjonaliści ceniący codzienne akcesoria 25–45, budżet średni–premium',
+  kids:       'Rodzice 28–42 kupujący dla dzieci i na prezent',
+  pets:       'Właściciele zwierząt 25–50, budżet średni',
+  lifestyle:  'Wymagający dorośli 25–45, ceniący spokojne, dobrze zrobione rzeczy',
 }
 
 /* ── Hero copy ───────────────────────────────────────────────────────────── */
@@ -185,67 +185,67 @@ type CopyTpl = { headlines: string[]; subs: string[] }
 const COPY: Record<Category, CopyTpl> = {
   candles: {
     headlines: [
-      'Hand-poured. Slow-burned. Made for moments.',
-      'Quiet light, made one batch at a time.',
-      'Candles for the part of the day that matters.',
+      'Ręcznie lane. Wolno palone. Na ważne chwile.',
+      'Spokojne światło, tworzone partia po partii.',
+      'Świece na tę część dnia, która się liczy.',
     ],
     subs: [
-      'Calm, clean-burning candles for people who notice the difference.',
-      'Small-batch wax, considered scents, made to last.',
-      'Made by hand. Built to slow you down.',
+      'Spokojne, czysto palące się świece dla tych, którzy czują różnicę.',
+      'Wosk z małych partii, przemyślane zapachy, zrobione na lata.',
+      'Robione ręcznie. Po to, by Cię zwolnić.',
     ],
   },
   home_decor: {
-    headlines: ['Objects you live with, not around.', 'For the rooms you actually use.'],
-    subs: ['Small-batch home goods for people who notice materials.', 'Made to be touched daily.'],
+    headlines: ['Przedmioty, z którymi żyjesz, nie obok których.', 'Do pokoi, których naprawdę używasz.'],
+    subs: ['Dobra do domu z małych partii dla tych, którzy czują materiały.', 'Zrobione, by dotykać ich codziennie.'],
   },
   jewelry: {
-    headlines: ['Small things, worn forever.', 'Quiet pieces. Built to last decades.'],
-    subs: ['Hand-finished jewellery for everyday wear.', 'Made in small batches. Sized to last.'],
+    headlines: ['Małe rzeczy noszone latami.', 'Spokojne formy. Na dekady.'],
+    subs: ['Ręcznie wykańczana biżuteria na co dzień.', 'Tworzona w małych partiach. Na lata.'],
   },
   apparel: {
-    headlines: ['Made simply. Worn daily.', 'Fewer pieces. Better made.'],
-    subs: ['Clothing for a wardrobe you actually reach for.', 'Cut from honest fabric, built to be worn.'],
+    headlines: ['Zrobione prosto. Noszone codziennie.', 'Mniej rzeczy. Lepiej zrobionych.'],
+    subs: ['Ubrania do szafy, po którą naprawdę sięgasz.', 'Z uczciwych tkanin, zrobione do noszenia.'],
   },
   beauty: {
-    headlines: ['Skincare without the noise.', 'Calm formulas for everyday skin.'],
-    subs: ['Made with ingredients you can read out loud.', 'Honest formulas. Quiet routine.'],
+    headlines: ['Pielęgnacja bez hałasu.', 'Spokojne formuły na codzienną skórę.'],
+    subs: ['Ze składników, które przeczytasz na głos.', 'Uczciwe formuły. Spokojny rytuał.'],
   },
   coffee: {
-    headlines: ['Slow-roasted, in small batches.', 'Coffee for the part of the morning that counts.'],
-    subs: ['Single-origin beans, roasted to order.', 'Made for people who notice the cup.'],
+    headlines: ['Wolno palona, w małych partiach.', 'Kawa na tę część poranka, która się liczy.'],
+    subs: ['Ziarna z jednego źródła, palone na zamówienie.', 'Dla tych, którzy czują filiżankę.'],
   },
   food: {
-    headlines: ['Honest food, made small.', 'Made in batches you can taste.'],
-    subs: ['Real ingredients, made in real kitchens.', 'Slow recipes. Short pantries.'],
+    headlines: ['Uczciwe jedzenie, robione w małej skali.', 'W partiach, które czuć w smaku.'],
+    subs: ['Prawdziwe składniki z prawdziwych kuchni.', 'Wolne przepisy. Krótkie listy składników.'],
   },
   art: {
-    headlines: ['Prints for blank walls.', 'Editions you actually live with.'],
-    subs: ['Limited prints from a working studio.', 'Considered work, made affordable.'],
+    headlines: ['Grafiki na puste ściany.', 'Edycje, z którymi naprawdę żyjesz.'],
+    subs: ['Limitowane druki z działającej pracowni.', 'Przemyślana praca w dostępnej cenie.'],
   },
   digital: {
-    headlines: ['Tools that save you a Tuesday.', 'The kit, not the lecture.'],
-    subs: ['Templates and presets built from real work.', 'Cut the busywork. Keep the shape.'],
+    headlines: ['Narzędzia, które oszczędzą Ci wtorek.', 'Zestaw, nie wykład.'],
+    subs: ['Szablony i presety z prawdziwej pracy.', 'Zetnij nudną robotę. Zostaw formę.'],
   },
   plants: {
-    headlines: ['Living things, sent gently.', 'Plants for rooms you spend time in.'],
-    subs: ['Grown carefully, packed carefully, shipped slowly.', 'For people who keep things alive.'],
+    headlines: ['Żywe rzeczy, wysyłane delikatnie.', 'Rośliny do pokoi, w których spędzasz czas.'],
+    subs: ['Hodowane z troską, pakowane z troską, wysyłane spokojnie.', 'Dla tych, którzy utrzymują rzeczy przy życiu.'],
   },
   accessories: {
-    headlines: ['Daily carry, made to last.', 'Things you pack first.'],
-    subs: ['Quiet accessories for working days.', 'Built to outlast the season.'],
+    headlines: ['Codzienne akcesoria na lata.', 'Rzeczy, które pakujesz pierwsze.'],
+    subs: ['Spokojne akcesoria na dni pracy.', 'Zrobione, by przetrwać niejeden sezon.'],
   },
   kids: {
-    headlines: ['Things kids actually keep.', 'Made for the long childhood.'],
-    subs: ['Soft, durable, considered. Made for play.', 'Designed for years, not weeks.'],
+    headlines: ['Rzeczy, które dzieci naprawdę zatrzymują.', 'Zrobione na całe dzieciństwo.'],
+    subs: ['Miękkie, trwałe, przemyślane. Do zabawy.', 'Zaprojektowane na lata, nie tygodnie.'],
   },
   pets: {
-    headlines: ['Made for the dog that gets walked.', 'Honest gear for everyday animals.'],
-    subs: ['Tough, soft, washable.', 'Built around how pets actually live.'],
+    headlines: ['Dla psa, który naprawdę chodzi na spacery.', 'Uczciwy sprzęt na co dzień.'],
+    subs: ['Wytrzymałe, miękkie, do prania.', 'Zrobione wokół tego, jak naprawdę żyją zwierzęta.'],
   },
   lifestyle: {
-    headlines: ['Made small. Made on purpose.', 'Quiet goods, made well.'],
-    subs: ['A small store of considered things.', 'Made for people who notice.'],
+    headlines: ['Robione w małej skali. Z rozmysłem.', 'Spokojne rzeczy, dobrze zrobione.'],
+    subs: ['Mały sklep z przemyślanymi rzeczami.', 'Dla tych, którzy zauważają.'],
   },
 }
 
@@ -258,42 +258,42 @@ function pickByTone(tone: string[], options: string[]): string {
 
 function defaultProblem(category: Category): string {
   switch (category) {
-    case 'candles':    return 'People want their home to feel calm but most candles smell artificial.'
-    case 'home_decor': return 'Most home goods are either disposable or too precious to actually use.'
-    case 'jewelry':    return 'Jewellery is either fast-fashion or untouchably expensive — nothing in between.'
-    case 'apparel':    return 'Wardrobes are full but nothing fits how the buyer actually lives.'
-    case 'beauty':     return 'Beauty shelves are loud, complicated, and full of ingredients no one reads.'
-    case 'coffee':     return 'Most coffee at home tastes like coffee at work.'
-    case 'food':       return 'Honest food is hard to find without driving to a farmer’s market.'
-    case 'art':        return 'Blank walls stay blank because real art feels out of reach.'
-    case 'digital':    return 'Operators waste hours rebuilding the same templates from scratch.'
-    case 'plants':     return 'Plants arrive stressed, ship badly, and die in the first month.'
-    case 'accessories':return 'Daily-carry gear breaks fast or looks dated within a year.'
-    case 'kids':       return 'Most kids’ things are loud, plastic, and built for one season.'
-    case 'pets':       return 'Pet gear is either ugly utility or expensive design.'
-    default:           return 'People want better-made everyday things and don’t know where to look.'
+    case 'candles':    return 'Ludzie chcą, by ich dom był spokojny, ale większość świec pachnie sztucznie.'
+    case 'home_decor': return 'Większość dóbr do domu jest albo jednorazowa, albo zbyt cenna, by ich używać.'
+    case 'jewelry':    return 'Biżuteria jest albo szybką modą, albo nieosiągalnie droga — nic pomiędzy.'
+    case 'apparel':    return 'Szafy są pełne, ale nic nie pasuje do tego, jak naprawdę żyje kupujący.'
+    case 'beauty':     return 'Półki z kosmetykami są głośne, skomplikowane i pełne składników, których nikt nie czyta.'
+    case 'coffee':     return 'Większość kawy w domu smakuje jak kawa w pracy.'
+    case 'food':       return 'Uczciwe jedzenie trudno znaleźć bez jazdy na targ.'
+    case 'art':        return 'Puste ściany zostają puste, bo prawdziwa sztuka wydaje się poza zasięgiem.'
+    case 'digital':    return 'Operatorzy tracą godziny, budując te same szablony od zera.'
+    case 'plants':     return 'Rośliny docierają zestresowane, źle znoszą wysyłkę i giną w pierwszym miesiącu.'
+    case 'accessories':return 'Codzienne akcesoria szybko się psują albo wyglądają przestarzale po roku.'
+    case 'kids':       return 'Większość rzeczy dla dzieci jest głośna, plastikowa i zrobiona na jeden sezon.'
+    case 'pets':       return 'Akcesoria dla zwierząt są albo brzydko użytkowe, albo drogo designerskie.'
+    default:           return 'Ludzie chcą lepiej zrobionych codziennych rzeczy i nie wiedzą, gdzie ich szukać.'
   }
 }
 
 function defaultEdge(category: Category, traits: string[]): string {
-  const trait = traits[0]?.toLowerCase() ?? 'considered'
+  const trait = traits[0]?.toLowerCase() ?? 'przemyślane'
   const base: Record<Category, string> = {
-    candles:    'Hand-poured in small batches with natural wax and considered scents.',
-    home_decor: 'Made in small runs by makers we actually know.',
-    jewelry:    'Hand-finished. Recycled metals. Real warranties.',
-    apparel:    'Cut in small runs. Natural fibres. Honest construction.',
-    beauty:     'Short ingredient lists. Independently tested. No filler.',
-    coffee:     'Single-origin, roasted-to-order, shipped within 48h.',
-    food:       'Made by people you can call. Short pantries. Honest pricing.',
-    art:        'Limited editions, signed and numbered by the artist.',
-    digital:    'Built from real working files, not stock kits.',
-    plants:     'Grown by us. Packed slowly. Shipped warm.',
-    accessories:'Cut from full-grain leather. Stitched to be repaired.',
-    kids:       'Tested by kids. Sewn to survive them.',
-    pets:       'Washable, repairable, sized properly.',
-    lifestyle:  'Small range. Made well. Nothing filler.',
+    candles:    'Ręcznie lane w małych partiach z naturalnego wosku i przemyślanych zapachów.',
+    home_decor: 'Robione w małych seriach przez twórców, których naprawdę znamy.',
+    jewelry:    'Ręcznie wykańczane. Metale z recyklingu. Prawdziwe gwarancje.',
+    apparel:    'Szyte w małych seriach. Naturalne włókna. Uczciwa konstrukcja.',
+    beauty:     'Krótkie listy składników. Niezależnie testowane. Bez wypełniaczy.',
+    coffee:     'Z jednego źródła, palone na zamówienie, wysyłane w 48h.',
+    food:       'Robione przez ludzi, do których możesz zadzwonić. Krótkie listy. Uczciwe ceny.',
+    art:        'Limitowane edycje, sygnowane i numerowane przez artystę.',
+    digital:    'Zbudowane z prawdziwych roboczych plików, nie gotowców.',
+    plants:     'Hodowane u nas. Pakowane spokojnie. Wysyłane ciepłe.',
+    accessories:'Cięte z pełnoziarnistej skóry. Szyte tak, by dało się je naprawić.',
+    kids:       'Testowane przez dzieci. Szyte, by je przetrwać.',
+    pets:       'Do prania, do naprawy, w dobrym rozmiarze.',
+    lifestyle:  'Mała oferta. Dobrze zrobiona. Bez wypełniaczy.',
   }
-  return `${base[category]} Built around being ${trait}.`
+  return `${base[category]} W jednym słowie: ${trait}.`
 }
 
 /* ── Product catalog ─────────────────────────────────────────────────────── */
@@ -410,11 +410,11 @@ const PRODUCT_TEMPLATES: Record<Category, InferredProduct[]> = {
     { name: 'Treat Pouch',        price: '69',  originalPrice: '89', description: 'Pas + komora na zamek.',     badge: 'sale',     collections: ['best-sellers'] },
   ],
   lifestyle: [
-    { name: 'Object 01',          price: '129', description: 'Considered everyday object.',                      badge: 'bestseller', collections: ['new-arrivals', 'best-sellers'] },
-    { name: 'Object 02',          price: '149', description: 'Considered everyday object.',                                            collections: ['best-sellers'] },
-    { name: 'Object 03',          price: '169', description: 'Considered everyday object.',                      badge: 'new',        collections: ['new-arrivals'] },
-    { name: 'Object 04',          price: '199', description: 'Considered everyday object.',                                            collections: ['new-arrivals'] },
-    { name: 'Object 05',          price: '99',  originalPrice: '129', description: 'Considered everyday object.', badge: 'sale',  collections: ['best-sellers'] },
+    { name: 'Przedmiot 01',       price: '129', description: 'Przemyślany codzienny przedmiot.',                badge: 'bestseller', collections: ['new-arrivals', 'best-sellers'] },
+    { name: 'Przedmiot 02',       price: '149', description: 'Przemyślany codzienny przedmiot.',                                     collections: ['best-sellers'] },
+    { name: 'Przedmiot 03',       price: '169', description: 'Przemyślany codzienny przedmiot.',                badge: 'new',        collections: ['new-arrivals'] },
+    { name: 'Przedmiot 04',       price: '199', description: 'Przemyślany codzienny przedmiot.',                                     collections: ['new-arrivals'] },
+    { name: 'Przedmiot 05',       price: '99',  originalPrice: '129', description: 'Przemyślany codzienny przedmiot.', badge: 'sale', collections: ['best-sellers'] },
   ],
 }
 
@@ -430,7 +430,7 @@ export function fillBusinessDefaults(input: Business): Business {
     ? input.name.trim()
     : suggestNames(input.sells || 'goods')[0] ?? 'Common Store'
   return {
-    sells: input.sells || 'Considered everyday goods',
+    sells: input.sells || 'Przemyślane codzienne przedmioty',
     name,
     logoDataUrl: input.logoDataUrl,
     problem: input.problem?.trim() || defaultProblem(category),
