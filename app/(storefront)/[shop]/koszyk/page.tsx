@@ -24,7 +24,7 @@ export default async function CartPage({ params }: Props) {
         <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
           <CartView shopSlug={shop.slug} freeShippingFrom={shop.delivery.freeShippingFrom} />
         </main>
-        <Footer shopSlug={shop.slug} branding={shop.branding} />
+        <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />
       </div>
     </>
   );

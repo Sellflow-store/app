@@ -33,7 +33,7 @@ export default async function CheckoutPage({ params }: Props) {
             codFee={shop.checkout.codFee}
           />
         </main>
-        <Footer shopSlug={shop.slug} branding={shop.branding} />
+        <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />
       </div>
     </>
   );

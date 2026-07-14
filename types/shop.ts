@@ -305,6 +305,33 @@ export interface ProductFulfillment {
   details?: string;
 }
 
+/** Linki do social mediów sklepu. Pusty string = ikona nie pojawia się w stopce. */
+export interface SocialLinks {
+  instagram: string;
+  facebook: string;
+  x: string;
+  youtube: string;
+  tiktok: string;
+}
+
+export interface FooterConfig {
+  /** Zdanie pod nazwą sklepu. Puste = użyj tagline'u z brandingu. */
+  description: string;
+  social: SocialLinks;
+}
+
+export const SOCIAL_PLATFORMS: {
+  key: keyof SocialLinks;
+  label: string;
+  placeholder: string;
+}[] = [
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/twoj-sklep" },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/twoj-sklep" },
+  { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@twoj-sklep" },
+  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/@twoj-sklep" },
+  { key: "x", label: "X (Twitter)", placeholder: "https://x.com/twoj-sklep" },
+];
+
 // ─── Full shop context (assembled from DB for storefront rendering) ────────────
 
 export interface ShopContext {
@@ -320,6 +347,7 @@ export interface ShopContext {
   terms: LegalConfig;
   privacy: LegalConfig;
   menu: MenuConfig;
+  footer: FooterConfig;
   integrations: IntegrationsConfig;
   compliance: ComplianceConfig;
   products: StorefrontProduct[];

@@ -32,7 +32,7 @@ export default async function StorefrontHome({ params }: Props) {
         <BenefitsSection config={shop.home.benefits} />
         <ReviewsSection config={shop.home.reviews} />
         <GuaranteeSection config={shop.home.guarantee} />
-        <Footer shopSlug={shop.slug} branding={shop.branding} />
+        <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />
         <NewsletterPopup shopSlug={shop.slug} config={shop.home.popup} />
       </div>
     </>

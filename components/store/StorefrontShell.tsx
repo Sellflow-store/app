@@ -19,7 +19,7 @@ export default function StorefrontShell({
         <TopBar config={shop.home} />
         <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />
         <main className="flex-1 w-full">{children}</main>
-        <Footer shopSlug={shop.slug} branding={shop.branding} />
+        <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />
       </div>
     </>
   );

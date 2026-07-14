@@ -193,7 +193,7 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </main>
 
-        <Footer shopSlug={shop.slug} branding={shop.branding} />
+        <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />
       </div>
     </>
   );

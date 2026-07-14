@@ -8,7 +8,7 @@
 export const CONFIG_KEYS = new Set([
   "branding", "home", "menu", "about", "faq", "terms", "privacy",
   "checkout", "delivery", "popup", "newsletter", "integrations",
-  "brand", "account", "compliance",
+  "brand", "account", "compliance", "footer",
 ]);
 
 // 256 KB serialized — generous for the biggest blobs (legal text, home config)
@@ -56,6 +56,21 @@ export function safeRadius(
   return { input, card, button };
 }
 
+/** Link social: ląduje w href na storefroncie, więc przepuszczamy wyłącznie
+ *  http(s). Inaczej `javascript:` w polu formularza dałoby XSS na sklepie. */
+export function safeUrl(v: unknown): string {
+  if (typeof v !== "string") return "";
+  const s = v.trim();
+  if (!s) return "";
+  try {
+    const u = new URL(s);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+    return u.toString().slice(0, 300);
+  } catch {
+    return "";
+  }
+}
+
 /** Scrub the values whose key feeds an HTML/CSS/JS sink on the storefront. */
 export function scrubConfigValue(key: string, value: Record<string, unknown>): Record<string, unknown> {
   if (key === "branding") {
@@ -70,6 +85,17 @@ export function scrubConfigValue(key: string, value: Record<string, unknown>): R
       const r = safeRadius(v.radius);
       if (r) v.radius = r;
       else delete v.radius;
+    }
+    return v;
+  }
+  if (key === "footer") {
+    const v = { ...value };
+    if ("social" in v && v.social && typeof v.social === "object") {
+      const s = v.social as Record<string, unknown>;
+      v.social = Object.fromEntries(Object.keys(s).map((k) => [k, safeUrl(s[k])]));
+    }
+    if ("description" in v) {
+      v.description = typeof v.description === "string" ? v.description.slice(0, 300) : "";
     }
     return v;
   }

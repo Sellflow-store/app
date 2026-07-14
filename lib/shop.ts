@@ -12,6 +12,7 @@ import type {
   FaqConfig,
   LegalConfig,
   MenuConfig,
+  FooterConfig,
   AccountConfig,
   IntegrationsConfig,
   ComplianceConfig,
@@ -125,6 +126,11 @@ export const DEFAULT_LEGAL: LegalConfig = { content: "" };
 
 export const DEFAULT_MENU: MenuConfig = { items: DEFAULT_MENU_ITEMS };
 
+export const DEFAULT_FOOTER: FooterConfig = {
+  description: "",
+  social: { instagram: "", facebook: "", x: "", youtube: "", tiktok: "" },
+};
+
 export const DEFAULT_ACCOUNT: AccountConfig = {
   firstName: "",
   lastName: "",
@@ -221,6 +227,13 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     items: Array.isArray(menuSaved) && menuSaved.length > 0 ? menuSaved : DEFAULT_MENU.items,
   };
 
+  const savedFooter = (configMap.footer as Partial<FooterConfig>) ?? {};
+  const footer: FooterConfig = {
+    ...DEFAULT_FOOTER,
+    ...savedFooter,
+    social: { ...DEFAULT_FOOTER.social, ...(savedFooter.social ?? {}) },
+  };
+
   const integrations: IntegrationsConfig = {
     ...DEFAULT_INTEGRATIONS,
     ...((configMap.integrations as Partial<IntegrationsConfig>) ?? {}),
@@ -280,6 +293,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     terms,
     privacy,
     menu,
+    footer,
     integrations,
     compliance,
     products: storefrontProducts,
