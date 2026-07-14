@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { Save, X, TriangleAlert } from "lucide-react";
 import type { BrandingConfig } from "@/types/shop";
+import {
+  DEFAULT_LOGO_HEIGHT,
+  DEFAULT_LOGO_MAX_WIDTH,
+  LOGO_HEIGHT_RANGE,
+  LOGO_MAX_WIDTH_RANGE,
+  NAVBAR_MIN_HEIGHT,
+} from "@/types/shop";
 import ImageUpload from "@/components/admin/ImageUpload";
 import { DISPLAY_FONTS, BODY_FONTS, googleFontsHref } from "@/lib/fonts";
 
@@ -71,6 +78,40 @@ function Field({ label, id, children }: { label: string; id: string; children: R
   );
 }
 
+function Slider({
+  label, id, value, min, max, onChange,
+}: {
+  label: string;
+  id: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="mb-3">
+      <div className="flex items-center justify-between mb-1.5">
+        <label htmlFor={id} className="text-xs font-semibold" style={{ color: "oklch(30% 0 0)" }}>
+          {label}
+        </label>
+        <span className="text-xs tabular-nums" style={{ color: "oklch(50% 0 0)" }}>
+          {value} px
+        </span>
+      </div>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full"
+        style={{ accentColor: "oklch(56% 0.30 335)" }}
+      />
+    </div>
+  );
+}
+
 const inputStyle = {
   border: "1.5px solid oklch(88% 0 0)",
   borderRadius: "10px",
@@ -95,6 +136,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
   const [shopName, setShopName]       = useState(initialConfig.shopName);
   const [tagline, setTagline]         = useState(initialConfig.tagline ?? "");
   const [logoUrl, setLogoUrl]         = useState(initialConfig.logoUrl ?? "");
+  const [logoHeight, setLogoHeight]   = useState(initialConfig.logoHeight ?? DEFAULT_LOGO_HEIGHT);
+  const [logoMaxWidth, setLogoMaxWidth] = useState(initialConfig.logoMaxWidth ?? DEFAULT_LOGO_MAX_WIDTH);
   const [primaryColor, setPrimary]    = useState(initialConfig.primaryColor);
   const [accentColor, setAccent]      = useState(initialConfig.accentColor);
   const [paperColor, setPaper]        = useState(initialConfig.paperColor ?? "");
@@ -111,9 +154,12 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         body: JSON.stringify({
           key: "branding",
           value: {
+            ...initialConfig,
             shopName,
             tagline,
             logoUrl,
+            logoHeight,
+            logoMaxWidth,
             faviconUrl: initialConfig.faviconUrl,
             primaryColor,
             accentColor,
@@ -213,6 +259,74 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             />
           </div>
         </div>
+
+        {logoUrl && (
+          <div className="mt-5 pt-5" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
+            <p className="text-xs mb-3" style={{ color: "oklch(45% 0 0)" }}>
+              Rozmiar w nagłówku sklepu. Logo poziome (szerokie i niskie) potrzebuje
+              zwykle większej maks. szerokości — inaczej zmniejsza się do ledwie
+              widocznego paska.
+            </p>
+
+            <Slider
+              id="logo-height"
+              label="Wysokość logo"
+              value={logoHeight}
+              min={LOGO_HEIGHT_RANGE.min}
+              max={LOGO_HEIGHT_RANGE.max}
+              onChange={setLogoHeight}
+            />
+            <Slider
+              id="logo-max-width"
+              label="Maks. szerokość logo"
+              value={logoMaxWidth}
+              min={LOGO_MAX_WIDTH_RANGE.min}
+              max={LOGO_MAX_WIDTH_RANGE.max}
+              onChange={setLogoMaxWidth}
+            />
+
+            <button
+              onClick={() => {
+                setLogoHeight(DEFAULT_LOGO_HEIGHT);
+                setLogoMaxWidth(DEFAULT_LOGO_MAX_WIDTH);
+              }}
+              className="text-xs underline"
+              style={{ color: "oklch(50% 0 0)" }}
+            >
+              Przywróć domyślne
+            </button>
+
+            {/* Podgląd nagłówka — te same reguły co w storefroncie */}
+            <div className="mt-4">
+              <p className="text-[11px] font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+                Podgląd nagłówka
+              </p>
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ border: "1px solid oklch(90% 0 0)", background: paperColor || "#fff" }}
+              >
+                <div
+                  className="flex items-center justify-between px-4"
+                  style={{ height: Math.max(NAVBAR_MIN_HEIGHT, logoHeight + 16) }}
+                >
+                  <img
+                    src={logoUrl}
+                    alt="Podgląd logo"
+                    className="w-auto object-contain"
+                    style={{ height: logoHeight, maxWidth: logoMaxWidth }}
+                  />
+                  <div className="flex items-center gap-4">
+                    {["Sklep", "Blog", "Kontakt"].map((l) => (
+                      <span key={l} className="text-xs" style={{ color: "oklch(45% 0 0)" }}>
+                        {l}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       {/* Shop identity */}

@@ -192,10 +192,22 @@ export interface ComplianceConfig {
   };
 }
 
+/** Domyślny rozmiar logo w navbarze — używany, gdy merchant nic nie ustawił. */
+export const DEFAULT_LOGO_HEIGHT = 40;
+export const DEFAULT_LOGO_MAX_WIDTH = 180;
+export const LOGO_HEIGHT_RANGE = { min: 24, max: 96 };
+export const LOGO_MAX_WIDTH_RANGE = { min: 80, max: 420 };
+/** Minimalna wysokość paska nawigacji (px) — logo może ją podnieść. */
+export const NAVBAR_MIN_HEIGHT = 64;
+
 export interface BrandingConfig {
   shopName: string;
   tagline: string;
   logoUrl: string;
+  /** Wysokość logo w navbarze (px). Brak = DEFAULT_LOGO_HEIGHT. */
+  logoHeight?: number;
+  /** Maks. szerokość logo w navbarze (px) — kluczowe dla logo poziomych. */
+  logoMaxWidth?: number;
   faviconUrl: string;
   primaryColor: string;
   accentColor: string;

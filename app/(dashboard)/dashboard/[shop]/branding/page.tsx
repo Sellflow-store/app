@@ -3,12 +3,15 @@ import { shopConfig, shops, users } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@clerk/nextjs/server";
 import type { BrandingConfig } from "@/types/shop";
+import { DEFAULT_LOGO_HEIGHT, DEFAULT_LOGO_MAX_WIDTH } from "@/types/shop";
 import BrandingForm from "./BrandingForm";
 
 const DEFAULT_BRANDING: BrandingConfig = {
   shopName: "Mój sklep",
   tagline: "",
   logoUrl: "",
+  logoHeight: DEFAULT_LOGO_HEIGHT,
+  logoMaxWidth: DEFAULT_LOGO_MAX_WIDTH,
   faviconUrl: "",
   primaryColor: "#12128c",
   accentColor: "#db00b2",

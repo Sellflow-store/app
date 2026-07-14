@@ -4,7 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { User, ShoppingBag, Menu, X } from "lucide-react";
 import type { BrandingConfig, MenuItem } from "@/types/shop";
-import { DEFAULT_MENU_ITEMS } from "@/types/shop";
+import {
+  DEFAULT_MENU_ITEMS,
+  DEFAULT_LOGO_HEIGHT,
+  DEFAULT_LOGO_MAX_WIDTH,
+  NAVBAR_MIN_HEIGHT,
+} from "@/types/shop";
 import { useCart } from "@/lib/cart";
 import { useStoreBase } from "./StoreBaseContext";
 import ProductSearch from "./ProductSearch";
@@ -27,14 +32,25 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
     href: item.href === "/" ? home : `${base}${item.href}`,
   }));
 
+  const logoHeight = branding.logoHeight ?? DEFAULT_LOGO_HEIGHT;
+  const logoMaxWidth = branding.logoMaxWidth ?? DEFAULT_LOGO_MAX_WIDTH;
+  // wyższe logo rozciąga pasek, żeby nie było przycięte ani ciasno upakowane
+  const rowHeight = Math.max(NAVBAR_MIN_HEIGHT, logoHeight + 16);
+
   return (
     <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-rule">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between" style={{ height: rowHeight }}>
           {/* Logo / shop name */}
-          <Link href={home} className="text-xl font-bold tracking-tight text-ink">
+          <Link href={home} className="text-xl font-bold tracking-tight text-ink shrink-0">
             {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt={branding.shopName} className="h-10 w-auto max-w-[180px] object-contain" />
+              <img
+                src={branding.logoUrl}
+                alt={branding.shopName}
+                className="w-auto object-contain"
+                // na wąskich ekranach logo nie może zjeść miejsca ikonom
+                style={{ height: logoHeight, maxWidth: `min(${logoMaxWidth}px, 55vw)` }}
+              />
             ) : (
               branding.shopName
             )}

@@ -17,12 +17,18 @@ import type {
   ComplianceConfig,
   StorefrontProduct,
 } from "@/types/shop";
-import { DEFAULT_MENU_ITEMS } from "@/types/shop";
+import {
+  DEFAULT_MENU_ITEMS,
+  DEFAULT_LOGO_HEIGHT,
+  DEFAULT_LOGO_MAX_WIDTH,
+} from "@/types/shop";
 
 export const DEFAULT_BRANDING: BrandingConfig = {
   shopName: "Mój sklep",
   tagline: "",
   logoUrl: "",
+  logoHeight: DEFAULT_LOGO_HEIGHT,
+  logoMaxWidth: DEFAULT_LOGO_MAX_WIDTH,
   faviconUrl: "",
   primaryColor: "#171717",
   accentColor: "#737373",
