@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Save, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import type { HomeConfig } from "@/types/shop";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -253,6 +254,45 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
       {/* Hero */}
       <Accordion title="Sekcja Hero (nagłówek)" open={!!open.hero} onToggle={() => toggle("hero")}>
         <div className="space-y-0">
+          <Field label="Zdjęcie w hero (opcjonalne)">
+            <div className="flex items-start gap-3">
+              <div
+                className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden shrink-0"
+                style={{ background: "oklch(95% 0.008 260)", border: "1.5px dashed oklch(80% 0 0)" }}
+              >
+                {config.hero.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={config.hero.image} alt="hero" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] text-center px-1" style={{ color: "oklch(55% 0 0)" }}>
+                    Brak
+                  </span>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] mb-2" style={{ color: "oklch(45% 0 0)" }}>
+                  Zalecane 800×800 px. Pojawi się po prawej stronie nagłówka. Bez zdjęcia
+                  pokazujemy placeholder. Pamiętaj o „Zapisz zmiany”.
+                </p>
+                <div className="flex items-center gap-3">
+                  <ImageUpload
+                    label={config.hero.image ? "Zmień zdjęcie" : "Wgraj zdjęcie"}
+                    onUploaded={(urls) => urls[0] && patch("hero", { image: urls[0] })}
+                  />
+                  {config.hero.image && (
+                    <button
+                      type="button"
+                      onClick={() => patch("hero", { image: "" })}
+                      className="text-[11px] font-medium underline-offset-2 hover:underline"
+                      style={{ color: "oklch(45% 0.18 20)" }}
+                    >
+                      Usuń
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Field>
           <Field label="Nadtytuł (eyebrow)">
             <input
               value={config.hero.eyebrow}
