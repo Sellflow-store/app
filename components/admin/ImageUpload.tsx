@@ -28,8 +28,16 @@ export default function ImageUpload({
       setError(null);
       onUploaded(res.map((file) => file.ufsUrl));
     },
-    onUploadError: () => {
-      setError("Nie udało się wgrać pliku. Możesz też wkleić adres URL zdjęcia.");
+    onUploadError: (err) => {
+      // Pokaż prawdziwą przyczynę (limit rozmiaru, brak konfiguracji storage,
+      // brak uprawnień…) zamiast generycznego komunikatu — inaczej nie da się
+      // zdiagnozować, czemu upload pada.
+      const msg = err?.message?.trim();
+      setError(
+        msg
+          ? `Nie udało się wgrać pliku: ${msg}`
+          : "Nie udało się wgrać pliku. Możesz też wkleić adres URL zdjęcia.",
+      );
     },
   });
 

@@ -31,7 +31,7 @@ export const fileRouter = {
     .middleware(requireShopOwner)
     .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
 
-  shopLogo: f({ image: { maxFileSize: "2MB", maxFileCount: 1 } })
+  shopLogo: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
     .middleware(requireShopOwner)
     .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
 } satisfies FileRouter;
