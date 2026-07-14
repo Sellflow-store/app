@@ -138,6 +138,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
   const [logoUrl, setLogoUrl]         = useState(initialConfig.logoUrl ?? "");
   const [logoHeight, setLogoHeight]   = useState(initialConfig.logoHeight ?? DEFAULT_LOGO_HEIGHT);
   const [logoMaxWidth, setLogoMaxWidth] = useState(initialConfig.logoMaxWidth ?? DEFAULT_LOGO_MAX_WIDTH);
+  const [faviconUrl, setFaviconUrl]   = useState(initialConfig.faviconUrl ?? "");
   const [primaryColor, setPrimary]    = useState(initialConfig.primaryColor);
   const [accentColor, setAccent]      = useState(initialConfig.accentColor);
   const [paperColor, setPaper]        = useState(initialConfig.paperColor ?? "");
@@ -160,7 +161,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             logoUrl,
             logoHeight,
             logoMaxWidth,
-            faviconUrl: initialConfig.faviconUrl,
+            faviconUrl,
             primaryColor,
             accentColor,
             paperColor,
@@ -327,6 +328,71 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             </div>
           </div>
         )}
+      </SectionCard>
+
+      {/* Favicon */}
+      <SectionCard title="Ikona karty przeglądarki (favicon)">
+        <div className="flex items-start gap-4">
+          <div className="relative shrink-0">
+            <div
+              className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden"
+              style={{ background: "oklch(95% 0.008 260)", border: "1.5px dashed oklch(80% 0 0)" }}
+            >
+              {faviconUrl || logoUrl ? (
+                <img src={faviconUrl || logoUrl} alt="favicon" className="w-full h-full object-contain p-1.5" />
+              ) : (
+                <span className="text-[10px] text-center px-1" style={{ color: "oklch(55% 0 0)" }}>
+                  brak
+                </span>
+              )}
+            </div>
+            {faviconUrl && (
+              <button
+                onClick={() => setFaviconUrl("")}
+                aria-label="Usuń favicon"
+                className="absolute -top-1.5 -right-1.5 p-1 rounded-full"
+                style={{ background: "oklch(25% 0 0)", color: "#fff" }}
+              >
+                <X className="w-3 h-3" strokeWidth={2} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1">
+            <p className="text-xs mb-2" style={{ color: "oklch(45% 0 0)" }}>
+              Mała ikona na karcie przeglądarki i w zakładkach. Bez własnego pliku
+              używamy logo sklepu. Kwadratowy PNG/SVG, min. 64×64 px — logo poziome
+              zrobi się w tym miejscu nieczytelne, więc warto wgrać sam znak (np.
+              samą chatkę bez napisu).
+            </p>
+            <ImageUpload
+              endpoint="shopLogo"
+              label={faviconUrl ? "Zmień favicon" : "Wgraj favicon"}
+              onUploaded={(urls) => urls[0] && setFaviconUrl(urls[0])}
+            />
+
+            {(faviconUrl || logoUrl) && (
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+                  Podgląd karty
+                </p>
+                <div
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-t-lg"
+                  style={{ background: "oklch(96% 0 0)", border: "1px solid oklch(88% 0 0)" }}
+                >
+                  <img
+                    src={faviconUrl || logoUrl}
+                    alt=""
+                    className="w-4 h-4 object-contain"
+                  />
+                  <span className="text-xs" style={{ color: "oklch(30% 0 0)" }}>
+                    {shopName || "Mój sklep"}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </SectionCard>
 
       {/* Shop identity */}
