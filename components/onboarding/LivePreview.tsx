@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useOnboarding } from "./state";
-import { buildBootstrap, encodeBootstrap, makeSlug, slugifyName } from "@/lib/brand/bootstrap";
+import { buildBootstrap, encodeBootstrap, slugifyName } from "@/lib/brand/bootstrap";
 import type { StoreBootstrap } from "@/lib/brand/types";
 import MiniPreview from "./MiniPreview";
 
@@ -24,16 +24,14 @@ export default function LivePreview() {
 
   // Built once per Step Preview mount — fresh bootstrapId would otherwise
   // force needless iframe reloads on every parent render.
-  const { url, previewSlug, payload, dbSlug, shopName } = useMemo(() => {
+  const { url, payload, dbSlug, shopName } = useMemo(() => {
     const p: StoreBootstrap = buildBootstrap(state.business, state.brand);
-    const sessionSlug = makeSlug(state.business.name);
     return {
       // Hash, not query — payload stays client-side, never hits Vercel/edge
       // URL limits (URI_TOO_LONG with full inferred catalogs + brand data).
       url: `/preview-shop#bootstrap=${encodeBootstrap(p)}`,
-      previewSlug: sessionSlug,
       payload: p,
-      dbSlug: slugifyName(p.store.name), // server slug — no shortid suffix needed before uniqueness check
+      dbSlug: slugifyName(p.store.name), // server slug — findFreeSlug próbuje go pierwszego
       shopName: p.store.name,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,7 +127,7 @@ export default function LivePreview() {
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
-          <span className="ml-3">{previewSlug}.sell-flow.store</span>
+          <span className="ml-3">{dbSlug}.sell-flow.store</span>
         </div>
         {iframeFailed ? (
           <MiniPreview />
