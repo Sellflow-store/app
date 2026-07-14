@@ -2,44 +2,46 @@
 
 import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
-import { generateReactHelpers } from "@uploadthing/react";
-import type { AppFileRouter } from "@/lib/uploadthing";
-
-const { useUploadThing } = generateReactHelpers<AppFileRouter>();
 
 interface Props {
-  endpoint: keyof AppFileRouter;
+  /** Zachowane dla kompatybilności wywołań (shopLogo / productImage / …).
+   *  Autoryzacja i limity są jednolite po stronie /api/upload, więc pole nie
+   *  zmienia zachowania — pozostaje, by nie ruszać miejsc wywołania. */
+  endpoint?: string;
   onUploaded: (urls: string[]) => void;
   label?: string;
   multiple?: boolean;
 }
 
 export default function ImageUpload({
-  endpoint,
   onUploaded,
   label = "Wgraj zdjęcie",
   multiple = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const { startUpload, isUploading } = useUploadThing(endpoint, {
-    onClientUploadComplete: (res) => {
-      setError(null);
-      onUploaded(res.map((file) => file.ufsUrl));
-    },
-    onUploadError: (err) => {
-      // Pokaż prawdziwą przyczynę (limit rozmiaru, brak konfiguracji storage,
-      // brak uprawnień…) zamiast generycznego komunikatu — inaczej nie da się
-      // zdiagnozować, czemu upload pada.
-      const msg = err?.message?.trim();
-      setError(
-        msg
-          ? `Nie udało się wgrać pliku: ${msg}`
-          : "Nie udało się wgrać pliku. Możesz też wkleić adres URL zdjęcia.",
-      );
-    },
-  });
+  async function upload(files: File[]) {
+    if (files.length === 0) return;
+    setError(null);
+    setIsUploading(true);
+    try {
+      const form = new FormData();
+      files.forEach((f) => form.append("files", f));
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = (await res.json()) as { urls?: string[]; error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "Nie udało się wgrać pliku. Możesz też wkleić adres URL zdjęcia.");
+        return;
+      }
+      onUploaded(data.urls ?? []);
+    } catch {
+      setError("Nie udało się wgrać pliku. Sprawdź połączenie i spróbuj ponownie.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
 
   return (
     <div>
@@ -51,7 +53,7 @@ export default function ImageUpload({
         className="hidden"
         onChange={(e) => {
           const files = Array.from(e.target.files ?? []);
-          if (files.length > 0) startUpload(files);
+          if (files.length > 0) upload(files);
           e.target.value = "";
         }}
       />
