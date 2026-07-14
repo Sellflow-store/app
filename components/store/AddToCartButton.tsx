@@ -113,7 +113,7 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
 
       {added && (
         <Link
-          href={`${base}/cart`}
+          href={`${base}/koszyk`}
           className="block text-center text-xs font-medium text-ink underline underline-offset-4 mt-3 hover:opacity-70 transition-opacity"
         >
           Przejdź do koszyka →

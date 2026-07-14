@@ -44,7 +44,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         ) : results.length === 0 ? (
           <p className="text-sm text-ink-2/70 font-light py-12">
             Spróbuj innej frazy lub przejrzyj{" "}
-            <a href={`${base}/products`} className="text-ink underline underline-offset-4">
+            <a href={`${base}/produkty`} className="text-ink underline underline-offset-4">
               wszystkie produkty
             </a>
             .

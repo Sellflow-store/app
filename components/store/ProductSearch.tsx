@@ -21,7 +21,7 @@ export default function ProductSearch() {
     const q = value.trim();
     if (q.length < 2) return;
     setOpen(false);
-    router.push(`${base}/search?q=${encodeURIComponent(q)}`);
+    router.push(`${base}/szukaj?q=${encodeURIComponent(q)}`);
   }
 
   return (

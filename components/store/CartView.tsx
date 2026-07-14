@@ -49,7 +49,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
           <div key={item.productId} className="flex items-center gap-4 py-5">
             {/* Thumbnail */}
             <Link
-              href={`${base}/products/${item.productId}`}
+              href={`${base}/produkty/${item.productId}`}
               className="w-20 h-20 bg-paper-3 rounded-input overflow-hidden shrink-0"
             >
               {item.image ? (
@@ -64,7 +64,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
             {/* Name + unit price */}
             <div className="flex-1 min-w-0">
               <Link
-                href={`${base}/products/${item.productId}`}
+                href={`${base}/produkty/${item.productId}`}
                 className="text-sm font-medium text-ink hover:opacity-70 transition-opacity line-clamp-2"
               >
                 {item.name}
@@ -123,7 +123,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
         </div>
         <p className="text-[11px] text-ink-2/70">Koszt dostawy zostanie doliczony w następnym kroku.</p>
         <Link
-          href={`${base}/checkout`}
+          href={`${base}/zamowienie`}
           className="inline-flex items-center gap-2 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-button hover:opacity-90 transition-opacity"
         >
           Przejdź do zamówienia

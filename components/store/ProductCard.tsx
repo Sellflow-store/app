@@ -80,7 +80,7 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
 
       {/* Info */}
       <Link
-        href={`${base}/products/${product.id}`}
+        href={`${base}/produkty/${product.id}`}
         className="block space-y-1 hover:opacity-80 transition-opacity"
       >
         <p className="text-[10px] tracking-[0.2em] uppercase text-ink-2/70">{product.category}</p>

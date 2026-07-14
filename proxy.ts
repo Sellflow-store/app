@@ -8,6 +8,22 @@ const isAuthRoute = createRouteMatcher(["/login(.*)", "/register(.*)"]);
 const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
 const isOpsRoute = createRouteMatcher(["/ops(.*)"]);
 
+// Old English storefront route segments → their Polish replacements. Kept so
+// bookmarks and any menu still storing English hrefs 308-redirect to the new
+// Polish paths instead of 404-ing. `faq` and `blog` were never renamed.
+const LEGACY_STOREFRONT_SEGMENTS: Record<string, string> = {
+  products: "produkty",
+  about: "o-nas",
+  contact: "kontakt",
+  terms: "regulamin",
+  privacy: "prywatnosc",
+  shipping: "dostawa",
+  returns: "zwroty",
+  search: "szukaj",
+  cart: "koszyk",
+  checkout: "zamowienie",
+};
+
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const url = req.nextUrl;
   const hostname = req.headers.get("host") ?? "";
@@ -58,6 +74,15 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     // page and gets rewritten to the path-based /(storefront)/[shop]/... route.
     const isGlobalPath = p.startsWith("/api") || /^\/(sso-callback)(\/|$)/.test(p);
     if (!isGlobalPath) {
+      // Redirect legacy English storefront paths (/about, /terms, …) to their
+      // Polish equivalents before rewriting, so old links keep working.
+      const firstSeg = p.split("/")[1] ?? "";
+      const polish = LEGACY_STOREFRONT_SEGMENTS[firstSeg];
+      if (polish) {
+        const redirectUrl = url.clone();
+        redirectUrl.pathname = `/${polish}${p.slice(firstSeg.length + 1)}`;
+        return NextResponse.redirect(redirectUrl, 308);
+      }
       const rewriteUrl = url.clone();
       // Storefront links on a subdomain are now slug-less (see storefront-base.ts),
       // but a legacy/bookmarked /{slug}/... URL must still resolve — don't prefix

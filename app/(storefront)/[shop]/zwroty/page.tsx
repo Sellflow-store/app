@@ -63,11 +63,11 @@ export default async function ReturnsPage({ params }: Props) {
 
         <p className="text-xs text-ink-2/70 leading-relaxed">
           Reklamacje rozpatrujemy w ciągu 14 dni. Szczegółowe zasady znajdziesz w{" "}
-          <Link href={`${base}/terms`} className="underline underline-offset-2 hover:text-ink">
+          <Link href={`${base}/regulamin`} className="underline underline-offset-2 hover:text-ink">
             regulaminie sklepu
           </Link>
           , a w razie pytań{" "}
-          <Link href={`${base}/contact`} className="underline underline-offset-2 hover:text-ink">
+          <Link href={`${base}/kontakt`} className="underline underline-offset-2 hover:text-ink">
             napisz do nas
           </Link>
           .

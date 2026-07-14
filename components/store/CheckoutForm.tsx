@@ -249,7 +249,7 @@ export default function CheckoutForm({
   return (
     <div>
       <Link
-        href={`${base}/cart`}
+        href={`${base}/koszyk`}
         className="inline-flex items-center gap-1 text-xs tracking-wide text-ink-2/70 hover:text-ink transition-colors mb-8"
       >
         <ChevronLeft className="w-3.5 h-3.5" strokeWidth={1.5} />

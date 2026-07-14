@@ -7,14 +7,14 @@ import type { MenuItem } from "@/types/shop";
 /** Strony, na które może wskazywać pozycja menu. */
 const PAGE_OPTIONS = [
   { href: "/", label: "Strona główna" },
-  { href: "/products", label: "Wszystkie produkty" },
-  { href: "/about", label: "O nas" },
+  { href: "/produkty", label: "Wszystkie produkty" },
+  { href: "/o-nas", label: "O nas" },
   { href: "/faq", label: "FAQ" },
-  { href: "/contact", label: "Kontakt" },
-  { href: "/shipping", label: "Dostawa" },
-  { href: "/returns", label: "Zwroty i reklamacje" },
-  { href: "/terms", label: "Regulamin" },
-  { href: "/privacy", label: "Polityka prywatności" },
+  { href: "/kontakt", label: "Kontakt" },
+  { href: "/dostawa", label: "Dostawa" },
+  { href: "/zwroty", label: "Zwroty i reklamacje" },
+  { href: "/regulamin", label: "Regulamin" },
+  { href: "/prywatnosc", label: "Polityka prywatności" },
 ];
 
 const inputStyle = {
@@ -191,7 +191,7 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
       </div>
 
       <button
-        onClick={() => setItems((prev) => [...prev, { label: "", href: "/products" }])}
+        onClick={() => setItems((prev) => [...prev, { label: "", href: "/produkty" }])}
         className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
         style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
       >

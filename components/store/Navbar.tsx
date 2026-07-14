@@ -60,7 +60,7 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
             <button className="hidden sm:block text-ink-2 hover:text-ink transition-colors">
               <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
             </button>
-            <Link href={`${base}/cart`} className="text-ink-2 hover:text-ink transition-colors relative">
+            <Link href={`${base}/koszyk`} className="text-ink-2 hover:text-ink transition-colors relative">
               <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={1.5} />
               {cartCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-ink text-on-ink text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">

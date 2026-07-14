@@ -30,7 +30,7 @@ export default function HeroSection({ config }: Props) {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
-                href={`${base}/products`}
+                href={`${base}/produkty`}
                 className="bg-ink text-on-ink px-8 py-3.5 text-sm tracking-wide rounded-button hover:bg-ink transition-colors duration-200 flex items-center justify-center gap-2 group"
               >
                 {config.ctaPrimary}

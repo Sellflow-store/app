@@ -24,18 +24,18 @@ export default function Footer({ branding }: Props) {
 
   const FOOTER_LINKS = {
     Sklep: [
-      { label: "Wszystkie produkty", href: `${base}/products` },
+      { label: "Wszystkie produkty", href: `${base}/produkty` },
     ],
     Informacje: [
-      { label: "O nas", href: `${base}/about` },
+      { label: "O nas", href: `${base}/o-nas` },
       { label: "FAQ", href: `${base}/faq` },
-      { label: "Dostawa", href: `${base}/shipping` },
-      { label: "Zwroty i reklamacje", href: `${base}/returns` },
-      { label: "Polityka prywatności", href: `${base}/privacy` },
-      { label: "Regulamin", href: `${base}/terms` },
+      { label: "Dostawa", href: `${base}/dostawa` },
+      { label: "Zwroty i reklamacje", href: `${base}/zwroty` },
+      { label: "Polityka prywatności", href: `${base}/prywatnosc` },
+      { label: "Regulamin", href: `${base}/regulamin` },
     ],
     Kontakt: [
-      { label: "Kontakt", href: `${base}/contact` },
+      { label: "Kontakt", href: `${base}/kontakt` },
     ],
   };
 
