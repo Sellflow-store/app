@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { STORAGE_KEY } from "@/lib/brand/types";
 
 const PENDING_KEY = "sellflow_pending_onboarding";
 const BOUNCE_KEY  = "sellflow_save_auth_bounced";
@@ -36,6 +37,18 @@ export default function OnboardingSavePage() {
     (async () => {
       try {
         const payload = JSON.parse(raw);
+        // Logo mogło wypaść ze stashu w sessionStorage (za duży base64 → limit).
+        // Pełny stan kreatora żyje w localStorage — odzyskaj z niego logo, żeby
+        // zapisało się na sklepie.
+        try {
+          if (!payload?.bootstrap?.store?.logoDataUrl) {
+            const wizRaw = localStorage.getItem(STORAGE_KEY);
+            const logo = wizRaw ? JSON.parse(wizRaw)?.business?.logoDataUrl : null;
+            if (logo && payload?.bootstrap?.store) {
+              payload.bootstrap.store.logoDataUrl = logo;
+            }
+          }
+        } catch { /* brak/uszkodzony stan kreatora — zapisz bez logo */ }
         const res = await fetch("/api/onboarding", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
