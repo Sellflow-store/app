@@ -3,16 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { useStoreBase } from "./StoreBaseContext";
 
-interface Props {
-  shopSlug: string;
-}
-
-export default function ProductSearch({ shopSlug }: Props) {
+export default function ProductSearch() {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const base = useStoreBase();
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -23,7 +21,7 @@ export default function ProductSearch({ shopSlug }: Props) {
     const q = value.trim();
     if (q.length < 2) return;
     setOpen(false);
-    router.push(`/${shopSlug}/search?q=${encodeURIComponent(q)}`);
+    router.push(`${base}/search?q=${encodeURIComponent(q)}`);
   }
 
   return (

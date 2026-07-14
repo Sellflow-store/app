@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { blogPosts } from "@/lib/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
 import StorefrontShell from "@/components/store/StorefrontShell";
 
 interface Props {
@@ -14,6 +15,7 @@ export default async function BlogListPage({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) notFound();
+  const base = await storefrontBase(shop.slug);
 
   const posts = await db
     .select({
@@ -42,7 +44,7 @@ export default async function BlogListPage({ params }: Props) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
             {posts.map((post) => (
-              <Link key={post.slug} href={`/${shop.slug}/blog/${post.slug}`} className="group block">
+              <Link key={post.slug} href={`${base}/blog/${post.slug}`} className="group block">
                 <div className="aspect-[16/10] bg-paper-3 rounded-2xl overflow-hidden mb-4">
                   {post.coverImage ? (
                     <img

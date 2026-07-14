@@ -6,6 +6,7 @@ import { User, ShoppingBag, Menu, X } from "lucide-react";
 import type { BrandingConfig, MenuItem } from "@/types/shop";
 import { DEFAULT_MENU_ITEMS } from "@/types/shop";
 import { useCart } from "@/lib/cart";
+import { useStoreBase } from "./StoreBaseContext";
 import ProductSearch from "./ProductSearch";
 
 interface Props {
@@ -18,11 +19,12 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { count: cartCount } = useCart(shopSlug);
 
-  const base = `/${shopSlug}`;
+  const base = useStoreBase();
+  const home = base || "/";
 
   const NAV_ITEMS = (menuItems?.length ? menuItems : DEFAULT_MENU_ITEMS).map((item) => ({
     label: item.label,
-    href: item.href === "/" ? base : `${base}${item.href}`,
+    href: item.href === "/" ? home : `${base}${item.href}`,
   }));
 
   return (
@@ -30,7 +32,7 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo / shop name */}
-          <Link href={base} className="text-xl font-bold tracking-tight text-ink">
+          <Link href={home} className="text-xl font-bold tracking-tight text-ink">
             {branding.logoUrl ? (
               <img src={branding.logoUrl} alt={branding.shopName} className="h-8 w-auto" />
             ) : (
@@ -54,7 +56,7 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
 
           {/* Icons */}
           <div className="flex items-center gap-5">
-            <ProductSearch shopSlug={shopSlug} />
+            <ProductSearch />
             <button className="hidden sm:block text-ink-2 hover:text-ink transition-colors">
               <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
             </button>

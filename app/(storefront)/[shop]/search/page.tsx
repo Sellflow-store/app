@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
 import StorefrontShell from "@/components/store/StorefrontShell";
 import ProductCard from "@/components/store/ProductCard";
 import { searchProducts } from "@/lib/storefront-products";
@@ -14,6 +15,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
   const { q = "" } = await searchParams;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) notFound();
+  const base = await storefrontBase(shop.slug);
 
   const query = q.trim();
   const results = query.length >= 2 ? searchProducts(shop.products, query) : [];
@@ -42,7 +44,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         ) : results.length === 0 ? (
           <p className="text-sm text-ink-2/70 font-light py-12">
             Spróbuj innej frazy lub przejrzyj{" "}
-            <a href={`/${shop.slug}/products`} className="text-ink underline underline-offset-4">
+            <a href={`${base}/products`} className="text-ink underline underline-offset-4">
               wszystkie produkty
             </a>
             .

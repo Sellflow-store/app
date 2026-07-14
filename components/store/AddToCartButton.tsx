@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Check, Minus, Plus } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
   shopSlug: string;
@@ -19,6 +20,7 @@ interface Props {
 
 export default function AddToCartButton({ shopSlug, product }: Props) {
   const { add } = useCart(shopSlug);
+  const base = useStoreBase();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -111,7 +113,7 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
 
       {added && (
         <Link
-          href={`/${shopSlug}/cart`}
+          href={`${base}/cart`}
           className="block text-center text-xs font-medium text-ink underline underline-offset-4 mt-3 hover:opacity-70 transition-opacity"
         >
           Przejdź do koszyka →

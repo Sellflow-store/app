@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Landmark, HandCoins, Check, Copy, Tag, X } from "lucide-react";
 import { useCart, formatPln } from "@/lib/cart";
+import { useStoreBase } from "./StoreBaseContext";
 import type { DeliveryMethod } from "@/types/shop";
 
 interface Props {
@@ -42,6 +43,7 @@ export default function CheckoutForm({
   codFee,
 }: Props) {
   const { items, subtotal, clear } = useCart(shopSlug);
+  const base = useStoreBase();
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -141,7 +143,7 @@ export default function CheckoutForm({
         )}
 
         <Link
-          href={`/${shopSlug}`}
+          href={base || "/"}
           className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-button hover:opacity-90 transition-opacity"
         >
           Wróć do sklepu
@@ -161,7 +163,7 @@ export default function CheckoutForm({
           Dodaj produkty, żeby złożyć zamówienie.
         </p>
         <Link
-          href={`/${shopSlug}`}
+          href={base || "/"}
           className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-button hover:opacity-90 transition-opacity"
         >
           Wróć do sklepu
@@ -247,7 +249,7 @@ export default function CheckoutForm({
   return (
     <div>
       <Link
-        href={`/${shopSlug}/cart`}
+        href={`${base}/cart`}
         className="inline-flex items-center gap-1 text-xs tracking-wide text-ink-2/70 hover:text-ink transition-colors mb-8"
       >
         <ChevronLeft className="w-3.5 h-3.5" strokeWidth={1.5} />

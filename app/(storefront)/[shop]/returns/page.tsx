@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { RotateCcw, ShieldCheck, Mail } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
 import StorefrontShell from "@/components/store/StorefrontShell";
 
 interface Props {
@@ -12,6 +13,7 @@ export default async function ReturnsPage({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) notFound();
+  const base = await storefrontBase(shop.slug);
 
   const steps = [
     {
@@ -61,11 +63,11 @@ export default async function ReturnsPage({ params }: Props) {
 
         <p className="text-xs text-ink-2/70 leading-relaxed">
           Reklamacje rozpatrujemy w ciągu 14 dni. Szczegółowe zasady znajdziesz w{" "}
-          <Link href={`/${shop.slug}/terms`} className="underline underline-offset-2 hover:text-ink">
+          <Link href={`${base}/terms`} className="underline underline-offset-2 hover:text-ink">
             regulaminie sklepu
           </Link>
           , a w razie pytań{" "}
-          <Link href={`/${shop.slug}/contact`} className="underline underline-offset-2 hover:text-ink">
+          <Link href={`${base}/contact`} className="underline underline-offset-2 hover:text-ink">
             napisz do nas
           </Link>
           .

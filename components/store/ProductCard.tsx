@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ShoppingBag, Check } from "lucide-react";
 import type { StorefrontProduct } from "@/types/shop";
 import { useCart } from "@/lib/cart";
+import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
   product: StorefrontProduct;
@@ -15,6 +16,7 @@ interface Props {
 export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
   const mainImage = product.images?.[0] ?? null;
   const { add } = useCart(shopSlug);
+  const base = useStoreBase();
   const [added, setAdded] = useState(false);
 
   const soldOut = product.stock != null && product.stock <= 0;
@@ -78,7 +80,7 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
 
       {/* Info */}
       <Link
-        href={`/${shopSlug}/products/${product.id}`}
+        href={`${base}/products/${product.id}`}
         className="block space-y-1 hover:opacity-80 transition-opacity"
       >
         <p className="text-[10px] tracking-[0.2em] uppercase text-ink-2/70">{product.category}</p>

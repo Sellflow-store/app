@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Minus, Plus, X, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart, formatPln } from "@/lib/cart";
+import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
   shopSlug: string;
@@ -11,6 +12,7 @@ interface Props {
 
 export default function CartView({ shopSlug, freeShippingFrom }: Props) {
   const { items, setQty, remove, subtotal } = useCart(shopSlug);
+  const base = useStoreBase();
 
   if (items.length === 0) {
     return (
@@ -25,7 +27,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
           Dodaj produkty, a pojawią się tutaj.
         </p>
         <Link
-          href={`/${shopSlug}`}
+          href={base || "/"}
           className="inline-flex items-center gap-2 bg-ink text-on-ink text-sm font-semibold px-6 py-3 rounded-button hover:opacity-90 transition-opacity"
         >
           Wróć do sklepu
@@ -47,7 +49,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
           <div key={item.productId} className="flex items-center gap-4 py-5">
             {/* Thumbnail */}
             <Link
-              href={`/${shopSlug}/products/${item.productId}`}
+              href={`${base}/products/${item.productId}`}
               className="w-20 h-20 bg-paper-3 rounded-input overflow-hidden shrink-0"
             >
               {item.image ? (
@@ -62,7 +64,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
             {/* Name + unit price */}
             <div className="flex-1 min-w-0">
               <Link
-                href={`/${shopSlug}/products/${item.productId}`}
+                href={`${base}/products/${item.productId}`}
                 className="text-sm font-medium text-ink hover:opacity-70 transition-opacity line-clamp-2"
               >
                 {item.name}
@@ -121,7 +123,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
         </div>
         <p className="text-[11px] text-ink-2/70">Koszt dostawy zostanie doliczony w następnym kroku.</p>
         <Link
-          href={`/${shopSlug}/checkout`}
+          href={`${base}/checkout`}
           className="inline-flex items-center gap-2 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-button hover:opacity-90 transition-opacity"
         >
           Przejdź do zamówienia

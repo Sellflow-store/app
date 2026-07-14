@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Check, Download, Clock } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
 import BrandTheme from "@/components/store/BrandTheme";
 import TopBar from "@/components/store/TopBar";
 import Navbar from "@/components/store/Navbar";
@@ -23,6 +24,8 @@ export default async function ProductPage({ params }: Props) {
   const product = shop.products.find((p) => p.id === id);
   if (!product) notFound();
 
+  const base = await storefrontBase(shop.slug);
+
   return (
     <>
       <BrandTheme branding={shop.branding} />
@@ -33,7 +36,7 @@ export default async function ProductPage({ params }: Props) {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
           {/* Breadcrumb */}
           <Link
-            href={`/${shop.slug}`}
+            href={base || "/"}
             className="inline-flex items-center gap-1 text-xs tracking-wide text-ink-2/70 hover:text-ink transition-colors mb-8"
           >
             <ChevronLeft className="w-3.5 h-3.5" strokeWidth={1.5} />

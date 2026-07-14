@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Instagram, Facebook, Twitter, Youtube } from "@/components/icons/social";
 import type { BrandingConfig } from "@/types/shop";
+import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
   shopSlug: string;
@@ -16,8 +19,8 @@ const SOCIAL = [
   { icon: Youtube, label: "YouTube" },
 ];
 
-export default function Footer({ shopSlug, branding }: Props) {
-  const base = `/${shopSlug}`;
+export default function Footer({ branding }: Props) {
+  const base = useStoreBase();
 
   const FOOTER_LINKS = {
     Sklep: [
@@ -42,7 +45,7 @@ export default function Footer({ shopSlug, branding }: Props) {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
-            <Link href={base} className="text-lg font-bold tracking-tight text-ink">
+            <Link href={base || "/"} className="text-lg font-bold tracking-tight text-ink">
               {branding.shopName}
             </Link>
             <p className="mt-3 text-sm text-ink-2 font-light leading-relaxed">

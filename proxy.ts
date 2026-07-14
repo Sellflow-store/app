@@ -51,14 +51,21 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
   } else if (hasSubdomain) {
     const shopSlug = hostname.replace(`.${appDomain}`, "");
-    const rewriteUrl = url.clone();
-    // Storefront links are path-based (/{slug}/...), so client-side navigation
-    // on a subdomain already carries the slug — prepending again would give
-    // /{slug}/{slug}/... and 404 on every click past the homepage.
-    const alreadyPrefixed =
-      url.pathname === `/${shopSlug}` || url.pathname.startsWith(`/${shopSlug}/`);
-    rewriteUrl.pathname = alreadyPrefixed ? url.pathname : `/${shopSlug}${url.pathname}`;
-    return NextResponse.rewrite(rewriteUrl);
+    const p = url.pathname;
+    // API routes are global (the shop is keyed by slug inside the path, e.g.
+    // /api/shops/{slug}/orders) and auth callbacks are host-level — neither may
+    // get the shop prefix, or the fetch 404s. Everything else is a storefront
+    // page and gets rewritten to the path-based /(storefront)/[shop]/... route.
+    const isGlobalPath = p.startsWith("/api") || /^\/(sso-callback)(\/|$)/.test(p);
+    if (!isGlobalPath) {
+      const rewriteUrl = url.clone();
+      // Storefront links on a subdomain are now slug-less (see storefront-base.ts),
+      // but a legacy/bookmarked /{slug}/... URL must still resolve — don't prefix
+      // it twice (/{slug}/{slug}/... would 404).
+      const alreadyPrefixed = p === `/${shopSlug}` || p.startsWith(`/${shopSlug}/`);
+      rewriteUrl.pathname = alreadyPrefixed ? p : `/${shopSlug}${p}`;
+      return NextResponse.rewrite(rewriteUrl);
+    }
   }
 
   // ── Custom domain routing ────────────────────────────────────────────────

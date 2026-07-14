@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { blogPosts } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
 import StorefrontShell from "@/components/store/StorefrontShell";
 
 interface Props {
@@ -29,6 +30,8 @@ export default async function BlogPostPage({ params }: Props) {
   const post = await getPost(shop.id, slug);
   if (!post) notFound();
 
+  const base = await storefrontBase(shop.slug);
+
   const date = post.publishedAt
     ? new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", year: "numeric" }).format(
         post.publishedAt
@@ -39,7 +42,7 @@ export default async function BlogPostPage({ params }: Props) {
     <StorefrontShell shop={shop}>
       <article className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <Link
-          href={`/${shop.slug}/blog`}
+          href={`${base}/blog`}
           className="inline-flex items-center gap-1.5 text-xs tracking-wide uppercase text-ink-2/70 hover:text-ink transition-colors mb-8"
         >
           <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} />

@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { HeroConfig } from "@/types/shop";
+import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
   config: HeroConfig;
   shopSlug: string;
 }
 
-export default function HeroSection({ config, shopSlug }: Props) {
+export default function HeroSection({ config }: Props) {
+  const base = useStoreBase();
   return (
     <section className="relative bg-paper-2 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,7 +30,7 @@ export default function HeroSection({ config, shopSlug }: Props) {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
-                href={`/${shopSlug}/products`}
+                href={`${base}/products`}
                 className="bg-ink text-on-ink px-8 py-3.5 text-sm tracking-wide rounded-button hover:bg-ink transition-colors duration-200 flex items-center justify-center gap-2 group"
               >
                 {config.ctaPrimary}

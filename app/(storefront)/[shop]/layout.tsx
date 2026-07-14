@@ -6,6 +6,8 @@ import { DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE } from "@/lib/shop";
 import type { IntegrationsConfig, ComplianceConfig } from "@/types/shop";
 import TrackVisit from "@/components/store/TrackVisit";
 import StorefrontScripts from "@/components/store/StorefrontScripts";
+import { StoreBaseProvider } from "@/components/store/StoreBaseContext";
+import { storefrontBase } from "@/lib/storefront-base";
 
 async function loadIntegrations(slug: string): Promise<{
   integrations: IntegrationsConfig;
@@ -53,12 +55,12 @@ export default async function ShopLayout({
   params: Promise<{ shop: string }>;
 }) {
   const { shop } = await params;
-  const data = await loadIntegrations(shop);
+  const [data, base] = await Promise.all([loadIntegrations(shop), storefrontBase(shop)]);
   return (
-    <>
+    <StoreBaseProvider base={base}>
       {children}
       <TrackVisit slug={shop} />
       {data && <StorefrontScripts integrations={data.integrations} compliance={data.compliance} />}
-    </>
+    </StoreBaseProvider>
   );
 }
