@@ -48,28 +48,31 @@ export default function MiniPreview({ compact = false }: Props) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {state.business.logoDataUrl ? (
+            // Jest logo → pokazujemy samo logo (większe), bez nazwy obok.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={state.business.logoDataUrl}
-              alt=""
-              style={{ width: 28, height: 28, objectFit: "contain" }}
+              alt={inf.effective_name}
+              style={{ height: compact ? 30 : 40, width: "auto", maxWidth: 180, objectFit: "contain" }}
             />
           ) : (
-            <span style={{
-              width: 22, height: 22,
-              borderRadius: 4,
-              background: accent,
-              display: "inline-block",
-            }} />
+            <>
+              <span style={{
+                width: 22, height: 22,
+                borderRadius: 4,
+                background: accent,
+                display: "inline-block",
+              }} />
+              <span style={{
+                fontFamily: inf.font_pair.display,
+                fontWeight: 700,
+                fontSize: compact ? 15 : 18,
+                letterSpacing: "-0.005em",
+              }}>
+                {inf.effective_name}
+              </span>
+            </>
           )}
-          <span style={{
-            fontFamily: inf.font_pair.display,
-            fontWeight: 700,
-            fontSize: compact ? 15 : 18,
-            letterSpacing: "-0.005em",
-          }}>
-            {inf.effective_name}
-          </span>
         </div>
         <div style={{ display: "flex", gap: compact ? 12 : 20, fontSize: compact ? 11 : 13, opacity: 0.7 }}>
           <span>Sklep</span>

@@ -34,7 +34,7 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
           {/* Logo / shop name */}
           <Link href={home} className="text-xl font-bold tracking-tight text-ink">
             {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt={branding.shopName} className="h-8 w-auto" />
+              <img src={branding.logoUrl} alt={branding.shopName} className="h-10 w-auto max-w-[180px] object-contain" />
             ) : (
               branding.shopName
             )}

@@ -67,10 +67,26 @@ export default function LivePreview() {
         // 401: anonymous visitor — stash payload, send them to register.
         // /onboarding/save picks the payload back up after sign-up + auto-finalizes.
         if (res.status === 401) {
-          sessionStorage.setItem(
-            "sellflow_pending_onboarding",
-            JSON.stringify({ shopName, slug: dbSlug, bootstrap: payload }),
-          );
+          const pending = { shopName, slug: dbSlug, bootstrap: payload };
+          try {
+            sessionStorage.setItem("sellflow_pending_onboarding", JSON.stringify(pending));
+          } catch {
+            // Payload za duży dla sessionStorage (np. duże logo) — zapisz bez logo,
+            // żeby rejestracja → finalizacja nadal zadziałały. Logo można dodać
+            // później w panelu. NIE przerywamy przekierowania.
+            try {
+              const slim = {
+                ...pending,
+                bootstrap: {
+                  ...pending.bootstrap,
+                  store: { ...pending.bootstrap.store, logoDataUrl: null },
+                },
+              };
+              sessionStorage.setItem("sellflow_pending_onboarding", JSON.stringify(slim));
+            } catch {
+              /* nawet slim się nie zmieścił — trudno, i tak przekierowujemy */
+            }
+          }
           router.push(`/register?redirect_url=${encodeURIComponent("/onboarding/save")}`);
           return;
         }

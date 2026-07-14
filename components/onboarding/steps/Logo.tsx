@@ -10,9 +10,40 @@ export default function Logo({ onNext, onBack }: Props) {
   const { state, patchBusiness } = useOnboarding();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Logo jest niesione przez cały onboarding jako base64 (podgląd → payload →
+  // sessionStorage przy rejestracji → POST → baza). Surowy plik potrafi mieć
+  // kilka MB i przekracza limit sessionStorage (QuotaExceededError zrywał zapis
+  // sklepu). Skalujemy raster do maks. 512 px i eksportujemy lekki PNG; SVG jest
+  // wektorem, więc zostaje bez zmian.
+  const MAX_DIM = 512;
   const handleFile = (file: File) => {
     const reader = new FileReader();
-    reader.onload = () => patchBusiness({ logoDataUrl: reader.result as string });
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      if (file.type === "image/svg+xml") {
+        patchBusiness({ logoDataUrl: dataUrl });
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          patchBusiness({ logoDataUrl: dataUrl });
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        // PNG zachowuje przezroczystość logo; małe wymiary trzymają rozmiar w ryzach.
+        patchBusiness({ logoDataUrl: canvas.toDataURL("image/png") });
+      };
+      img.onerror = () => patchBusiness({ logoDataUrl: dataUrl });
+      img.src = dataUrl;
+    };
     reader.readAsDataURL(file);
   };
 
