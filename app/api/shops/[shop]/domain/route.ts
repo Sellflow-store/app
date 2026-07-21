@@ -39,6 +39,15 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ domain: null, vercelConfigured: vercelConfigured() });
   }
   const status = await getDomainStatus(domain);
+  // Self-heal the persisted verification flag from the live status so the
+  // subdomain redirect (proxy.ts) tracks reality without its own Vercel call.
+  const verified = status.verified && !status.misconfigured;
+  if (verified !== shop?.customDomainVerified) {
+    await db
+      .update(shops)
+      .set({ customDomainVerified: verified })
+      .where(eq(shops.id, access.shopId));
+  }
   return NextResponse.json({
     domain,
     dns: dnsInstructions(domain),
@@ -114,12 +123,19 @@ export async function PUT(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 
+  const status = await getDomainStatus(domain);
   await db
     .update(shops)
-    .set({ customDomain: domain, updatedAt: new Date() })
+    .set({
+      customDomain: domain,
+      // Reset verification to the freshly-observed state — a brand-new domain
+      // is normally still pending DNS, so this is usually false. Drives the
+      // subdomain→custom-domain redirect (see proxy.ts).
+      customDomainVerified: status.verified && !status.misconfigured,
+      updatedAt: new Date(),
+    })
     .where(eq(shops.id, access.shopId));
 
-  const status = await getDomainStatus(domain);
   return NextResponse.json({
     ok: true,
     domain,
@@ -140,7 +156,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await removeDomainFromProject(shop.customDomain);
     await db
       .update(shops)
-      .set({ customDomain: null, updatedAt: new Date() })
+      .set({ customDomain: null, customDomainVerified: false, updatedAt: new Date() })
       .where(eq(shops.id, access.shopId));
   }
   return NextResponse.json({ ok: true });

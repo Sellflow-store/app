@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { shops, shopConfig } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -47,6 +48,15 @@ export async function generateMetadata({
   const { shop } = await params;
   const data = await loadShopMeta(shop);
   const meta: Metadata = {};
+
+  // Resolve relative OG / canonical URLs against the host actually serving this
+  // request. When a shop has a verified custom domain the subdomain redirects
+  // there (proxy.ts), so the serving host is already the canonical one.
+  const host = (await headers()).get("host");
+  if (host) {
+    const proto = host.includes("localhost") ? "http" : "https";
+    meta.metadataBase = new URL(`${proto}://${host}`);
+  }
 
   const gmc = data?.integrations.googleMerchantId?.trim();
   if (gmc) meta.verification = { other: { "google-site-verification": gmc } };

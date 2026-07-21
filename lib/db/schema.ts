@@ -35,6 +35,11 @@ export const shops = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     slug: text("slug").notNull(), // monostore → monostore.sellflow.app
     customDomain: text("custom_domain"),
+    // Last-known Vercel verification state for customDomain. Persisted (not
+    // fetched live) so the edge middleware can decide the subdomain→custom-domain
+    // redirect without a Vercel API call per request. Maintained by the domain
+    // route's status checks; reset when the domain is changed/removed.
+    customDomainVerified: boolean("custom_domain_verified").notNull().default(false),
     ownerId: uuid("owner_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),

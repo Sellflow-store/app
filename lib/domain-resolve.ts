@@ -32,3 +32,32 @@ export async function resolveCustomDomainSlug(host: string): Promise<string | nu
     return null;
   }
 }
+
+/**
+ * Reverse of resolveCustomDomainSlug: given a shop slug (i.e. a request on
+ * {slug}.<appDomain>), return its custom domain IF that domain is verified —
+ * so the middleware can 307-redirect the subdomain to the shop's own address
+ * (one canonical host). Returns null when there's no verified custom domain,
+ * so the subdomain keeps serving directly. Gated on customDomainVerified (not
+ * a live Vercel call) to keep this cheap on the subdomain hot path.
+ */
+export async function resolveVerifiedCustomDomain(slug: string): Promise<string | null> {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  try {
+    const sql = neon(url);
+    const rows = (await sql`
+      SELECT custom_domain FROM shops
+      WHERE slug = ${slug}
+        AND custom_domain_verified = true
+        AND custom_domain IS NOT NULL
+        AND active = true
+        AND suspended = false
+        AND deleted_at IS NULL
+      LIMIT 1
+    `) as { custom_domain: string }[];
+    return rows[0]?.custom_domain ?? null;
+  } catch {
+    return null;
+  }
+}

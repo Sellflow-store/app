@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { clerkConfigured } from "@/lib/auth-env";
-import { resolveCustomDomainSlug } from "@/lib/domain-resolve";
+import { resolveCustomDomainSlug, resolveVerifiedCustomDomain } from "@/lib/domain-resolve";
 
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isAuthRoute = createRouteMatcher(["/login(.*)", "/register(.*)"]);
@@ -100,6 +100,18 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
   } else if (hasSubdomain) {
     const shopSlug = hostname.replace(`.${appDomain}`, "");
+    // If this shop has a verified custom domain, the subdomain is not its
+    // canonical address — 307-redirect storefront pages there so there's one
+    // public URL (no duplicate content). Global paths (/api, /sso-callback)
+    // are excluded: they must keep working on the subdomain host.
+    const p = url.pathname;
+    const isGlobalPath = p.startsWith("/api") || /^\/(sso-callback)(\/|$)/.test(p);
+    if (!isGlobalPath) {
+      const verifiedDomain = await resolveVerifiedCustomDomain(shopSlug);
+      if (verifiedDomain) {
+        return NextResponse.redirect(`https://${verifiedDomain}${p}${url.search}`, 307);
+      }
+    }
     const res = rewriteStorefront(url, shopSlug);
     if (res) return res;
   }
