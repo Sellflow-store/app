@@ -51,6 +51,7 @@ interface Props {
   shopName: string;
   active: boolean;
   storeUrl: string;
+  customDomain: string | null;
   integrations: IntegrationsConfig;
   compliance: ComplianceConfig;
   branding: BrandingConfig;
@@ -116,7 +117,14 @@ export default function SettingsPanel(props: Props) {
           {active === "style" && (
             <StyleSection shopSlug={props.shopSlug} initialBranding={props.branding} initialBrand={props.brand} />
           )}
-          {active === "domain" && <DomainSection storeUrl={props.storeUrl} />}
+          {active === "domain" && (
+            <DomainSection
+              shopSlug={props.shopSlug}
+              plan={props.plan}
+              storeUrl={props.storeUrl}
+              initialDomain={props.customDomain}
+            />
+          )}
           {active === "team" && <TeamSection ownerEmail={props.accountEmail} />}
           {active === "integrations" && <IntegrationsSection shopSlug={props.shopSlug} initial={props.integrations} />}
           {active === "compliance" && <ComplianceSection shopSlug={props.shopSlug} initial={props.compliance} />}

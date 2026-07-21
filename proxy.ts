@@ -2,6 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { clerkConfigured } from "@/lib/auth-env";
+import { resolveCustomDomainSlug } from "@/lib/domain-resolve";
 
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isAuthRoute = createRouteMatcher(["/login(.*)", "/register(.*)"]);
@@ -23,6 +24,38 @@ const LEGACY_STOREFRONT_SEGMENTS: Record<string, string> = {
   cart: "koszyk",
   checkout: "zamowienie",
 };
+
+// Rewrite a host-rooted storefront request onto the path-based
+// /(storefront)/[shop]/... route for `shopSlug`. Shared by the subdomain and
+// custom-domain branches so both resolve to the exact same storefront tree.
+// Returns null for global paths (/api, /sso-callback), which must pass through
+// unprefixed — the shop is keyed by slug inside those paths, not the host.
+function rewriteStorefront(
+  url: NextRequest["nextUrl"],
+  shopSlug: string,
+): NextResponse | null {
+  const p = url.pathname;
+  const isGlobalPath = p.startsWith("/api") || /^\/(sso-callback)(\/|$)/.test(p);
+  if (isGlobalPath) return null;
+
+  // Redirect legacy English storefront paths (/about, /terms, …) to their
+  // Polish equivalents before rewriting, so old links keep working.
+  const firstSeg = p.split("/")[1] ?? "";
+  const polish = LEGACY_STOREFRONT_SEGMENTS[firstSeg];
+  if (polish) {
+    const redirectUrl = url.clone();
+    redirectUrl.pathname = `/${polish}${p.slice(firstSeg.length + 1)}`;
+    return NextResponse.redirect(redirectUrl, 308);
+  }
+
+  const rewriteUrl = url.clone();
+  // Storefront links on a subdomain/custom domain are slug-less (see
+  // storefront-base.ts), but a legacy/bookmarked /{slug}/... URL must still
+  // resolve — don't prefix it twice (/{slug}/{slug}/... would 404).
+  const alreadyPrefixed = p === `/${shopSlug}` || p.startsWith(`/${shopSlug}/`);
+  rewriteUrl.pathname = alreadyPrefixed ? p : `/${shopSlug}${p}`;
+  return NextResponse.rewrite(rewriteUrl);
+}
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const url = req.nextUrl;
@@ -67,41 +100,23 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
   } else if (hasSubdomain) {
     const shopSlug = hostname.replace(`.${appDomain}`, "");
-    const p = url.pathname;
-    // API routes are global (the shop is keyed by slug inside the path, e.g.
-    // /api/shops/{slug}/orders) and auth callbacks are host-level — neither may
-    // get the shop prefix, or the fetch 404s. Everything else is a storefront
-    // page and gets rewritten to the path-based /(storefront)/[shop]/... route.
-    const isGlobalPath = p.startsWith("/api") || /^\/(sso-callback)(\/|$)/.test(p);
-    if (!isGlobalPath) {
-      // Redirect legacy English storefront paths (/about, /terms, …) to their
-      // Polish equivalents before rewriting, so old links keep working.
-      const firstSeg = p.split("/")[1] ?? "";
-      const polish = LEGACY_STOREFRONT_SEGMENTS[firstSeg];
-      if (polish) {
-        const redirectUrl = url.clone();
-        redirectUrl.pathname = `/${polish}${p.slice(firstSeg.length + 1)}`;
-        return NextResponse.redirect(redirectUrl, 308);
-      }
-      const rewriteUrl = url.clone();
-      // Storefront links on a subdomain are now slug-less (see storefront-base.ts),
-      // but a legacy/bookmarked /{slug}/... URL must still resolve — don't prefix
-      // it twice (/{slug}/{slug}/... would 404).
-      const alreadyPrefixed = p === `/${shopSlug}` || p.startsWith(`/${shopSlug}/`);
-      rewriteUrl.pathname = alreadyPrefixed ? p : `/${shopSlug}${p}`;
-      return NextResponse.rewrite(rewriteUrl);
-    }
+    const res = rewriteStorefront(url, shopSlug);
+    if (res) return res;
   }
 
   // ── Custom domain routing ────────────────────────────────────────────────
-  // myshop.pl → look up shop by custom domain (handled via DB at page level)
-  // For non-sellflow.app, non-localhost hosts we pass shopDomain header
+  // myshop.pl → resolve the shop's slug by its custom domain at the edge, then
+  // rewrite onto the same path-based /(storefront)/[shop]/... tree the
+  // subdomains use. The neon-http driver runs over fetch, so the lookup is
+  // edge-safe. Only live shops resolve; an unknown/parked/disabled domain gets
+  // a plain 404 rather than falling through to the platform landing page.
   if (!isLocalhost && !isMainDomain && !hostname.endsWith(`.${appDomain}`)) {
-    const rewriteUrl = url.clone();
-    rewriteUrl.pathname = `/_custom${url.pathname}`;
-    const response = NextResponse.rewrite(rewriteUrl);
-    response.headers.set("x-shop-domain", hostname);
-    return response;
+    const shopSlug = await resolveCustomDomainSlug(hostname);
+    if (!shopSlug) {
+      return new NextResponse("Sklep nie został znaleziony", { status: 404 });
+    }
+    const res = rewriteStorefront(url, shopSlug);
+    if (res) return res;
   }
 
   // ── Auth guards for dashboard + ops ──────────────────────────────────────

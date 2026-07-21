@@ -59,6 +59,7 @@ export default async function SettingsPage({
       shopName={shop.name}
       active={shop.active}
       storeUrl={`https://${shop.slug}.${appDomain}`}
+      customDomain={shop.customDomain}
       integrations={integrations}
       compliance={compliance}
       branding={branding}
