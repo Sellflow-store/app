@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { shops, products, orders, shopConfig } from "@/lib/db/schema";
+import { shops, products, orders } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { ArrowLeft, ExternalLink, LogIn } from "lucide-react";
 import ShopActions from "./ShopActions";
+import DomainActions from "./DomainActions";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -136,6 +137,9 @@ export default async function ShopDetailPage({ params }: PageProps) {
         plan={shop.owner.plan ?? "free"}
       />
 
+      {/* ── Custom domain ────────────────────────────────────────── */}
+      <DomainActions slug={shop.slug} initialDomain={shop.customDomain} />
+
       {/* ── Details ──────────────────────────────────────────────── */}
       <section
         className="rounded-2xl overflow-hidden"
@@ -144,7 +148,6 @@ export default async function ShopDetailPage({ params }: PageProps) {
         <SectionHeader>Dane sklepu</SectionHeader>
         <Row label="Nazwa" value={shop.name} />
         <Row label="Adres" value={`${shop.slug}.sell-flow.store`} mono />
-        <Row label="Własna domena" value={shop.customDomain ?? "—"} mono />
         <Row label="Utworzono" value={new Date(shop.createdAt).toLocaleString("pl-PL")} mono />
         <Row label="Ostatnia zmiana" value={new Date(shop.updatedAt).toLocaleString("pl-PL")} mono />
         {shop.deletedAt && (
