@@ -6,6 +6,8 @@ import { ChevronLeft, Landmark, HandCoins, Check, Copy, Tag, X } from "lucide-re
 import { useCart, formatPln } from "@/lib/cart";
 import { useStoreBase } from "./StoreBaseContext";
 import type { DeliveryMethod } from "@/types/shop";
+import { requiresPickupPoint } from "@/types/shop";
+import PickupPointPicker, { type PickedPoint } from "./PickupPointPicker";
 
 interface Props {
   shopSlug: string;
@@ -21,6 +23,7 @@ interface Confirmation {
   total: string;
   paymentMethod: "transfer" | "cod";
   transfer: { bankAccount: string; accountOwner: string; title: string } | null;
+  pickupPoint: { code: string; address: string } | null;
 }
 
 const inputClass =
@@ -53,6 +56,7 @@ export default function CheckoutForm({
   const [city, setCity] = useState("");
   const [notes, setNotes] = useState("");
   const [deliveryId, setDeliveryId] = useState(deliveryMethods[0]?.id ?? "");
+  const [pickupPoint, setPickupPoint] = useState<PickedPoint | null>(null);
   const [payment, setPayment] = useState<"transfer" | "cod">(transferEnabled ? "transfer" : "cod");
   const [discountInput, setDiscountInput] = useState("");
   const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
@@ -79,6 +83,16 @@ export default function CheckoutForm({
         <p className="text-sm text-ink-2 font-light mb-8">
           Potwierdzenie wysłaliśmy na adres <span className="font-medium text-ink">{email}</span>.
         </p>
+
+        {confirmation.pickupPoint && (
+          <div className="text-left border border-rule rounded-card p-6 mb-6">
+            <h2 className="text-sm font-semibold tracking-wide text-ink mb-2">
+              Paczkę odbierzesz w paczkomacie
+            </h2>
+            <p className="text-sm text-ink font-medium">{confirmation.pickupPoint.code}</p>
+            <p className="text-sm text-ink-2 mt-0.5">{confirmation.pickupPoint.address}</p>
+          </div>
+        )}
 
         {confirmation.paymentMethod === "transfer" && confirmation.transfer && (
           <div className="text-left border border-rule rounded-card p-6 mb-8">
@@ -183,6 +197,15 @@ export default function CheckoutForm({
 
   // ── Totals ────────────────────────────────────────────────────────────────
   const method = deliveryMethods.find((m) => m.id === deliveryId) ?? null;
+  // Paczkomat zamiast adresu — ulica przestaje mieć sens, punkt staje się wymagany.
+  const needsPoint = hasPhysical && method != null && requiresPickupPoint(method);
+  const streetRequired = hasPhysical && !needsPoint;
+  // Przy pobraniu nie każdy paczkomat przyjmie płatność. Zamiast kasować wybór
+  // efektem (a więc kolejnym renderem), po prostu go nie uznajemy — klient widzi
+  // pusty wybór i listę już ograniczoną do punktów z płatnością.
+  const validPoint =
+    pickupPoint && (effPayment !== "cod" || pickupPoint.paymentAvailable) ? pickupPoint : null;
+  const pointMissing = needsPoint && !validPoint;
   const freeFrom = parseFloat(freeShippingFrom);
   const shippingFree = !isNaN(freeFrom) && freeFrom > 0 && subtotal >= freeFrom;
   const shippingCost = hasPhysical && method ? (shippingFree ? 0 : parseFloat(method.price)) : 0;
@@ -218,6 +241,10 @@ export default function CheckoutForm({
     setError(null);
     setSubmitting(true);
     try {
+      if (pointMissing) {
+        setError("Wybierz paczkomat, do którego mamy dowieźć paczkę.");
+        return;
+      }
       const res = await fetch(`/api/shops/${shopSlug}/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -226,6 +253,7 @@ export default function CheckoutForm({
           address: hasPhysical ? { street, zip, city } : null,
           items: items.map((i) => ({ productId: i.productId, qty: i.qty })),
           deliveryMethodId: hasPhysical ? deliveryId : null,
+          pickupPointCode: needsPoint ? validPoint?.code ?? null : null,
           paymentMethod: effPayment,
           discountCode: discount?.code ?? null,
           notes,
@@ -285,11 +313,15 @@ export default function CheckoutForm({
           {/* Address — physical carts only */}
           {hasPhysical && (
           <section>
-            <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">Adres dostawy</h2>
+            <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">
+              {needsPoint ? "Dane odbiorcy" : "Adres dostawy"}
+            </h2>
             <div className="space-y-4">
               <div>
-                <FieldLabel htmlFor="co-street">Ulica i numer *</FieldLabel>
-                <input id="co-street" required value={street} onChange={(e) => setStreet(e.target.value)} className={inputClass} placeholder="ul. Kwiatowa 7/2" />
+                <FieldLabel htmlFor="co-street">
+                  Ulica i numer {streetRequired ? "*" : "(opcjonalnie)"}
+                </FieldLabel>
+                <input id="co-street" required={streetRequired} value={street} onChange={(e) => setStreet(e.target.value)} className={inputClass} placeholder="ul. Kwiatowa 7/2" />
               </div>
               <div className="grid grid-cols-[8rem_1fr] gap-4">
                 <div>
@@ -351,6 +383,17 @@ export default function CheckoutForm({
                 <p className="text-xs text-ink-2">Twoje zamówienie kwalifikuje się do darmowej dostawy 🎉</p>
               )}
             </div>
+
+            {needsPoint && (
+              <div className="mt-4">
+                <PickupPointPicker
+                  value={validPoint}
+                  onChange={setPickupPoint}
+                  paymentOnly={effPayment === "cod"}
+                  initialQuery={zip.trim() || city.trim()}
+                />
+              </div>
+            )}
           </section>
           )}
 
@@ -525,7 +568,7 @@ export default function CheckoutForm({
 
           <button
             type="submit"
-            disabled={submitting || (hasPhysical && !method) || (!transferEnabled && !codShown)}
+            disabled={submitting || (hasPhysical && !method) || pointMissing || (!transferEnabled && !codShown)}
             className="w-full mt-6 bg-accent-brand text-on-accent text-sm font-semibold px-8 py-4 rounded-button hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {submitting ? "Składanie zamówienia…" : "Zamawiam i płacę"}

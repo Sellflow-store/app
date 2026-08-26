@@ -20,6 +20,7 @@ interface OrderData {
   paymentMethod: string | null;
   paymentStatus: string;
   shippingAddress: Record<string, string | undefined>;
+  pickupPoint: { code?: string; name?: string; address?: string } | null;
   notes: string | null;
   createdAt: string;
 }
@@ -52,6 +53,7 @@ export default function OrderDetail({ shopSlug, order }: Props) {
 
   const st = STATUS_STYLES[order.status] ?? STATUS_STYLES.pending;
   const addr = order.shippingAddress;
+  const point = order.pickupPoint?.code ? order.pickupPoint : null;
 
   async function update(patch: { status?: string; paymentStatus?: string }) {
     setBusy(true);
@@ -242,14 +244,34 @@ export default function OrderDetail({ shopSlug, order }: Props) {
             )}
           </Card>
 
-          <Card title="Adres dostawy">
-            <p className="text-xs leading-relaxed" style={{ color: "oklch(35% 0 0)" }}>
-              {addr.name}
-              <br />
-              {addr.street}
-              <br />
-              {addr.zip} {addr.city}
-            </p>
+          <Card title={point ? "Paczkomat" : "Adres dostawy"}>
+            {point ? (
+              <>
+                <p className="text-xs font-semibold" style={{ color: "oklch(15% 0 0)" }}>
+                  {point.code}
+                </p>
+                <p className="text-xs mt-1 leading-relaxed" style={{ color: "oklch(35% 0 0)" }}>
+                  {point.address}
+                </p>
+                <p className="text-xs mt-2 leading-relaxed" style={{ color: "oklch(45% 0 0)" }}>
+                  Odbiorca: {addr.name}
+                  {addr.zip || addr.city ? (
+                    <>
+                      <br />
+                      {addr.zip} {addr.city}
+                    </>
+                  ) : null}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs leading-relaxed" style={{ color: "oklch(35% 0 0)" }}>
+                {addr.name}
+                <br />
+                {addr.street}
+                <br />
+                {addr.zip} {addr.city}
+              </p>
+            )}
           </Card>
         </div>
       </div>

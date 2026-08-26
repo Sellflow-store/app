@@ -14,12 +14,23 @@ interface OrderSummary {
   discountCode?: string | null;
   total: string;
   showShipping?: boolean; // false for all-digital/service orders
+  /** Wybrany paczkomat — pokazywany zamiast ogólnego "damy Ci znać". */
+  pickupPoint?: { code: string; address: string } | null;
 }
 
 interface TransferDetails {
   bankAccount: string;
   accountOwner: string;
   title: string;
+}
+
+/** Blok z wybranym paczkomatem — ten sam w mailu klienta i merchanta. */
+function pickupBlock(order: OrderSummary): string {
+  if (!order.pickupPoint) return "";
+  return `<div style="background:#f8f8f7;border-radius:12px;padding:16px 20px;margin:16px 0;">
+    <p style="margin:0 0 4px;font-size:12px;font-weight:bold;color:#111111;">Paczkomat</p>
+    <p style="margin:0;font-size:13px;color:#444444;"><strong>${esc(order.pickupPoint.code)}</strong> — ${esc(order.pickupPoint.address)}</p>
+  </div>`;
 }
 
 const pln = (v: string | number) =>
@@ -118,6 +129,7 @@ export function orderConfirmationEmail(params: {
     <p style="margin:0 0 4px;font-size:14px;color:#444444;">Cześć ${esc(customerName)},</p>
     <p style="margin:0 0 16px;font-size:14px;color:#444444;">przyjęliśmy Twoje zamówienie <strong>${esc(order.orderNumber)}</strong>. Poniżej podsumowanie:</p>
     ${itemsTable(order)}
+    ${pickupBlock(order)}
     ${paymentBlock}
     ${fulfillmentBlock}
     ${order.showShipping === false ? "" : `<p style="margin:16px 0 0;font-size:13px;color:#666666;">Damy Ci znać, gdy paczka będzie w drodze.</p>`}`;
@@ -151,6 +163,7 @@ export function merchantNewOrderEmail(params: {
       <strong>${pln(order.total)}</strong> — płatność: ${paymentMethod === "transfer" ? "przelew" : "za pobraniem"}.
     </p>
     ${itemsTable(order)}
+    ${pickupBlock(order)}
     ${fulfillmentBlock}
     <p style="margin:20px 0 0;">
       <a href="${orderUrl}" style="display:inline-block;background:#d6009f;color:#ffffff;font-size:13px;font-weight:bold;padding:12px 24px;border-radius:99px;text-decoration:none;">Zobacz zamówienie w panelu</a>

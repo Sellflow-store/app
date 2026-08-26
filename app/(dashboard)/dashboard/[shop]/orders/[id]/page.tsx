@@ -40,6 +40,8 @@ export default async function OrderDetailPage({
         paymentMethod: order.paymentMethod,
         paymentStatus: order.paymentStatus,
         shippingAddress: (order.shippingAddress as Record<string, string | undefined>) ?? {},
+        pickupPoint:
+          (order.pickupPoint as { code?: string; name?: string; address?: string } | null) ?? null,
         notes: order.notes,
         createdAt: order.createdAt.toLocaleString("pl-PL", {
           day: "2-digit",

@@ -7,6 +7,7 @@ import { checkDiscountCode } from "@/lib/discounts";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationEmail, merchantNewOrderEmail } from "@/lib/email-templates";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { fetchPointByCode } from "@/lib/inpost";
 import type { DeliveryConfig, CheckoutConfig } from "@/types/shop";
 
 type Params = { params: Promise<{ shop: string }> };
@@ -16,6 +17,7 @@ interface OrderRequest {
   address: { street: string; zip: string; city: string } | null;
   items: { productId: string; qty: number }[];
   deliveryMethodId: string | null;
+  pickupPointCode?: string | null;
   paymentMethod: "transfer" | "cod";
   discountCode?: string | null;
   notes?: string;
@@ -81,11 +83,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   const hasDigital = dbProducts.some((p) => p.type === "digital");
   const hasService = dbProducts.some((p) => p.type === "service");
 
-  // Address required only when something ships.
+  // Address required only when something ships. Dla paczkomatu ulica nie ma
+  // sensu (adresem jest punkt), więc sprawdzamy ją dopiero po ustaleniu metody.
   const street = body.address?.street?.trim() ?? "";
   const zip = body.address?.zip?.trim() ?? "";
   const city = body.address?.city?.trim() ?? "";
-  if (hasPhysical && (!street || !zip || !city)) return bad("Uzupełnij adres dostawy.");
+  if (hasPhysical && (!zip || !city)) return bad("Uzupełnij adres dostawy.");
 
   // ── Load config ─────────────────────────────────────────────────────────
   const configs = await db
@@ -107,6 +110,32 @@ export async function POST(req: NextRequest, { params }: Params) {
     ? delivery.methods.find((m) => m.id === body.deliveryMethodId && m.enabled) ?? null
     : null;
   if (hasPhysical && !method) return bad("Wybierz metodę dostawy.");
+  if (method && method.kind !== "parcel_locker" && !street) {
+    return bad("Uzupełnij adres dostawy.");
+  }
+
+  // ── Punkt odbioru — kod z przeglądarki weryfikujemy u InPostu ────────────
+  // Klient mógłby podstawić dowolny ciąg, a etykieta powstaje z tego, co tu
+  // zapiszemy. Bierzemy nazwę i adres z odpowiedzi InPostu, nie od klienta.
+  let pickupPoint: Record<string, string | boolean> | null = null;
+  if (method?.kind === "parcel_locker") {
+    const code = body.pickupPointCode?.trim();
+    if (!code) return bad("Wybierz paczkomat, do którego mamy dowieźć paczkę.");
+    const point = await fetchPointByCode(code);
+    if (!point) return bad("Nie znamy takiego paczkomatu. Wybierz punkt z mapy.");
+    if (body.paymentMethod === "cod" && !point.paymentAvailable) {
+      return bad(
+        `Paczkomat ${point.code} nie przyjmuje płatności przy odbiorze. Wybierz inny punkt albo zapłać przelewem.`
+      );
+    }
+    pickupPoint = {
+      code: point.code,
+      name: point.name,
+      address: point.address,
+      carrier: "inpost",
+      paymentAvailable: point.paymentAvailable,
+    };
+  }
 
   // Cash-on-delivery only makes sense for a physical shipment.
   if (body.paymentMethod === "cod" && !hasPhysical) {
@@ -175,6 +204,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     deliveryMethodId: method?.id,
     deliveryMethod: method?.label,
     deliveryMethodKind: method?.kind,
+    pickupPointCode: pickupPoint?.code,
     codFee: codFee > 0 ? codFee.toFixed(2) : undefined,
   };
 
@@ -204,6 +234,8 @@ export async function POST(req: NextRequest, { params }: Params) {
           total: total.toFixed(2),
           paymentMethod: body.paymentMethod,
           shippingAddress,
+          pickupPoint: pickupPoint ?? {},
+          carrier: pickupPoint ? "inpost" : null,
           notes: body.notes?.trim() || null,
         })
         .returning();
@@ -279,6 +311,9 @@ export async function POST(req: NextRequest, { params }: Params) {
     discountCode: appliedDiscount?.code ?? null,
     total: total.toFixed(2),
     showShipping: hasPhysical,
+    pickupPoint: pickupPoint
+      ? { code: String(pickupPoint.code), address: String(pickupPoint.address) }
+      : null,
   };
 
   // Customer-facing note for non-physical items.
@@ -348,6 +383,9 @@ export async function POST(req: NextRequest, { params }: Params) {
       discountCode: appliedDiscount?.code ?? null,
       total: total.toFixed(2),
       paymentMethod: body.paymentMethod,
+      pickupPoint: pickupPoint
+        ? { code: String(pickupPoint.code), address: String(pickupPoint.address) }
+        : null,
       transfer:
         body.paymentMethod === "transfer"
           ? {
