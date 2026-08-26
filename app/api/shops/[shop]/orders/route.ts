@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { shops, shopConfig, products, orders, customers, users, discountCodes } from "@/lib/db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { DEFAULT_DELIVERY, DEFAULT_CHECKOUT } from "@/lib/shop";
+import { DEFAULT_CHECKOUT, normalizeDeliveryConfig } from "@/lib/shop";
 import { checkDiscountCode } from "@/lib/discounts";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationEmail, merchantNewOrderEmail } from "@/lib/email-templates";
@@ -94,10 +94,9 @@ export async function POST(req: NextRequest, { params }: Params) {
     .where(and(eq(shopConfig.shopId, shop.id), inArray(shopConfig.key, ["delivery", "checkout"])));
   const configMap = Object.fromEntries(configs.map((c) => [c.key, c.value]));
 
-  const delivery: DeliveryConfig = {
-    ...DEFAULT_DELIVERY,
-    ...((configMap.delivery as Partial<DeliveryConfig>) ?? {}),
-  };
+  const delivery: DeliveryConfig = normalizeDeliveryConfig(
+    configMap.delivery as Partial<DeliveryConfig> | undefined
+  );
   const checkout: CheckoutConfig = {
     ...DEFAULT_CHECKOUT,
     ...((configMap.checkout as Partial<CheckoutConfig>) ?? {}),
@@ -175,6 +174,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     city: city || undefined,
     deliveryMethodId: method?.id,
     deliveryMethod: method?.label,
+    deliveryMethodKind: method?.kind,
     codFee: codFee > 0 ? codFee.toFixed(2) : undefined,
   };
 

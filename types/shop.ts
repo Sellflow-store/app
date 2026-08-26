@@ -91,11 +91,32 @@ export interface PopupConfig {
   successText: string;
 }
 
+/** Czym metoda dostawy JEST — etykieta i cena tego nie mówią, a od tego zależy,
+ *  czego checkout musi dodatkowo zażądać (punkt odbioru) i co przyszła
+ *  integracja kurierska ma zamówić. */
+export type DeliveryMethodKind = "courier" | "parcel_locker" | "pickup";
+
 export interface DeliveryMethod {
   id: string;
   label: string;
   price: string; // "12.99"
   enabled: boolean;
+  kind: DeliveryMethodKind;
+}
+
+/** Metody paczkomatowe wymagają wskazania konkretnego punktu w checkoucie. */
+export function requiresPickupPoint(m: DeliveryMethod): boolean {
+  return m.kind === "parcel_locker";
+}
+
+/** Punkt odbioru wybrany przez klienta (InPost i inne sieci). */
+export interface PickupPoint {
+  /** Kod punktu, np. "WAW198M" — identyfikator u przewoźnika. */
+  code: string;
+  name: string;
+  /** Jednolinijkowy adres do pokazania w panelu i w mailu. */
+  address: string;
+  carrier: string; // "inpost" | …
 }
 
 export interface DeliveryConfig {

@@ -7,6 +7,7 @@ import type {
   HomeConfig,
   BrandingConfig,
   DeliveryConfig,
+  DeliveryMethodKind,
   CheckoutConfig,
   AboutConfig,
   FaqConfig,
@@ -97,12 +98,38 @@ export const DEFAULT_HOME: HomeConfig = {
 
 export const DEFAULT_DELIVERY: DeliveryConfig = {
   methods: [
-    { id: "kurier", label: "Kurier", price: "16.99", enabled: true },
-    { id: "paczkomat", label: "Paczkomat InPost", price: "12.99", enabled: true },
-    { id: "odbior", label: "Odbiór osobisty", price: "0.00", enabled: false },
+    { id: "kurier", label: "Kurier", price: "16.99", enabled: true, kind: "courier" },
+    { id: "paczkomat", label: "Paczkomat InPost", price: "12.99", enabled: true, kind: "parcel_locker" },
+    { id: "odbior", label: "Odbiór osobisty", price: "0.00", enabled: false, kind: "pickup" },
   ],
   freeShippingFrom: "",
 };
+
+const DELIVERY_KINDS: DeliveryMethodKind[] = ["courier", "parcel_locker", "pickup"];
+
+/** Zgaduje rodzaj metody dla configów zapisanych zanim pole `kind` istniało.
+ *  Sklepy w bazie mają domyślne id (kurier/paczkomat/odbior), więc trafia
+ *  prawie zawsze; etykieta jest zapasem dla metod dodanych ręcznie. */
+function guessDeliveryKind(m: { id?: string; label?: string }): DeliveryMethodKind {
+  const hay = `${m.id ?? ""} ${m.label ?? ""}`.toLowerCase();
+  if (/paczkomat|automat|locker|punkt|pudo|paczkopunkt/.test(hay)) return "parcel_locker";
+  if (/odbi[oó]r|osobist|sklep|pickup/.test(hay)) return "pickup";
+  return "courier";
+}
+
+/** Dokłada `kind` metodom bez tego pola i odsiewa wartości spoza enumu.
+ *  Wołane wszędzie, gdzie config dostawy jest CZYTANY — dzięki temu stare
+ *  wiersze w shop_config działają bez migracji danych. */
+export function normalizeDeliveryConfig(raw: Partial<DeliveryConfig> | undefined): DeliveryConfig {
+  const merged: DeliveryConfig = { ...DEFAULT_DELIVERY, ...(raw ?? {}) };
+  return {
+    ...merged,
+    methods: (merged.methods ?? []).map((m) => ({
+      ...m,
+      kind: DELIVERY_KINDS.includes(m.kind) ? m.kind : guessDeliveryKind(m),
+    })),
+  };
+}
 
 export const DEFAULT_CHECKOUT: CheckoutConfig = {
   transferEnabled: true,
@@ -195,10 +222,9 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     popup: { ...DEFAULT_HOME.popup, ...((configMap.home as HomeConfig)?.popup ?? {}) },
   };
 
-  const delivery: DeliveryConfig = {
-    ...DEFAULT_DELIVERY,
-    ...((configMap.delivery as Partial<DeliveryConfig>) ?? {}),
-  };
+  const delivery: DeliveryConfig = normalizeDeliveryConfig(
+    configMap.delivery as Partial<DeliveryConfig> | undefined
+  );
 
   const checkout: CheckoutConfig = {
     ...DEFAULT_CHECKOUT,

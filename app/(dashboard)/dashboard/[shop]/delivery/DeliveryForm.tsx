@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Save, Plus, Trash2 } from "lucide-react";
-import type { DeliveryConfig, DeliveryMethod } from "@/types/shop";
+import type { DeliveryConfig, DeliveryMethod, DeliveryMethodKind } from "@/types/shop";
 
 const inputStyle = {
   border: "1.5px solid oklch(88% 0 0)",
@@ -21,6 +21,18 @@ const focusProps = {
     (e.target.style.borderColor = "oklch(22% 0.24 270)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement>) =>
     (e.target.style.borderColor = "oklch(88% 0 0)"),
+};
+
+const KIND_OPTIONS: { value: DeliveryMethodKind; label: string }[] = [
+  { value: "courier", label: "Kurier pod adres" },
+  { value: "parcel_locker", label: "Paczkomat / punkt odbioru" },
+  { value: "pickup", label: "Odbiór osobisty" },
+];
+
+const KIND_HINT: Record<DeliveryMethodKind, string> = {
+  courier: "Klient podaje adres dostawy.",
+  parcel_locker: "Klient wskaże konkretny punkt przy składaniu zamówienia.",
+  pickup: "Klient odbiera u Ciebie — bez wysyłki.",
 };
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -168,6 +180,10 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
         >
           Metody dostawy
         </h2>
+        <p className="text-xs mb-4 -mt-3" style={{ color: "oklch(50% 0 0)" }}>
+          Rodzaj decyduje, o co poprosimy klienta w koszyku — przy paczkomacie
+          o wskazanie punktu, przy kurierze o adres.
+        </p>
 
         <div className="space-y-3">
           {methods.map((m, i) => (
@@ -216,6 +232,35 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
                 </button>
               </div>
+
+              <div className="grid grid-cols-[auto_1fr] gap-3 items-center mt-2 pl-[3rem]">
+                <label
+                  className="text-xs font-medium shrink-0"
+                  style={{ color: "oklch(45% 0 0)" }}
+                  htmlFor={`kind-${m.id}`}
+                >
+                  Rodzaj
+                </label>
+                <div>
+                  <select
+                    id={`kind-${m.id}`}
+                    value={m.kind}
+                    onChange={(e) =>
+                      updateMethod(i, { kind: e.target.value as DeliveryMethodKind })
+                    }
+                    style={{ ...inputStyle, maxWidth: "16rem" }}
+                  >
+                    {KIND_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] mt-1" style={{ color: "oklch(55% 0 0)" }}>
+                    {KIND_HINT[m.kind]}
+                  </p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -224,7 +269,13 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
           onClick={() =>
             setMethods((prev) => [
               ...prev,
-              { id: `metoda-${Date.now().toString(36)}`, label: "", price: "", enabled: true },
+              {
+                id: `metoda-${Date.now().toString(36)}`,
+                label: "",
+                price: "",
+                enabled: true,
+                kind: "courier",
+              },
             ])
           }
           className="mt-3 flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"

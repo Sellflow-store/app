@@ -39,6 +39,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     images?: string[];
     specs?: { key: string; value: string }[];
     stock?: number | null;
+    weightGrams?: number | null;
+    dimensions?: Record<string, number | null>;
     sortOrder?: number;
     type?: string;
     fulfillment?: Record<string, unknown>;
@@ -83,6 +85,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       images: body.images ?? [],
       specs: body.specs ?? [],
       stock: body.stock ?? null,
+      weightGrams: body.weightGrams ?? null,
+      dimensions: body.dimensions ?? {},
       type: body.type ?? "physical",
       fulfillment: body.fulfillment ?? {},
       sortOrder: body.sortOrder ?? 0,

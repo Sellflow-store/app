@@ -30,6 +30,11 @@ export default async function EditProductPage({
   if (!product) notFound();
 
   const f = (product.fulfillment ?? {}) as Record<string, unknown>;
+  const dim = (product.dimensions ?? {}) as {
+    length?: number | null;
+    width?: number | null;
+    height?: number | null;
+  };
 
   const initial: ProductFormData = {
     name: product.name,
@@ -42,6 +47,10 @@ export default async function EditProductPage({
     description: product.description ?? "",
     images: (product.images as string[]) ?? [],
     stock: product.stock != null ? String(product.stock) : "",
+    weight: product.weightGrams != null ? String(product.weightGrams) : "",
+    length: dim.length != null ? String(dim.length) : "",
+    width: dim.width != null ? String(dim.width) : "",
+    height: dim.height != null ? String(dim.height) : "",
     specs: (product.specs as { key: string; value: string }[]) ?? [],
     type: (product.type as ProductType) ?? "physical",
     digitalKind: (f.kind as DigitalKind) ?? "file",

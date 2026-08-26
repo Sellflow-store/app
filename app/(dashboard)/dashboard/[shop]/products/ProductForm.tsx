@@ -28,6 +28,10 @@ export interface ProductFormData {
   description: string;
   images: string[];
   stock: string; // "" = nie śledzę stanu
+  weight: string;  // gramy, "" = nie podano
+  length: string;  // cm
+  width: string;   // cm
+  height: string;  // cm
   specs: ProductSpec[];
   type: ProductType;
   // digital
@@ -53,6 +57,10 @@ const EMPTY: ProductFormData = {
   description: "",
   images: [],
   stock: "",
+  weight: "",
+  length: "",
+  width: "",
+  height: "",
   specs: [],
   type: "physical",
   digitalKind: "file",
@@ -201,6 +209,29 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       stock = n;
     }
 
+    // Gabaryt: puste → null. Wartości muszą być dodatnie, bo trafią do wyceny
+    // przesyłki — zero albo minus zablokowałoby etykietę u brokera.
+    const positiveOrNull = (raw: string): number | null | "invalid" => {
+      if (raw.trim() === "") return null;
+      const n = parseFloat(raw.replace(",", ".").replace(/[^\d.]/g, ""));
+      if (isNaN(n) || n <= 0) return "invalid";
+      return Math.round(n);
+    };
+    const weight = positiveOrNull(form.weight);
+    const dims = {
+      length: positiveOrNull(form.length),
+      width: positiveOrNull(form.width),
+      height: positiveOrNull(form.height),
+    };
+    if (weight === "invalid") {
+      setValidationError("Waga musi być liczbą większą od zera (w gramach).");
+      return;
+    }
+    if (Object.values(dims).includes("invalid")) {
+      setValidationError("Wymiary muszą być liczbami większymi od zera (w centymetrach).");
+      return;
+    }
+
     setValidationError(null);
     setSaveState("saving");
 
@@ -234,6 +265,16 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       images: form.images,
       // Stock only applies to physical products; others are unlimited.
       stock: form.type === "physical" ? stock : null,
+      // Gabaryt dotyczy tylko wysyłki — produkty cyfrowe i usługi go nie mają.
+      weightGrams: form.type === "physical" ? (weight as number | null) : null,
+      dimensions:
+        form.type === "physical"
+          ? {
+              length: dims.length as number | null,
+              width: dims.width as number | null,
+              height: dims.height as number | null,
+            }
+          : {},
       specs: form.specs
         .map((s) => ({ key: s.key.trim(), value: s.value.trim() }))
         .filter((s) => s.key || s.value),
@@ -738,6 +779,62 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           Zostaw puste, jeśli nie chcesz śledzić stanu — produkt będzie zawsze dostępny.
           Przy <strong>0</strong> klient zobaczy „Wyprzedane" i nie doda produktu do koszyka.
           Stan zmniejsza się automatycznie po każdym zamówieniu.
+        </p>
+      </SectionCard>
+      )}
+
+      {/* Shipping dimensions — physical only */}
+      {form.type === "physical" && (
+      <SectionCard title="Gabaryt przesyłki">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Field label="Waga (g)" id="p-weight">
+            <input
+              id="p-weight"
+              value={form.weight}
+              onChange={(e) => patch({ weight: e.target.value })}
+              placeholder="np. 500"
+              inputMode="numeric"
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+          <Field label="Długość (cm)" id="p-length">
+            <input
+              id="p-length"
+              value={form.length}
+              onChange={(e) => patch({ length: e.target.value })}
+              placeholder="np. 30"
+              inputMode="numeric"
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+          <Field label="Szerokość (cm)" id="p-width">
+            <input
+              id="p-width"
+              value={form.width}
+              onChange={(e) => patch({ width: e.target.value })}
+              placeholder="np. 20"
+              inputMode="numeric"
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+          <Field label="Wysokość (cm)" id="p-height">
+            <input
+              id="p-height"
+              value={form.height}
+              onChange={(e) => patch({ height: e.target.value })}
+              placeholder="np. 10"
+              inputMode="numeric"
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+        </div>
+        <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+          Potrzebne, żeby policzyć koszt wysyłki i wygenerować etykietę kurierską.
+          Możesz zostawić puste i uzupełnić później — bez tego trzeba będzie nadawać paczki ręcznie.
         </p>
       </SectionCard>
       )}

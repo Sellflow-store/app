@@ -117,6 +117,10 @@ export const products = pgTable(
     reviews: integer("reviews").default(0),
     visible: boolean("visible").notNull().default(true),
     stock: integer("stock"), // null = nie śledzę stanu (nieograniczony); liczba = ilość
+    // Gabaryt do wyceny przesyłki i etykiety. null = merchant nie podał —
+    // wtedy broker nie wyceni wysyłki, więc zbieramy to od teraz.
+    weightGrams: integer("weight_grams"),
+    dimensions: jsonb("dimensions").default({}), // { length, width, height } w cm
     shortDesc: text("short_desc"),
     description: text("description"),
     images: jsonb("images").notNull().default([]),   // string[]
@@ -211,7 +215,15 @@ export const orders = pgTable(
     paymentStatus: text("payment_status").notNull().default("unpaid"), // unpaid | paid | refunded
     shippingAddress: jsonb("shipping_address").default({}),
     discountCode: text("discount_code"),
-    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    // Operator płatności — neutralne wobec dostawcy (PayU/Tpay/P24/…).
+    // Zastąpiło martwe stripe_payment_intent_id (kolumna była w 100% pusta).
+    paymentProvider: text("payment_provider"),          // "payu" | "tpay" | "p24" | …
+    paymentProviderRef: text("payment_provider_ref"),   // id transakcji u operatora
+    // Przesyłka — wypełniane ręcznie przez merchanta, docelowo przez brokera.
+    carrier: text("carrier"),                           // "inpost" | "dpd" | …
+    trackingNumber: text("tracking_number"),
+    labelUrl: text("label_url"),                        // PDF etykiety z brokera
+    pickupPoint: jsonb("pickup_point").default({}),     // PickupPoint: code, name, address, carrier
     notes: text("notes"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

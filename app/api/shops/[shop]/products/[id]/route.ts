@@ -27,6 +27,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     benefits: unknown[];
     specs: unknown[];
     stock: number | null;
+    weightGrams: number | null;
+    dimensions: Record<string, number | null>;
     sortOrder: number;
     type: string;
     fulfillment: Record<string, unknown>;
@@ -36,7 +38,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const fields = [
     "name", "price", "oldPrice", "category", "badge", "visible",
     "shortDesc", "description", "images", "colors", "sizes",
-    "benefits", "specs", "stock", "sortOrder", "type", "fulfillment",
+    "benefits", "specs", "stock", "weightGrams", "dimensions",
+    "sortOrder", "type", "fulfillment",
   ] as const;
   for (const f of fields) {
     if (body[f] !== undefined) updates[f] = body[f];

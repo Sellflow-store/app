@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { shopConfig } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
-import { DEFAULT_DELIVERY } from "@/lib/shop";
+import { DEFAULT_DELIVERY, normalizeDeliveryConfig } from "@/lib/shop";
 import type { DeliveryConfig } from "@/types/shop";
 import DeliveryForm from "./DeliveryForm";
 
@@ -21,7 +21,7 @@ export default async function DeliveryPage({
         where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "delivery")),
       });
       if (row?.value) {
-        initialConfig = { ...DEFAULT_DELIVERY, ...(row.value as Partial<DeliveryConfig>) };
+        initialConfig = normalizeDeliveryConfig(row.value as Partial<DeliveryConfig>);
       }
     }
   } catch {
