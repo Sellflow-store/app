@@ -23,6 +23,44 @@ export default function AccountSection({ shopSlug, accountEmail, userId, initial
   function set<K extends keyof AccountConfig>(key: K, value: AccountConfig[K]) {
     setData((d) => ({ ...d, [key]: value }));
   }
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [lookupNote, setLookupNote] = useState<string | null>(null);
+
+  async function fetchCompany() {
+    setLookingUp(true);
+    setLookupError(null);
+    setLookupNote(null);
+    try {
+      const res = await fetch(
+        `/api/company-lookup?nip=${encodeURIComponent(data.company.taxId)}`
+      );
+      const body = await res.json();
+      if (!res.ok) {
+        setLookupError(body.error ?? "Nie udało się pobrać danych.");
+        return;
+      }
+      const c = body.company as {
+        name: string;
+        address: string;
+        statusVat: string | null;
+      };
+      setData((d) => ({
+        ...d,
+        company: { ...d.company, name: c.name, address: c.address },
+      }));
+      setLookupNote(
+        c.statusVat && c.statusVat !== "Czynny"
+          ? `Dane uzupełnione. Uwaga: status VAT tej firmy to „${c.statusVat}".`
+          : "Dane uzupełnione z rejestru. Sprawdź je i zapisz."
+      );
+    } catch {
+      setLookupError("Nie udało się połączyć z rejestrem. Wpisz dane ręcznie.");
+    } finally {
+      setLookingUp(false);
+    }
+  }
+
   function setCompany<K extends keyof AccountConfig["company"]>(key: K, value: string) {
     setData((d) => ({ ...d, company: { ...d.company, [key]: value } }));
   }
@@ -92,9 +130,41 @@ export default function AccountSection({ shopSlug, accountEmail, userId, initial
             <Field label="Nazwa firmy">
               <TextInput value={data.company.name} onChange={(e) => setCompany("name", e.target.value)} />
             </Field>
-            <Field label="NIP">
-              <TextInput value={data.company.taxId} placeholder="000-000-00-00" onChange={(e) => setCompany("taxId", e.target.value)} />
+            <Field
+              label="NIP"
+              hint={'Wpisz NIP i kliknij „Pobierz dane” — nazwę i adres weźmiemy z rejestru Ministerstwa Finansów.'}
+            >
+              <div className="flex gap-2">
+                <TextInput
+                  value={data.company.taxId}
+                  placeholder="000-000-00-00"
+                  onChange={(e) => {
+                    setCompany("taxId", e.target.value);
+                    setLookupError(null);
+                    setLookupNote(null);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={fetchCompany}
+                  disabled={lookingUp || !data.company.taxId.trim()}
+                  className="shrink-0 text-xs font-semibold px-3.5 rounded-lg transition-all disabled:opacity-40"
+                  style={{ border: `1.5px solid ${P.border}`, color: P.ink, background: P.surface2 }}
+                >
+                  {lookingUp ? "Szukam…" : "Pobierz dane"}
+                </button>
+              </div>
             </Field>
+            {lookupError && (
+              <p className="text-[11px] -mt-2 mb-3" style={{ color: "oklch(50% 0.20 20)" }}>
+                {lookupError}
+              </p>
+            )}
+            {lookupNote && (
+              <p className="text-[11px] -mt-2 mb-3" style={{ color: P.muted }}>
+                {lookupNote}
+              </p>
+            )}
             <Field label="Adres">
               <TextInput value={data.company.address} onChange={(e) => setCompany("address", e.target.value)} />
             </Field>

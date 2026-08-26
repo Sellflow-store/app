@@ -8,6 +8,9 @@ import { sendEmail } from "@/lib/email";
 import { orderConfirmationEmail, merchantNewOrderEmail } from "@/lib/email-templates";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { fetchPointByCode } from "@/lib/inpost";
+import { buildTransferQrPayload } from "@/lib/qr-transfer";
+import QRCode from "qrcode";
+import type { AccountConfig } from "@/types/shop";
 import type { DeliveryConfig, CheckoutConfig } from "@/types/shop";
 
 type Params = { params: Promise<{ shop: string }> };
@@ -94,7 +97,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const configs = await db
     .select()
     .from(shopConfig)
-    .where(and(eq(shopConfig.shopId, shop.id), inArray(shopConfig.key, ["delivery", "checkout"])));
+    .where(and(eq(shopConfig.shopId, shop.id), inArray(shopConfig.key, ["delivery", "checkout", "account"])));
   const configMap = Object.fromEntries(configs.map((c) => [c.key, c.value]));
 
   const delivery: DeliveryConfig = normalizeDeliveryConfig(
@@ -292,14 +295,39 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
   // ── Emails — best-effort, never fail the order on email problems ────────
+  const transferTitle = `Zamówienie ${order.orderNumber}`;
   const transferDetails =
     body.paymentMethod === "transfer"
       ? {
           bankAccount: checkout.bankAccount,
           accountOwner: checkout.accountOwner,
-          title: `Zamówienie ${order.orderNumber}`,
+          title: transferTitle,
         }
       : null;
+
+  // ── Kod QR przelewu (standard 2D ZBP) ───────────────────────────────────
+  // Klient skanuje go aplikacją banku zamiast przepisywać 26 cyfr. Generujemy
+  // po stronie serwera, żeby nie dokładać kodera QR do bundla storefrontu.
+  // Gdy danych nie da się poprawnie sformatować, po prostu nie pokazujemy kodu —
+  // numer konta i tytuł są obok, więc klient nadal zapłaci.
+  let transferQr: string | null = null;
+  if (transferDetails) {
+    const account = (configMap.account as Partial<AccountConfig> | undefined) ?? {};
+    const payload = buildTransferQrPayload({
+      bankAccount: checkout.bankAccount,
+      recipientName: checkout.accountOwner || shop.name,
+      title: transferTitle,
+      amount: total.toFixed(2),
+      taxId: account.company?.taxId,
+    });
+    if (payload) {
+      try {
+        transferQr = await QRCode.toDataURL(payload, { margin: 1, width: 320 });
+      } catch (e) {
+        console.error("QR przelewu nie powstał:", e);
+      }
+    }
+  }
 
   const summary = {
     orderNumber: order.orderNumber,
@@ -386,14 +414,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       pickupPoint: pickupPoint
         ? { code: String(pickupPoint.code), address: String(pickupPoint.address) }
         : null,
-      transfer:
-        body.paymentMethod === "transfer"
-          ? {
-              bankAccount: checkout.bankAccount,
-              accountOwner: checkout.accountOwner,
-              title: `Zamówienie ${order.orderNumber}`,
-            }
-          : null,
+      transfer: transferDetails ? { ...transferDetails, qr: transferQr } : null,
     },
     { status: 201 }
   );

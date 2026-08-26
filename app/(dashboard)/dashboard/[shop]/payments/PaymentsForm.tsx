@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Save, Landmark, HandCoins } from "lucide-react";
 import type { CheckoutConfig } from "@/types/shop";
+import { isValidNrb, formatNrb, normalizeNrb } from "@/lib/nrb";
 
 const inputStyle = {
   border: "1.5px solid oklch(88% 0 0)",
@@ -52,12 +53,6 @@ function Field({ label, id, children }: { label: string; id: string; children: R
   );
 }
 
-/** Grupuje cyfry NRB po 4 dla czytelności; akceptuje też IBAN z "PL" */
-function formatBankAccount(raw: string): string {
-  const cleaned = raw.replace(/\s/g, "").toUpperCase();
-  return cleaned.replace(/(.{4})/g, "$1 ").trim();
-}
-
 function normalizePrice(raw: string): string | null {
   const cleaned = raw.replace(",", ".").replace(/[^\d.]/g, "");
   if (cleaned === "") return "0.00";
@@ -87,10 +82,20 @@ export default function PaymentsForm({ shopSlug, initialConfig }: Props) {
       setValidationError("Włącz przynajmniej jedną metodę płatności — inaczej klienci nie złożą zamówienia.");
       return;
     }
-    const accountDigits = bankAccount.replace(/[\sA-Z]/gi, "");
-    if (transferEnabled && accountDigits.length !== 26) {
-      setValidationError("Numer konta powinien mieć 26 cyfr (polski NRB).");
-      return;
+    if (transferEnabled) {
+      const digits = normalizeNrb(bankAccount);
+      if (digits.length !== 26) {
+        setValidationError("Numer konta powinien mieć 26 cyfr (polski NRB).");
+        return;
+      }
+      // Suma kontrolna wyłapuje przekręcone cyfry. Bez tego jedynym sygnałem
+      // błędu byłoby to, że przelewy od klientów nigdy nie przychodzą.
+      if (!isValidNrb(digits)) {
+        setValidationError(
+          "Ten numer konta ma błędną sumę kontrolną — sprawdź, czy nie ma literówki."
+        );
+        return;
+      }
     }
     const fee = normalizePrice(codFee);
     if (fee === null) {
@@ -103,7 +108,7 @@ export default function PaymentsForm({ shopSlug, initialConfig }: Props) {
     try {
       const value: CheckoutConfig = {
         transferEnabled,
-        bankAccount: formatBankAccount(bankAccount),
+        bankAccount: transferEnabled ? formatNrb(bankAccount) : bankAccount.trim(),
         accountOwner: accountOwner.trim(),
         codEnabled,
         codFee: fee,
@@ -195,7 +200,7 @@ export default function PaymentsForm({ shopSlug, initialConfig }: Props) {
                 value={bankAccount}
                 onChange={(e) => setBankAccount(e.target.value)}
                 onBlur={(e) => {
-                  setBankAccount(formatBankAccount(e.target.value));
+                  setBankAccount(formatNrb(e.target.value));
                   focusProps.onBlur(e);
                 }}
                 onFocus={focusProps.onFocus}

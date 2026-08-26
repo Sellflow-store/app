@@ -22,7 +22,13 @@ interface Confirmation {
   orderNumber: string;
   total: string;
   paymentMethod: "transfer" | "cod";
-  transfer: { bankAccount: string; accountOwner: string; title: string } | null;
+  transfer: {
+    bankAccount: string;
+    accountOwner: string;
+    title: string;
+    /** Kod QR w standardzie 2D ZBP jako data URI; null, gdy nie dało się go zbudować. */
+    qr: string | null;
+  } | null;
   pickupPoint: { code: string; address: string } | null;
 }
 
@@ -140,6 +146,26 @@ export default function CheckoutForm({
                 <dd className="text-ink font-bold">{formatPln(parseFloat(confirmation.total))}</dd>
               </div>
             </dl>
+            {confirmation.transfer.qr && (
+              <div className="mt-5 pt-5 border-t border-rule flex items-center gap-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={confirmation.transfer.qr}
+                  alt="Kod QR z danymi przelewu"
+                  width={104}
+                  height={104}
+                  className="rounded-input shrink-0"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink">Zapłać z telefonu</p>
+                  <p className="text-xs text-ink-2 mt-1">
+                    Zeskanuj kod aplikacją swojego banku — dane przelewu wypełnią się same.
+                    Przelew i tak zatwierdzasz w banku.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <p className="text-[11px] text-ink-2/70 mt-4">
               Zamówienie zrealizujemy po zaksięgowaniu wpłaty.
             </p>
