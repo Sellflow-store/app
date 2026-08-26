@@ -179,12 +179,30 @@ export function orderShippedEmail(params: {
   shopName: string;
   customerName: string;
   orderNumber: string;
+  carrierName?: string | null;
+  trackingNumber?: string | null;
+  /** null, gdy przewoźnik nie ma wyszukiwarki — pokazujemy sam numer. */
+  trackingUrl?: string | null;
 }): { subject: string; html: string } {
-  const { shopName, customerName, orderNumber } = params;
+  const { shopName, customerName, orderNumber, carrierName, trackingNumber, trackingUrl } = params;
+
+  const trackingBlock = trackingNumber
+    ? `<div style="background:#f8f8f7;border-radius:12px;padding:20px;margin:20px 0;">
+        <p style="margin:0 0 4px;font-size:12px;font-weight:bold;color:#111111;">Numer przesyłki${carrierName ? ` · ${esc(carrierName)}` : ""}</p>
+        <p style="margin:0;font-size:15px;font-weight:bold;color:#111111;letter-spacing:0.02em;">${esc(trackingNumber)}</p>
+        ${
+          trackingUrl
+            ? `<p style="margin:14px 0 0;"><a href="${esc(trackingUrl)}" style="display:inline-block;background:#16161d;color:#ffffff;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:99px;text-decoration:none;">Śledź przesyłkę</a></p>`
+            : `<p style="margin:10px 0 0;font-size:12px;color:#888888;">Wpisz ten numer na stronie przewoźnika, żeby sprawdzić status.</p>`
+        }
+      </div>`
+    : "";
+
   const body = `
     <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Twoja paczka jest w drodze 📦</h1>
     <p style="margin:0 0 8px;font-size:14px;color:#444444;">Cześć ${esc(customerName)},</p>
-    <p style="margin:0;font-size:14px;color:#444444;">zamówienie <strong>${esc(orderNumber)}</strong> zostało wysłane. Spodziewaj się dostawy w najbliższych dniach.</p>`;
+    <p style="margin:0;font-size:14px;color:#444444;">zamówienie <strong>${esc(orderNumber)}</strong> zostało wysłane. Spodziewaj się dostawy w najbliższych dniach.</p>
+    ${trackingBlock}`;
 
   return {
     subject: `Zamówienie ${orderNumber} wysłane — ${shopName}`,

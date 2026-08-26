@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Banknote } from "lucide-react";
+import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Banknote, ExternalLink } from "lucide-react";
+import { CARRIERS, trackingUrl } from "@/lib/tracking";
 import { STATUS_STYLES, PAYMENT_LABELS } from "../OrdersTable";
 
 interface OrderData {
@@ -21,11 +22,24 @@ interface OrderData {
   paymentStatus: string;
   shippingAddress: Record<string, string | undefined>;
   pickupPoint: { code?: string; name?: string; address?: string } | null;
+  carrier: string | null;
+  trackingNumber: string | null;
   notes: string | null;
   createdAt: string;
 }
 
 const pln = (v: string) => `${parseFloat(v).toFixed(2).replace(".", ",")} zł`;
+
+const fieldStyle: React.CSSProperties = {
+  border: "1.5px solid oklch(88% 0 0)",
+  borderRadius: "10px",
+  padding: "8px 10px",
+  fontSize: "12px",
+  color: "oklch(11% 0.10 275)",
+  background: "#fff",
+  width: "100%",
+  outline: "none",
+};
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -50,10 +64,17 @@ export default function OrderDetail({ shopSlug, order }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Przy paczkomacie przewoźnik jest znany z góry — nie każemy go wybierać.
+  const [carrier, setCarrier] = useState(order.carrier ?? (order.pickupPoint?.code ? "inpost" : ""));
+  const [tracking, setTracking] = useState(order.trackingNumber ?? "");
+  const [shipSaved, setShipSaved] = useState(false);
+  const [shipError, setShipError] = useState<string | null>(null);
+  const [shipBusy, setShipBusy] = useState(false);
 
   const st = STATUS_STYLES[order.status] ?? STATUS_STYLES.pending;
   const addr = order.shippingAddress;
   const point = order.pickupPoint?.code ? order.pickupPoint : null;
+  const savedTrackingUrl = trackingUrl(order.carrier, order.trackingNumber);
 
   async function update(patch: { status?: string; paymentStatus?: string }) {
     setBusy(true);
@@ -73,6 +94,31 @@ export default function OrderDetail({ shopSlug, order }: Props) {
       setError("Nie udało się zapisać zmiany. Spróbuj ponownie.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function saveShipping() {
+    setShipBusy(true);
+    setShipError(null);
+    setShipSaved(false);
+    try {
+      const res = await fetch(`/api/shops/${shopSlug}/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ carrier: carrier || null, trackingNumber: tracking || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setShipError(data.error ?? "Nie udało się zapisać. Spróbuj ponownie.");
+        return;
+      }
+      setShipSaved(true);
+      setTimeout(() => setShipSaved(false), 2500);
+      router.refresh();
+    } catch {
+      setShipError("Nie udało się zapisać. Spróbuj ponownie.");
+    } finally {
+      setShipBusy(false);
     }
   }
 
@@ -234,6 +280,86 @@ export default function OrderDetail({ shopSlug, order }: Props) {
               <Banknote className="w-3.5 h-3.5" strokeWidth={1.5} />
               {order.paymentStatus === "paid" ? "Oznacz jako nieopłacone" : "Oznacz jako opłacone"}
             </button>
+          </Card>
+
+          <Card title="Przesyłka">
+            <div className="space-y-3">
+              <div>
+                <label
+                  htmlFor="od-carrier"
+                  className="block text-[11px] font-medium mb-1"
+                  style={{ color: "oklch(45% 0 0)" }}
+                >
+                  Przewoźnik
+                </label>
+                <select
+                  id="od-carrier"
+                  value={carrier}
+                  onChange={(e) => setCarrier(e.target.value)}
+                  style={fieldStyle}
+                >
+                  <option value="">— wybierz —</option>
+                  {CARRIERS.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="od-tracking"
+                  className="block text-[11px] font-medium mb-1"
+                  style={{ color: "oklch(45% 0 0)" }}
+                >
+                  Numer przesyłki
+                </label>
+                <input
+                  id="od-tracking"
+                  value={tracking}
+                  onChange={(e) => setTracking(e.target.value)}
+                  placeholder="np. 640012345678901234567890"
+                  style={fieldStyle}
+                />
+              </div>
+
+              {shipError && (
+                <p className="text-[11px]" style={{ color: "oklch(50% 0.20 20)" }}>
+                  {shipError}
+                </p>
+              )}
+
+              <button
+                onClick={saveShipping}
+                disabled={shipBusy}
+                className="w-full text-xs font-semibold px-4 py-2.5 rounded-lg transition-all disabled:opacity-60"
+                style={{
+                  background: shipSaved ? "oklch(52% 0.20 158)" : "oklch(56% 0.30 335)",
+                  color: "#fff",
+                }}
+              >
+                {shipBusy ? "Zapisywanie…" : shipSaved ? "Zapisano!" : "Zapisz przesyłkę"}
+              </button>
+
+              {savedTrackingUrl ? (
+                <a
+                  href={savedTrackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 text-xs font-medium"
+                  style={{ color: "oklch(40% 0.15 275)" }}
+                >
+                  <ExternalLink className="w-3 h-3" strokeWidth={1.5} />
+                  Śledź {order.trackingNumber}
+                </a>
+              ) : null}
+
+              <p className="text-[11px] leading-relaxed" style={{ color: "oklch(60% 0 0)" }}>
+                {order.status === "shipped"
+                  ? "Zamówienie jest już oznaczone jako wysłane — mail z numerem poszedł przy tej zmianie."
+                  : "Uzupełnij numer przed oznaczeniem zamówienia jako wysłane, a klient dostanie go w mailu."}
+              </p>
+            </div>
           </Card>
 
           <Card title="Klient">
