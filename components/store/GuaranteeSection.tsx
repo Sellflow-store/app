@@ -1,7 +1,36 @@
-import { ShieldCheck, RotateCcw, Truck, LucideIcon } from "lucide-react";
-import type { GuaranteeConfig } from "@/types/shop";
+import {
+  ShieldCheck,
+  RotateCcw,
+  Truck,
+  Package,
+  Mail,
+  Leaf,
+  Lock,
+  Clock,
+  Star,
+  LucideIcon,
+} from "lucide-react";
+import type { GuaranteeConfig, GuaranteeIcon } from "@/types/shop";
 
-const ICONS: LucideIcon[] = [ShieldCheck, RotateCcw, Truck];
+/** Ikona po pozycji — tak działały istniejące sklepy, zostaje jako fallback. */
+const BY_POSITION: LucideIcon[] = [ShieldCheck, RotateCcw, Truck];
+
+/** Ikona po znaczeniu — merchant wybiera w panelu, więc pasuje do treści. */
+const BY_KEY: Record<GuaranteeIcon, LucideIcon> = {
+  shield: ShieldCheck,
+  return: RotateCcw,
+  package: Package,
+  truck: Truck,
+  mail: Mail,
+  leaf: Leaf,
+  lock: Lock,
+  clock: Clock,
+  star: Star,
+};
+
+function iconFor(key: GuaranteeIcon | undefined, index: number): LucideIcon {
+  return (key && BY_KEY[key]) || BY_POSITION[index] || ShieldCheck;
+}
 
 interface Props {
   config: GuaranteeConfig;
@@ -10,6 +39,8 @@ interface Props {
 export default function GuaranteeSection({ config }: Props) {
   const items = config.items ?? [];
   if (config.visible === false || items.length === 0) return null;
+
+  if (config.layout === "strip") return <Strip config={config} />;
 
   // Ciemny pas to domyślny wygląd (tak wyglądają istniejące sklepy). Marki
   // minimalistyczne dostają wariant na papierze — ciężki czarny blok potrafi
@@ -48,7 +79,7 @@ export default function GuaranteeSection({ config }: Props) {
                 </div>
               );
             }
-            const Icon = ICONS[i] ?? ShieldCheck;
+            const Icon = iconFor(item.icon, i);
             return (
               <div key={i} className="text-center">
                 <div
@@ -62,6 +93,49 @@ export default function GuaranteeSection({ config }: Props) {
             );
           })}
         </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Wąski pasek zaufania tuż nad stopką: mała ikona + tytuł + jedno zdanie,
+ * bez nagłówka. Tło i hairline takie jak w stopce, więc oba bloki czytają się
+ * jako jeden — zamiast trzeciej „dużej sekcji" pod rząd.
+ */
+function Strip({ config }: { config: GuaranteeConfig }) {
+  const items = config.items ?? [];
+  const cols =
+    items.length === 1
+      ? "sm:grid-cols-1 max-w-md"
+      : items.length === 2
+        ? "sm:grid-cols-2 max-w-3xl"
+        : items.length === 4
+          ? "sm:grid-cols-2 lg:grid-cols-4"
+          : "sm:grid-cols-3";
+  return (
+    <section aria-label="Zasady zakupów" className="bg-paper-2 border-t border-rule">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+        <ul className={`grid grid-cols-1 ${cols} gap-6 lg:gap-10 mx-auto`}>
+          {items.map((item, i) => {
+            const Icon = iconFor(item.icon, i);
+            return (
+              <li key={i} className="flex items-start gap-3">
+                <Icon className="w-4 h-4 mt-0.5 shrink-0 text-ink" strokeWidth={1.5} />
+                <div>
+                  <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-ink">
+                    {item.title}
+                  </p>
+                  {item.description && (
+                    <p className="mt-1 text-xs text-ink-2 font-light leading-relaxed">
+                      {item.description}
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

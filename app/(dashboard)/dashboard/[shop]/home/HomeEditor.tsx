@@ -92,16 +92,33 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+type ListItem = { title: string; description: string; icon?: string };
+
+const GUARANTEE_ICONS = [
+  { value: "shield", label: "Tarcza" },
+  { value: "return", label: "Zwrot" },
+  { value: "package", label: "Paczka" },
+  { value: "truck", label: "Dostawa" },
+  { value: "mail", label: "Kontakt" },
+  { value: "leaf", label: "Natura" },
+  { value: "lock", label: "Bezpieczeństwo" },
+  { value: "clock", label: "Czas" },
+  { value: "star", label: "Gwiazdka" },
+];
+
 function ItemListEditor({
   items,
   onChange,
   addLabel,
+  iconOptions,
 }: {
-  items: { title: string; description: string }[];
-  onChange: (items: { title: string; description: string }[]) => void;
+  items: ListItem[];
+  onChange: (items: ListItem[]) => void;
   addLabel: string;
+  /** Gdy podane, każda pozycja dostaje select ikony (klucz → etykieta). */
+  iconOptions?: { value: string; label: string }[];
 }) {
-  function update(i: number, patch: Partial<{ title: string; description: string }>) {
+  function update(i: number, patch: Partial<ListItem>) {
     const next = [...items];
     next[i] = { ...next[i], ...patch };
     onChange(next);
@@ -115,7 +132,27 @@ function ItemListEditor({
           className="p-3 rounded-xl"
           style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
         >
-          <div className="grid grid-cols-[1fr_1.5fr_2rem] gap-2 items-end">
+          <div
+            className={`grid gap-2 items-end ${
+              iconOptions ? "grid-cols-[7rem_1fr_1.5fr_2rem]" : "grid-cols-[1fr_1.5fr_2rem]"
+            }`}
+          >
+            {iconOptions && (
+              <Field label="Ikona">
+                <select
+                  value={item.icon ?? ""}
+                  onChange={(e) => update(i, { icon: e.target.value || undefined })}
+                  style={inputStyle}
+                >
+                  <option value="">wg kolejności</option>
+                  {iconOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
             <Field label="Tytuł">
               <input
                 value={item.title}
@@ -497,10 +534,26 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               />
             </Field>
           </div>
+          <Field label="Układ">
+            <select
+              value={config.guarantee.layout ?? "section"}
+              onChange={(e) =>
+                patch("guarantee", { layout: e.target.value as HomeConfig["guarantee"]["layout"] })
+              }
+              style={inputStyle}
+            >
+              <option value="section">Osobna sekcja z nagłówkiem</option>
+              <option value="strip">Wąski pasek z małymi ikonami nad stopką</option>
+            </select>
+            <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+              Pasek nie pokazuje nagłówka — same punkty, jedna linia każdy, zlewa się ze stopką.
+            </p>
+          </Field>
           <ItemListEditor
             items={config.guarantee.items}
-            onChange={(items) => patch("guarantee", { items })}
+            onChange={(items) => patch("guarantee", { items: items as HomeConfig["guarantee"]["items"] })}
             addLabel="Dodaj punkt gwarancji"
+            iconOptions={GUARANTEE_ICONS}
           />
         </div>
       </Accordion>

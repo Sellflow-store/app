@@ -59,9 +59,15 @@ export interface ReviewsConfig {
   visible?: boolean;
 }
 
+/** Klucz ikony z allowlisty w GuaranteeSection (shield, return, package, truck,
+ *  mail, leaf, lock, clock, star). Brak = ikona po pozycji (zgodność wstecz). */
+export type GuaranteeIcon =
+  | "shield" | "return" | "package" | "truck" | "mail" | "leaf" | "lock" | "clock" | "star";
+
 export interface GuaranteeItem {
   title: string;
   description: string;
+  icon?: GuaranteeIcon;
 }
 
 export interface GuaranteeConfig {
@@ -72,6 +78,9 @@ export interface GuaranteeConfig {
   showIcons?: boolean;
   /** Brak/"dark" = czarny pas (zgodność wstecz). "light" = na papierze. */
   tone?: "dark" | "light";
+  /** "section" (brak) = osobna sekcja z nagłówkiem; "strip" = wąski pasek
+   *  z małymi ikonami tuż nad stopką, bez nagłówka — zlewa się ze stopką. */
+  layout?: "section" | "strip";
   /** false = sekcja ukryta na stronie głównej. */
   visible?: boolean;
 }
