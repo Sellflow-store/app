@@ -5,6 +5,10 @@ export interface TopBarConfig {
   visible: boolean;
 }
 
+/** split = dotychczasowy układ; fullbleed = zdjęcie na całą szerokość;
+ *  editorial = typografia na osi, zdjęcie jako pas pod spodem. */
+export type HeroLayout = "split" | "fullbleed" | "editorial";
+
 export interface HeroConfig {
   eyebrow: string;
   headline: string;
@@ -14,6 +18,10 @@ export interface HeroConfig {
   ctaSecondary: string;
   socialProof: string;
   image: string;
+  /** Brak = split (zgodność wstecz). */
+  layout?: HeroLayout;
+  /** Kadrowanie zdjęcia w układach fullbleed/editorial. Brak = center. */
+  imagePosition?: "top" | "center" | "bottom";
 }
 
 export interface ProductsSectionConfig {

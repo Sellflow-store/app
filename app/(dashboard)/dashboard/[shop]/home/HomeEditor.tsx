@@ -254,6 +254,36 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
       {/* Hero */}
       <Accordion title="Sekcja Hero (nagłówek)" open={!!open.hero} onToggle={() => toggle("hero")}>
         <div className="space-y-0">
+          <Field label="Układ">
+            <select
+              value={config.hero.layout ?? "split"}
+              onChange={(e) => patch("hero", { layout: e.target.value as HomeConfig["hero"]["layout"] })}
+              style={inputStyle}
+            >
+              <option value="split">Dwie kolumny — tekst po lewej, zdjęcie po prawej</option>
+              <option value="fullbleed">Zdjęcie na całą szerokość, tekst na dole</option>
+              <option value="editorial">Typograficzny — duży tytuł na osi, zdjęcie jako pas</option>
+            </select>
+            <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+              „Zdjęcie na całą szerokość" wymaga zdjęcia — bez niego pokaże się układ
+              typograficzny. Najlepiej działa z fotografią na modelce lub z sesji.
+            </p>
+          </Field>
+          {(config.hero.layout === "fullbleed" || config.hero.layout === "editorial") && (
+            <Field label="Kadrowanie zdjęcia">
+              <select
+                value={config.hero.imagePosition ?? "center"}
+                onChange={(e) =>
+                  patch("hero", { imagePosition: e.target.value as HomeConfig["hero"]["imagePosition"] })
+                }
+                style={inputStyle}
+              >
+                <option value="top">Góra — gdy ważna jest głowa / góra kadru</option>
+                <option value="center">Środek</option>
+                <option value="bottom">Dół</option>
+              </select>
+            </Field>
+          )}
           <Field label="Zdjęcie w hero (opcjonalne)">
             <div className="flex items-start gap-3">
               <div
@@ -271,8 +301,8 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               </div>
               <div className="flex-1">
                 <p className="text-[11px] mb-2" style={{ color: "oklch(45% 0 0)" }}>
-                  Zalecane 800×800 px. Pojawi się po prawej stronie nagłówka. Bez zdjęcia
-                  pokazujemy placeholder. Pamiętaj o „Zapisz zmiany”.
+                  Dwie kolumny: 800×800 px. Na całą szerokość / pas: zdjęcie poziome lub z
+                  sesji, min. 2000 px szerokości. Pamiętaj o „Zapisz zmiany”.
                 </p>
                 <div className="flex items-center gap-3">
                   <ImageUpload
