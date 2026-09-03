@@ -43,12 +43,12 @@ export default async function ProductPage({ params }: Props) {
             Wróć do sklepu
           </Link>
 
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
             {/* Gallery */}
             <ProductGallery images={product.images} name={product.name} />
 
-            {/* Info */}
-            <div className="lg:py-4">
+            {/* Info — przyklejona, bo galeria jest teraz długą kolumną zdjęć */}
+            <div className="lg:py-4 lg:sticky lg:top-8 lg:self-start">
               {product.badge && (
                 <span className="inline-block bg-ink text-on-ink text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full mb-4">
                   {product.badge}
@@ -135,6 +135,7 @@ export default async function ProductPage({ params }: Props) {
                   image: product.images[0] ?? null,
                   stock: product.stock,
                   type: product.type,
+                  sizes: product.sizes,
                 }}
               />
 
@@ -206,7 +207,7 @@ export async function generateMetadata({ params }: Props) {
   const product = shop.products.find((p) => p.id === id);
   if (!product) return {};
   return {
-    title: `${product.name} — ${shop.branding.shopName}`,
+    title: `${product.name}`,
     description: product.shortDesc ?? product.description ?? undefined,
   };
 }
