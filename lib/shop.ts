@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { shops, shopConfig, products } from "./db/schema";
+import { shops, shopConfig, products, blogPosts } from "./db/schema";
 import { eq, and } from "drizzle-orm";
 import { getLowestPrices30 } from "./price-history";
 import type {
@@ -249,8 +249,27 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   };
 
   const menuSaved = (configMap.menu as Partial<MenuConfig>)?.items;
+  const menuItems =
+    Array.isArray(menuSaved) && menuSaved.length > 0 ? menuSaved : DEFAULT_MENU.items;
+
+  // Blog w menu tylko wtedy, gdy jest co czytać. „Blog" prowadzący do pustej
+  // strony wygląda jak niedokończony sklep, a domyślne menu ma go zawsze.
+  // Zapytanie leci wyłącznie wtedy, gdy pozycja blogowa faktycznie jest w menu.
+  const hasBlogItem = menuItems.some((i) => i.href === "/blog" || i.href.startsWith("/blog/"));
+  let publishedPosts = 0;
+  if (hasBlogItem) {
+    const [row] = await db
+      .select({ id: blogPosts.id })
+      .from(blogPosts)
+      .where(and(eq(blogPosts.shopId, shop.id), eq(blogPosts.published, true)))
+      .limit(1);
+    publishedPosts = row ? 1 : 0;
+  }
+
   const menu: MenuConfig = {
-    items: Array.isArray(menuSaved) && menuSaved.length > 0 ? menuSaved : DEFAULT_MENU.items,
+    items: publishedPosts > 0 || !hasBlogItem
+      ? menuItems
+      : menuItems.filter((i) => i.href !== "/blog" && !i.href.startsWith("/blog/")),
   };
 
   const savedFooter = (configMap.footer as Partial<FooterConfig>) ?? {};

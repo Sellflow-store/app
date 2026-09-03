@@ -43,9 +43,12 @@ export default function HeroSection({ config }: Props) {
                 {config.ctaSecondary}
               </a>
             </div>
-            <p className="mt-5 text-xs text-ink-2/70 tracking-wide">
-              ★★★★★ &nbsp;{config.socialProof}
-            </p>
+            {/* Bez zaszytych ★★★★★ — nowy sklep nie ma opinii, a rysowanie
+                pięciu gwiazdek przy zerze opinii to fałszywy dowód społeczny.
+                Zostaje sam tekst, który merchant sam wpisał (albo nic). */}
+            {config.socialProof && (
+              <p className="mt-5 text-xs text-ink-2/70 tracking-wide">{config.socialProof}</p>
+            )}
           </div>
 
           <div className="order-1 lg:order-2 flex items-center justify-center">

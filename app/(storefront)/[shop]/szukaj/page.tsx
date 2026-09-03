@@ -69,8 +69,8 @@ export async function generateMetadata({ params, searchParams }: Props) {
   const query = q.trim();
   return {
     title: query
-      ? `Wyniki dla „${query}” — ${shop.branding.shopName}`
-      : `Wyszukiwarka — ${shop.branding.shopName}`,
+      ? `Wyniki dla „${query}”`
+      : "Wyszukiwarka",
     robots: { index: false },
   };
 }

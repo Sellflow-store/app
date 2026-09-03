@@ -31,6 +31,8 @@ export interface BenefitsConfig {
   eyebrow: string;
   headline: string;
   items: BenefitItem[];
+  /** Brak = ikony (zgodność wstecz). false = układ redakcyjny: tytuł, kreska, tekst. */
+  showIcons?: boolean;
 }
 
 export interface ReviewItem {
@@ -45,6 +47,8 @@ export interface ReviewsConfig {
   reviewCount: string;
   media: string[];
   items: ReviewItem[];
+  /** Brak = pokaż (zgodność wstecz). false = ukryj sekcję nawet z opiniami. */
+  visible?: boolean;
 }
 
 export interface GuaranteeItem {
@@ -56,6 +60,12 @@ export interface GuaranteeConfig {
   headline: string;
   subheadline: string;
   items: GuaranteeItem[];
+  /** Brak = ikony (zgodność wstecz). false = układ redakcyjny. */
+  showIcons?: boolean;
+  /** Brak/"dark" = czarny pas (zgodność wstecz). "light" = na papierze. */
+  tone?: "dark" | "light";
+  /** false = sekcja ukryta na stronie głównej. */
+  visible?: boolean;
 }
 
 export interface VideoConfig {

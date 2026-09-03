@@ -49,5 +49,5 @@ export async function generateMetadata({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
-  return { title: `FAQ — ${shop.branding.shopName}` };
+  return { title: `FAQ` };
 }

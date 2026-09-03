@@ -391,6 +391,17 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
 
       {/* Benefits */}
       <Accordion title="Sekcja Korzyści" open={!!open.benefits} onToggle={() => toggle("benefits")}>
+        <div className="mb-4">
+          <Toggle
+            checked={config.benefits.showIcons !== false}
+            onChange={(v) => patch("benefits", { showIcons: v })}
+            label="Pokaż ikony przy korzyściach"
+          />
+          <p className="text-[11px] mt-2" style={{ color: "oklch(60% 0 0)" }}>
+            Ikony dobierają się po kolejności, nie po treści. Po wyłączeniu punkt składa się
+            z tytułu, cienkiej kreski i opisu — spokojniej przy autorskich tekstach.
+          </p>
+        </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Nadtytuł (eyebrow)">
@@ -420,6 +431,23 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
 
       {/* Guarantee */}
       <Accordion title="Gwarancja satysfakcji" open={!!open.guarantee} onToggle={() => toggle("guarantee")}>
+        <div className="mb-4 space-y-3">
+          <Toggle
+            checked={config.guarantee.visible !== false}
+            onChange={(v) => patch("guarantee", { visible: v })}
+            label="Pokaż sekcję na stronie głównej"
+          />
+          <Toggle
+            checked={config.guarantee.showIcons !== false}
+            onChange={(v) => patch("guarantee", { showIcons: v })}
+            label="Pokaż ikony"
+          />
+          <Toggle
+            checked={config.guarantee.tone === "light"}
+            onChange={(v) => patch("guarantee", { tone: v ? "light" : "dark" })}
+            label="Jasne tło zamiast czarnego pasa"
+          />
+        </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Nagłówek">
@@ -444,6 +472,22 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             onChange={(items) => patch("guarantee", { items })}
             addLabel="Dodaj punkt gwarancji"
           />
+        </div>
+      </Accordion>
+
+      {/* Opinie */}
+      <Accordion title="Sekcja Opinie" open={!!open.reviews} onToggle={() => toggle("reviews")}>
+        <div className="space-y-3">
+          <Toggle
+            checked={config.reviews.visible !== false}
+            onChange={(v) => patch("reviews", { visible: v })}
+            label="Pokaż sekcję z opiniami klientów"
+          />
+          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+            Sekcja i tak nie pokaże się, dopóki nie ma ani jednej opinii ani logotypu
+            prasowego — pusty sklep nie wyświetla gwiazdek na podstawie zera opinii.
+            Wyłącznik przydaje się, gdy opinie już są, a mimo to nie chcesz ich pokazywać.
+          </p>
         </div>
       </Accordion>
 
