@@ -32,7 +32,14 @@ export default async function OrderDetailPage({
         customerName: order.customerName ?? "—",
         customerEmail: order.customerEmail,
         customerPhone: order.customerPhone,
-        items: (order.items as { name: string; price: string; qty: number; image: string | null }[]) ?? [],
+        items:
+          (order.items as {
+            name: string;
+            price: string;
+            qty: number;
+            image: string | null;
+            size?: string | null;
+          }[]) ?? [],
         subtotal: order.subtotal,
         shippingCost: order.shippingCost,
         total: order.total,

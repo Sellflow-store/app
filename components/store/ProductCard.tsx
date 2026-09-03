@@ -20,6 +20,9 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
   const [added, setAdded] = useState(false);
 
   const soldOut = product.stock != null && product.stock <= 0;
+  // Rozmiar wybiera się na stronie produktu — szybkie dodawanie z listy
+  // wrzuciłoby do koszyka pozycję bez rozmiaru, więc tu tylko prowadzimy dalej.
+  const needsSize = (product.sizes?.length ?? 0) > 0;
 
   function quickAdd() {
     if (soldOut) return;
@@ -59,7 +62,16 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
             </span>
           )
         )}
-        {!soldOut && (
+        {!soldOut && needsSize && (
+          <Link
+            href={`${base}/produkty/${product.id}`}
+            aria-label={`Wybierz rozmiar — ${product.name}`}
+            className="absolute bottom-3 right-3 backdrop-blur-sm p-2.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-sm bg-paper/90 opacity-0 group-hover:opacity-100 hover:bg-ink hover:text-on-ink text-ink-2"
+          >
+            <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+          </Link>
+        )}
+        {!soldOut && !needsSize && (
           <button
             onClick={quickAdd}
             aria-label={`Dodaj ${product.name} do koszyka`}

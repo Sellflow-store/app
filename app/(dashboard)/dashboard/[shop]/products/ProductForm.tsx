@@ -27,6 +27,7 @@ export interface ProductFormData {
   shortDesc: string;
   description: string;
   images: string[];
+  sizes: string; // rozmiary po przecinku, "" = produkt bez rozmiarów
   stock: string; // "" = nie śledzę stanu
   weight: string;  // gramy, "" = nie podano
   length: string;  // cm
@@ -56,6 +57,7 @@ const EMPTY: ProductFormData = {
   shortDesc: "",
   description: "",
   images: [],
+  sizes: "",
   stock: "",
   weight: "",
   length: "",
@@ -263,6 +265,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       shortDesc: form.shortDesc.trim() || undefined,
       description: htmlIsEmpty(form.description) ? undefined : form.description,
       images: form.images,
+      sizes: parseSizes(form.sizes),
       // Stock only applies to physical products; others are unlimited.
       stock: form.type === "physical" ? stock : null,
       // Gabaryt dotyczy tylko wysyłki — produkty cyfrowe i usługi go nie mają.
@@ -452,6 +455,21 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             />
           </Field>
         </div>
+        <Field label="Rozmiary (po przecinku)" id="p-sizes">
+          <input
+            id="p-sizes"
+            value={form.sizes}
+            onChange={(e) => patch({ sizes: e.target.value })}
+            placeholder="S/M, M/L, L/XL"
+            style={inputStyle}
+            {...focusProps}
+          />
+          <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+            Zostaw puste, jeśli produkt nie ma rozmiarów. Gdy są — klient musi wybrać
+            rozmiar, zanim doda produkt do koszyka.
+          </p>
+        </Field>
+
         <Field label="Krótki opis (na liście produktów)" id="p-short">
           <input
             id="p-short"
@@ -874,4 +892,14 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       )}
     </div>
   );
+}
+
+/** "S/M, M/L,, S/M " → ["S/M","M/L"] — bez pustych i bez duplikatów. */
+function parseSizes(raw: string): string[] {
+  const out: string[] = [];
+  for (const part of raw.split(",")) {
+    const size = part.trim();
+    if (size && size.length <= 24 && !out.includes(size)) out.push(size);
+  }
+  return out;
 }

@@ -33,6 +33,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     oldPrice?: string | null;
     category?: string;
     badge?: string;
+    sizes?: string[];
     visible?: boolean;
     shortDesc?: string;
     description?: string;
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       oldPrice: body.oldPrice ?? null,
       category: body.category,
       badge: body.badge,
+      sizes: Array.isArray(body.sizes) ? body.sizes.filter((s) => typeof s === "string") : [],
       visible: body.visible ?? true,
       shortDesc: body.shortDesc,
       description: body.description,

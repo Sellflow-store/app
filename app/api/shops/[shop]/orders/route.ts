@@ -18,7 +18,7 @@ type Params = { params: Promise<{ shop: string }> };
 interface OrderRequest {
   customer: { email: string; name: string; phone?: string };
   address: { street: string; zip: string; city: string } | null;
-  items: { productId: string; qty: number }[];
+  items: { productId: string; qty: number; size?: string | null }[];
   deliveryMethodId: string | null;
   pickupPointCode?: string | null;
   paymentMethod: "transfer" | "cod";
@@ -79,6 +79,25 @@ export async function POST(req: NextRequest, { params }: Params) {
   const missing = ids.filter((id) => !productMap.has(id));
   if (missing.length > 0) {
     return bad("Część produktów z koszyka jest już niedostępna. Odśwież koszyk.", 409);
+  }
+
+  // ── Rozmiar — nigdy z klienta na wiarę ──────────────────────────────────
+  // Produkt z rozmiarami musi dostać jeden z SWOICH rozmiarów; produkt bez
+  // rozmiarów dostaje null, choćby przeglądarka coś przysłała.
+  const sizeByLine: (string | null)[] = [];
+  for (const i of body.items) {
+    const p = productMap.get(i.productId)!;
+    const available = ((p.sizes as string[]) ?? []).filter((s) => typeof s === "string");
+    const wanted = typeof i.size === "string" ? i.size.trim() : "";
+    if (available.length === 0) {
+      sizeByLine.push(null);
+      continue;
+    }
+    const match = available.find((s) => s === wanted);
+    if (!match) {
+      return bad(`Wybierz rozmiar dla produktu „${p.name}".`);
+    }
+    sizeByLine.push(match);
   }
 
   // Physical items drive shipping, address and cash-on-delivery.
@@ -167,13 +186,14 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
   }
 
-  const orderItems = body.items.map((i) => {
+  const orderItems = body.items.map((i, idx) => {
     const p = productMap.get(i.productId)!;
     return {
       productId: p.id,
       name: p.name,
       price: p.price,
       qty: i.qty,
+      size: sizeByLine[idx],
       image: ((p.images as string[]) ?? [])[0] ?? null,
     };
   });

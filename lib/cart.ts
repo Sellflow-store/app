@@ -8,8 +8,19 @@ export interface CartItem {
   price: string; // "129.99" — display only; checkout recomputes from DB
   image: string | null;
   qty: number;
+  /** Wybrany rozmiar. undefined/null = produkt bez rozmiarów (i stare koszyki). */
+  size?: string | null;
   stock?: number | null; // null/undefined = nieograniczony; cap ilości w koszyku
   type?: "physical" | "digital" | "service"; // undefined = physical (legacy)
+}
+
+/**
+ * Tożsamość POZYCJI koszyka, nie produktu: ten sam model w dwóch rozmiarach to
+ * dwie osobne linie. Samo `productId` nie wystarcza — inaczej dodanie M/L do
+ * koszyka z S/M tylko zwiększałoby ilość przy złym rozmiarze.
+ */
+export function lineKey(item: Pick<CartItem, "productId" | "size">): string {
+  return `${item.productId}\u0000${item.size ?? ""}`;
 }
 
 const EMPTY: CartItem[] = [];
@@ -81,11 +92,12 @@ export function useCart(shopSlug: string) {
   const add = useCallback(
     (item: Omit<CartItem, "qty">, qty = 1) => {
       const current = read(shopSlug);
-      const existing = current.find((i) => i.productId === item.productId);
+      const key = lineKey(item);
+      const existing = current.find((i) => lineKey(i) === key);
       const cap = capFor(item.stock);
       const next = existing
         ? current.map((i) =>
-            i.productId === item.productId
+            lineKey(i) === key
               ? { ...i, stock: item.stock, qty: Math.min(capFor(item.stock), i.qty + qty) }
               : i
           )
@@ -96,13 +108,13 @@ export function useCart(shopSlug: string) {
   );
 
   const setQty = useCallback(
-    (productId: string, qty: number) => {
+    (key: string, qty: number) => {
       const current = read(shopSlug);
       const next =
         qty <= 0
-          ? current.filter((i) => i.productId !== productId)
+          ? current.filter((i) => lineKey(i) !== key)
           : current.map((i) =>
-              i.productId === productId ? { ...i, qty: Math.min(capFor(i.stock), qty) } : i
+              lineKey(i) === key ? { ...i, qty: Math.min(capFor(i.stock), qty) } : i
             );
       write(shopSlug, next);
     },
@@ -110,8 +122,8 @@ export function useCart(shopSlug: string) {
   );
 
   const remove = useCallback(
-    (productId: string) => {
-      write(shopSlug, read(shopSlug).filter((i) => i.productId !== productId));
+    (key: string) => {
+      write(shopSlug, read(shopSlug).filter((i) => lineKey(i) !== key));
     },
     [shopSlug]
   );

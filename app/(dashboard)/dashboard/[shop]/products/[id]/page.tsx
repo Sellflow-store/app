@@ -51,6 +51,7 @@ export default async function EditProductPage({
     length: dim.length != null ? String(dim.length) : "",
     width: dim.width != null ? String(dim.width) : "",
     height: dim.height != null ? String(dim.height) : "",
+    sizes: ((product.sizes as string[]) ?? []).join(", "),
     specs: (product.specs as { key: string; value: string }[]) ?? [],
     type: (product.type as ProductType) ?? "physical",
     digitalKind: (f.kind as DigitalKind) ?? "file",

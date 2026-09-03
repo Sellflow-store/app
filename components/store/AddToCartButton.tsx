@@ -15,6 +15,8 @@ interface Props {
     image: string | null;
     stock?: number | null;
     type?: "physical" | "digital" | "service";
+    /** Puste = produkt bez rozmiarów; wtedy sekcja wyboru się nie pokazuje. */
+    sizes?: string[];
   };
 }
 
@@ -23,6 +25,10 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
   const base = useStoreBase();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const sizes = product.sizes ?? [];
+  // Jeden rozmiar = brak wyboru do zrobienia, więc wybieramy go za klienta.
+  const [size, setSize] = useState<string | null>(sizes.length === 1 ? sizes[0] : null);
+  const [sizeError, setSizeError] = useState(false);
 
   const tracked = product.stock != null;
   const soldOut = tracked && product.stock! <= 0;
@@ -31,12 +37,17 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
 
   function handleAdd() {
     if (soldOut) return;
+    if (sizes.length > 0 && !size) {
+      setSizeError(true);
+      return;
+    }
     add(
       {
         productId: product.id,
         name: product.name,
         price: product.price,
         image: product.image,
+        size,
         stock: product.stock,
         type: product.type,
       },
@@ -64,6 +75,43 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
 
   return (
     <div>
+      {sizes.length > 0 && (
+        <div className="mb-5">
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-[11px] tracking-[0.2em] uppercase text-ink-2/70">Rozmiar</span>
+            {sizeError && (
+              <span className="text-[11px] text-ink font-medium">Wybierz rozmiar</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Rozmiar">
+            {sizes.map((s) => {
+              const selected = s === size;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    setSize(s);
+                    setSizeError(false);
+                  }}
+                  className={`min-w-[3.5rem] px-4 py-2.5 text-sm rounded-input border transition-colors ${
+                    selected
+                      ? "border-ink bg-ink text-on-ink"
+                      : sizeError
+                      ? "border-ink/40 text-ink-2 hover:border-ink"
+                      : "border-rule text-ink-2 hover:border-ink hover:text-ink"
+                  }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-3">
         {/* Qty stepper */}
         <div className="flex items-center border border-rule rounded-input">

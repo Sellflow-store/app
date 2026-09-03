@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Landmark, HandCoins, Check, Copy, Tag, X } from "lucide-react";
-import { useCart, formatPln } from "@/lib/cart";
+import { useCart, formatPln, lineKey } from "@/lib/cart";
 import { useStoreBase } from "./StoreBaseContext";
 import type { DeliveryMethod } from "@/types/shop";
 import { requiresPickupPoint } from "@/types/shop";
@@ -277,7 +277,7 @@ export default function CheckoutForm({
         body: JSON.stringify({
           customer: { email, name, phone },
           address: hasPhysical ? { street, zip, city } : null,
-          items: items.map((i) => ({ productId: i.productId, qty: i.qty })),
+          items: items.map((i) => ({ productId: i.productId, qty: i.qty, size: i.size ?? null })),
           deliveryMethodId: hasPhysical ? deliveryId : null,
           pickupPointCode: needsPoint ? validPoint?.code ?? null : null,
           paymentMethod: effPayment,
@@ -494,9 +494,11 @@ export default function CheckoutForm({
 
           <ul className="space-y-3 mb-5">
             {items.map((i) => (
-              <li key={i.productId} className="flex justify-between gap-3 text-sm">
+              <li key={lineKey(i)} className="flex justify-between gap-3 text-sm">
                 <span className="text-ink-2 font-light min-w-0 truncate">
-                  {i.name} <span className="text-ink-2/60">×{i.qty}</span>
+                  {i.name}
+                  {i.size && <span className="text-ink-2/60"> · {i.size}</span>}{" "}
+                  <span className="text-ink-2/60">×{i.qty}</span>
                 </span>
                 <span className="text-ink font-medium tabular-nums shrink-0">
                   {formatPln(parseFloat(i.price) * i.qty)}

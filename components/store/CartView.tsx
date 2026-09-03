@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Minus, Plus, X, ShoppingBag, ArrowRight } from "lucide-react";
-import { useCart, formatPln } from "@/lib/cart";
+import { useCart, formatPln, lineKey } from "@/lib/cart";
 import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
@@ -45,8 +45,10 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
       <h1 className="text-3xl font-bold tracking-tight text-ink mb-8">Koszyk</h1>
 
       <div className="divide-y divide-rule border-y border-rule">
-        {items.map((item) => (
-          <div key={item.productId} className="flex items-center gap-4 py-5">
+        {items.map((item) => {
+          const key = lineKey(item);
+          return (
+          <div key={key} className="flex items-center gap-4 py-5">
             {/* Thumbnail */}
             <Link
               href={`${base}/produkty/${item.productId}`}
@@ -69,13 +71,16 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
               >
                 {item.name}
               </Link>
+              {item.size && (
+                <p className="text-xs text-ink-2 mt-1">Rozmiar: {item.size}</p>
+              )}
               <p className="text-xs text-ink-2/70 mt-1">{formatPln(parseFloat(item.price))} / szt.</p>
             </div>
 
             {/* Qty stepper */}
             <div className="flex items-center border border-rule rounded-input shrink-0">
               <button
-                onClick={() => setQty(item.productId, item.qty - 1)}
+                onClick={() => setQty(key, item.qty - 1)}
                 aria-label="Zmniejsz ilość"
                 className="px-2.5 py-2 text-ink-2 hover:text-ink transition-colors"
               >
@@ -85,7 +90,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
                 {item.qty}
               </span>
               <button
-                onClick={() => setQty(item.productId, item.qty + 1)}
+                onClick={() => setQty(key, item.qty + 1)}
                 aria-label="Zwiększ ilość"
                 className="px-2.5 py-2 text-ink-2 hover:text-ink transition-colors"
               >
@@ -99,14 +104,15 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
             </span>
 
             <button
-              onClick={() => remove(item.productId)}
+              onClick={() => remove(key)}
               aria-label={`Usuń ${item.name} z koszyka`}
               className="p-1.5 text-ink-2/60 hover:text-ink transition-colors shrink-0"
             >
               <X className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Summary */}

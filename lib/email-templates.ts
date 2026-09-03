@@ -2,6 +2,7 @@ interface OrderItem {
   name: string;
   price: string;
   qty: number;
+  size?: string | null;
 }
 
 interface OrderSummary {
@@ -70,7 +71,9 @@ function itemsTable(order: OrderSummary): string {
   const rows = order.items
     .map(
       (i) => `<tr>
-        <td style="padding:8px 0;font-size:13px;color:#444444;border-bottom:1px solid #f0f0f0;">${esc(i.name)} <span style="color:#999999;">×${i.qty}</span></td>
+        <td style="padding:8px 0;font-size:13px;color:#444444;border-bottom:1px solid #f0f0f0;">${esc(i.name)}${
+          i.size ? ` <span style="color:#666666;">· rozm. ${esc(i.size)}</span>` : ""
+        } <span style="color:#999999;">×${i.qty}</span></td>
         <td align="right" style="padding:8px 0;font-size:13px;color:#222222;border-bottom:1px solid #f0f0f0;white-space:nowrap;">${pln(parseFloat(i.price) * i.qty)}</td>
       </tr>`
     )

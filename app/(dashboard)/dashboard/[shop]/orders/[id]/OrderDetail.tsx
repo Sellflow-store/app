@@ -13,7 +13,7 @@ interface OrderData {
   customerName: string;
   customerEmail: string;
   customerPhone: string | null;
-  items: { name: string; price: string; qty: number; image: string | null }[];
+  items: { name: string; price: string; qty: number; image: string | null; size?: string | null }[];
   subtotal: string;
   shippingCost: string;
   total: string;
@@ -215,6 +215,7 @@ export default function OrderDetail({ shopSlug, order }: Props) {
                       {item.name}
                     </p>
                     <p className="text-[11px]" style={{ color: "oklch(55% 0 0)" }}>
+                      {item.size ? `Rozmiar ${item.size} · ` : ""}
                       {pln(item.price)} × {item.qty}
                     </p>
                   </div>
