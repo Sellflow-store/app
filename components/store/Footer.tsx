@@ -109,12 +109,50 @@ export default function Footer({ branding, footer }: Props) {
           ))}
         </div>
 
-        <div className="mt-14 pt-6 border-t border-rule">
+        <div className="mt-14 pt-6 border-t border-rule flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-xs text-ink-2/70">
             © {new Date().getFullYear()} {branding.shopName}. Wszelkie prawa zastrzeżone.
           </p>
+          <PoweredBy />
         </div>
       </div>
     </footer>
+  );
+}
+
+/**
+ * Podpis platformy w stopce każdego sklepu — jak „Powered by Shopify".
+ * Znak „S" inline (nie <img src="/icon.svg">), bo na subdomenie proxy
+ * przepisałoby ścieżkę na /{slug}/icon.svg i obrazek by nie wstał.
+ */
+function PoweredBy() {
+  const landing = `https://${process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store"}`;
+  return (
+    <a
+      href={landing}
+      target="_blank"
+      rel="noopener"
+      className="inline-flex items-center gap-1.5 text-xs text-ink-2/70 hover:text-ink transition-colors"
+    >
+      <span>Zbudowane w Polsce</span>
+      <span aria-hidden="true" style={{ color: "#CD1625" }}>♥</span>
+      <span className="inline-flex items-center gap-1 font-medium text-ink-2">
+        <svg viewBox="0 0 100 100" className="w-3.5 h-3.5" aria-hidden="true">
+          <rect width="100" height="100" rx="18" fill="#12128c" />
+          <text
+            x="50"
+            y="76"
+            fontFamily="Arial Black,Arial,sans-serif"
+            fontWeight="900"
+            fontSize="74"
+            textAnchor="middle"
+            fill="#ffffff"
+          >
+            S
+          </text>
+        </svg>
+        Sellflow
+      </span>
+    </a>
   );
 }
