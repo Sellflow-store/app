@@ -458,7 +458,21 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
 
       {/* Benefits */}
       <Accordion title="Sekcja Korzyści" open={!!open.benefits} onToggle={() => toggle("benefits")}>
-        <div className="mb-4">
+        <div className="mb-4 space-y-3">
+          <Field label="Gdzie pokazać">
+            <select
+              value={config.benefits.placement ?? "home"}
+              onChange={(e) =>
+                patch("benefits", { placement: e.target.value as HomeConfig["benefits"]["placement"] })
+              }
+              style={inputStyle}
+            >
+              <option value="home">Na stronie głównej</option>
+              <option value="about">Na stronie „O nas”</option>
+              <option value="both">Na obu</option>
+              <option value="hidden">Nigdzie (ukryta)</option>
+            </select>
+          </Field>
           <Toggle
             checked={config.benefits.showIcons !== false}
             onChange={(v) => patch("benefits", { showIcons: v })}

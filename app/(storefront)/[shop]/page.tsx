@@ -34,7 +34,10 @@ export default async function StorefrontHome({ params }: Props) {
           shopSlug={shop.slug}
           cardStyle={shop.branding.cardStyle}
         />
-        <BenefitsSection config={shop.home.benefits} />
+        {(shop.home.benefits.placement ?? "home") !== "about" &&
+          shop.home.benefits.placement !== "hidden" && (
+            <BenefitsSection config={shop.home.benefits} />
+          )}
         <ReviewsSection config={shop.home.reviews} />
         <GuaranteeSection config={shop.home.guarantee} />
         <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />

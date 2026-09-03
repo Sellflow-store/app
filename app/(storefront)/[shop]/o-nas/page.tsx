@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getShopBySlug } from "@/lib/shop";
 import StorefrontShell from "@/components/store/StorefrontShell";
+import BenefitsSection from "@/components/store/BenefitsSection";
 
 interface Props {
   params: Promise<{ shop: string }>;
@@ -12,6 +13,11 @@ export default async function AboutPage({ params }: Props) {
   if (!shop) notFound();
 
   const { headline, content } = shop.about;
+  // Sekcja „korzyści" ze strony głównej może mieszkać tutaj — przy markach
+  // z autorską historią czyta się lepiej pod tekstem o marce niż między
+  // produktami a stopką.
+  const placement = shop.home.benefits.placement ?? "home";
+  const showBenefits = placement === "about" || placement === "both";
 
   return (
     <StorefrontShell shop={shop}>
@@ -29,6 +35,7 @@ export default async function AboutPage({ params }: Props) {
           </p>
         )}
       </div>
+      {showBenefits && <BenefitsSection config={shop.home.benefits} />}
     </StorefrontShell>
   );
 }

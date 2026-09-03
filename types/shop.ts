@@ -41,6 +41,8 @@ export interface BenefitsConfig {
   items: BenefitItem[];
   /** Brak = ikony (zgodność wstecz). false = układ redakcyjny: tytuł, kreska, tekst. */
   showIcons?: boolean;
+  /** Gdzie renderować. Brak = "home" (zgodność wstecz). */
+  placement?: "home" | "about" | "both" | "hidden";
 }
 
 export interface ReviewItem {
