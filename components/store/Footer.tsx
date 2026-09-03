@@ -52,8 +52,22 @@ export default function Footer({ branding, footer }: Props) {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
-            <Link href={base || "/"} className="text-lg font-bold tracking-tight text-ink">
-              {branding.shopName}
+            <Link href={base || "/"} className="inline-block text-lg font-bold tracking-tight text-ink">
+              {branding.logoUrl ? (
+                // Ten sam logotyp co w navbarze, w tej samej wysokości — stopka
+                // z nazwą tekstem obok logo w nagłówku wyglądała jak dwie marki.
+                <img
+                  src={branding.logoUrl}
+                  alt={branding.shopName}
+                  className="w-auto object-contain"
+                  style={{
+                    height: branding.logoHeight ?? 28,
+                    maxWidth: `min(${branding.logoMaxWidth ?? 160}px, 60vw)`,
+                  }}
+                />
+              ) : (
+                branding.shopName
+              )}
             </Link>
             {description && (
               <p className="mt-3 text-sm text-ink-2 font-light leading-relaxed">{description}</p>
