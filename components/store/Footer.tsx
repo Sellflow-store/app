@@ -120,11 +120,9 @@ export default function Footer({ branding, footer }: Props) {
   );
 }
 
-/**
- * Podpis platformy w stopce każdego sklepu — jak „Powered by Shopify".
- * Znak „S" inline (nie <img src="/icon.svg">), bo na subdomenie proxy
- * przepisałoby ścieżkę na /{slug}/icon.svg i obrazek by nie wstał.
- */
+/** Podpis platformy w stopce każdego sklepu — jak „Powered by Shopify". */
+const SELLFLOW_LOGO = "https://sell-flow.store/assets/sellflow-logo-navy.png";
+
 function PoweredBy() {
   const landing = `https://${process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store"}`;
   return (
@@ -132,27 +130,11 @@ function PoweredBy() {
       href={landing}
       target="_blank"
       rel="noopener"
-      className="inline-flex items-center gap-1.5 text-xs text-ink-2/70 hover:text-ink transition-colors"
+      className="inline-flex items-center gap-2 text-xs text-ink-2/70 hover:text-ink transition-colors"
     >
       <span>Zbudowane w Polsce</span>
-      <span aria-hidden="true" style={{ color: "#CD1625" }}>♥</span>
-      <span className="inline-flex items-center gap-1 font-medium text-ink-2">
-        <svg viewBox="0 0 100 100" className="w-3.5 h-3.5" aria-hidden="true">
-          <rect width="100" height="100" rx="18" fill="#12128c" />
-          <text
-            x="50"
-            y="76"
-            fontFamily="Arial Black,Arial,sans-serif"
-            fontWeight="900"
-            fontSize="74"
-            textAnchor="middle"
-            fill="#ffffff"
-          >
-            S
-          </text>
-        </svg>
-        Sellflow
-      </span>
+      {/* logo 2211×504 → przy 14 px wysokości ok. 61 px szerokości */}
+      <img src={SELLFLOW_LOGO} alt="Sellflow" className="h-3.5 w-auto" loading="lazy" />
     </a>
   );
 }
