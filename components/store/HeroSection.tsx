@@ -249,7 +249,14 @@ function Editorial({ config, base }: { config: HeroConfig; base: string }) {
  */
 function Cover({ config, base }: { config: HeroConfig; base: string }) {
   const position = IMAGE_POSITION[config.imagePosition ?? "center"];
-  const height = config.coverHeight === "tall" ? "h-[82vh] min-h-[520px]" : "h-screen";
+  // „medium" jest po to, żeby kadr POZIOMY nie musiał być przycinany do
+  // pełnego ekranu — przy zdjęciu 2:1 pełna wysokość zjada boki fotografii.
+  const height =
+    config.coverHeight === "medium"
+      ? "h-[64vh] min-h-[420px]"
+      : config.coverHeight === "tall"
+        ? "h-[82vh] min-h-[520px]"
+        : "h-screen";
   const onDark = config.overlayTone === "light";
   return (
     <section className={`relative w-full overflow-hidden bg-paper-3 ${height}`}>

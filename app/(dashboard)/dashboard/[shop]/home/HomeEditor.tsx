@@ -413,6 +413,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                 >
                   <option value="full">Pełny ekran</option>
                   <option value="tall">Wysoki, ale widać, że strona idzie dalej</option>
+                  <option value="medium">Niższy — do zdjęć poziomych</option>
                 </select>
               </Field>
             </>

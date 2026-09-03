@@ -25,7 +25,7 @@ export interface HeroConfig {
   /** Tylko "cover": kolor treści paska nawigacji na zdjęciu. Brak = dark. */
   overlayTone?: "light" | "dark";
   /** Tylko "cover": wysokość kadru. Brak = "full" (cały ekran). */
-  coverHeight?: "full" | "tall";
+  coverHeight?: "full" | "tall" | "medium";
 }
 
 export interface ProductsSectionConfig {
