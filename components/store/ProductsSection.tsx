@@ -15,17 +15,17 @@ export default function ProductsSection({ config, products, shopSlug, cardStyle 
   return (
     <section id="sklep" className="py-20 lg:py-28 bg-paper">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <span className="text-xs tracking-[0.25em] uppercase text-ink-2/70 font-medium">
-            {config.eyebrow}
-          </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-ink tracking-tight">
-            {config.headline}
-          </h2>
-          <p className="mt-3 text-ink-2 font-light max-w-md mx-auto">
-            {config.subheadline}
-          </p>
-        </div>
+        {config.showHeading !== false && (
+          <div className="text-center mb-14">
+            <span className="text-xs tracking-[0.25em] uppercase text-ink-2/70 font-medium">
+              {config.eyebrow}
+            </span>
+            <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-ink tracking-tight">
+              {config.headline}
+            </h2>
+            <p className="mt-3 text-ink-2 font-light max-w-md mx-auto">{config.subheadline}</p>
+          </div>
+        )}
         <div
           className={`grid ${cardStyle === "minimal" ? "gap-8 lg:gap-12" : "gap-6 lg:gap-8"} ${
             displayed.length === 1

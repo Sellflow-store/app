@@ -146,6 +146,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
   const [cardStyle, setCardStyle]     = useState<CardStyle>(initialConfig.cardStyle ?? "default");
   const [headingWeight, setHeadingWeight] = useState<HeadingWeight>(initialConfig.headingWeight ?? "bold");
   const [logoCaption, setLogoCaption] = useState(initialConfig.logoCaption ?? "");
+  const [logoUrlLight, setLogoUrlLight] = useState(initialConfig.logoUrlLight ?? "");
   const [displayFont, setDisplayFont] = useState(initialConfig.fontFamily || "Space Grotesk");
   const [bodyFont, setBodyFont]       = useState(initialConfig.bodyFontFamily || "Inter Tight");
   const [saveState, setSaveState]     = useState<SaveState>("idle");
@@ -173,6 +174,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             cardStyle,
             headingWeight,
             logoCaption: logoCaption.trim(),
+            logoUrlLight,
             fontFamily: displayFont,
             bodyFontFamily: bodyFont,
           } satisfies BrandingConfig,
@@ -268,6 +270,44 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             />
           </div>
         </div>
+
+        {logoUrl && (
+          <div className="mt-5 pt-5" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
+            <p className="text-xs mb-2" style={{ color: "oklch(45% 0 0)" }}>
+              Jasna wersja logo — pokazuje się, gdy menu leży na ciemnym zdjęciu
+              (układ hero „sam kadr”). Bez niej zostaje logo podstawowe.
+            </p>
+            <div className="flex items-center gap-3 mb-1">
+              <div
+                className="w-24 h-12 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "oklch(25% 0 0)" }}
+              >
+                {logoUrlLight ? (
+                  <img src={logoUrlLight} alt="logo jasne" className="max-w-[85%] max-h-[80%] object-contain" />
+                ) : (
+                  <span className="text-[10px]" style={{ color: "oklch(70% 0 0)" }}>
+                    brak
+                  </span>
+                )}
+              </div>
+              <ImageUpload
+                endpoint="shopLogo"
+                label={logoUrlLight ? "Zmień" : "Wgraj jasne logo"}
+                onUploaded={(urls) => urls[0] && setLogoUrlLight(urls[0])}
+              />
+              {logoUrlLight && (
+                <button
+                  type="button"
+                  onClick={() => setLogoUrlLight("")}
+                  className="text-[11px] font-medium underline-offset-2 hover:underline"
+                  style={{ color: "oklch(45% 0.18 20)" }}
+                >
+                  Usuń
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {logoUrl && (
           <div className="mt-5 pt-5" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>

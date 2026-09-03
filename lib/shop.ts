@@ -220,6 +220,10 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     video: { ...DEFAULT_HOME.video, ...((configMap.home as HomeConfig)?.video ?? {}) },
     discounts: { ...DEFAULT_HOME.discounts, ...((configMap.home as HomeConfig)?.discounts ?? {}) },
     popup: { ...DEFAULT_HOME.popup, ...((configMap.home as HomeConfig)?.popup ?? {}) },
+    // Sekcja opcjonalna — nie ma jej w DEFAULT_HOME, więc przepisujemy wprost.
+    // (Ten obiekt jest składany klucz po kluczu, więc każdy NOWY klucz configu
+    // trzeba tu dopisać — inaczej po cichu ginie w drodze do storefrontu.)
+    lookbook: (configMap.home as HomeConfig)?.lookbook,
   };
 
   const delivery: DeliveryConfig = normalizeDeliveryConfig(

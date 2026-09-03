@@ -29,8 +29,11 @@ const IMAGE_POSITION: Record<NonNullable<HeroConfig["imagePosition"]>, string> =
 export default function HeroSection({ config }: Props) {
   const base = useStoreBase();
   const layout: HeroLayout =
-    config.layout === "fullbleed" && !config.image ? "editorial" : config.layout ?? "split";
+    (config.layout === "fullbleed" || config.layout === "cover") && !config.image
+      ? "editorial"
+      : config.layout ?? "split";
 
+  if (layout === "cover") return <Cover config={config} base={base} />;
   if (layout === "fullbleed") return <FullBleed config={config} base={base} />;
   if (layout === "editorial") return <Editorial config={config} base={base} />;
   return <Split config={config} base={base} />;
@@ -230,6 +233,46 @@ function Editorial({ config, base }: { config: HeroConfig; base: string }) {
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+// ─── cover — sam kadr, bez tekstu; pasek nawigacji leży na zdjęciu ───────────
+
+/**
+ * Otwarcie jak w domach mody: jedno zdjęcie na pełny ekran i nic więcej —
+ * bez nadtytułu, nagłówka i przycisków. Nawigacja (Navbar z `overlay`) leży
+ * na kadrze, więc strona zaczyna się od fotografii, nie od paska.
+ *
+ * Opcjonalny podpis na dole (`ctaPrimary`) jest jedynym tekstem, jaki ten
+ * układ dopuszcza — bez niego kadr zostaje zupełnie czysty.
+ */
+function Cover({ config, base }: { config: HeroConfig; base: string }) {
+  const position = IMAGE_POSITION[config.imagePosition ?? "center"];
+  const height = config.coverHeight === "tall" ? "h-[82vh] min-h-[520px]" : "h-screen";
+  const onDark = config.overlayTone === "light";
+  return (
+    <section className={`relative w-full overflow-hidden bg-paper-3 ${height}`}>
+      <img
+        src={config.image}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ objectPosition: position }}
+      />
+      {config.ctaPrimary && (
+        <div className="absolute inset-x-0 bottom-0 pb-10 lg:pb-14 flex justify-center">
+          {/* Jedyny tekst w tym układzie — i musi być klikalny, bo brzmi jak
+              zaproszenie („Zobacz kolekcję"), a nie jak podpis pod zdjęciem. */}
+          <Link
+            href={`${base}/produkty`}
+            className={`text-[11px] tracking-[0.28em] uppercase underline-offset-8 hover:underline ${
+              onDark ? "text-white" : "text-ink"
+            }`}
+          >
+            {config.ctaPrimary}
+          </Link>
+        </div>
+      )}
     </section>
   );
 }

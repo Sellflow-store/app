@@ -7,7 +7,7 @@ export interface TopBarConfig {
 
 /** split = dotychczasowy układ; fullbleed = zdjęcie na całą szerokość;
  *  editorial = typografia na osi, zdjęcie jako pas pod spodem. */
-export type HeroLayout = "split" | "fullbleed" | "editorial";
+export type HeroLayout = "split" | "fullbleed" | "editorial" | "cover";
 
 export interface HeroConfig {
   eyebrow: string;
@@ -20,11 +20,17 @@ export interface HeroConfig {
   image: string;
   /** Brak = split (zgodność wstecz). */
   layout?: HeroLayout;
-  /** Kadrowanie zdjęcia w układach fullbleed/editorial. Brak = center. */
+  /** Kadrowanie zdjęcia w układach fullbleed/editorial/cover. Brak = center. */
   imagePosition?: "top" | "center" | "bottom";
+  /** Tylko "cover": kolor treści paska nawigacji na zdjęciu. Brak = dark. */
+  overlayTone?: "light" | "dark";
+  /** Tylko "cover": wysokość kadru. Brak = "full" (cały ekran). */
+  coverHeight?: "full" | "tall";
 }
 
 export interface ProductsSectionConfig {
+  /** false = bez nadtytułu, tytułu i podtytułu — sama siatka produktów. */
+  showHeading?: boolean;
   eyebrow: string;
   headline: string;
   subheadline: string;
@@ -277,10 +283,25 @@ export interface BrandingConfig {
   cardStyle?: CardStyle;
   /** Podpis pod logo w navbarze, np. imię i nazwisko projektantki. */
   logoCaption?: string;
+  /** Jasna wersja logo — używana, gdy pasek leży na ciemnym zdjęciu. */
+  logoUrlLight?: string;
   fontFamily: string; // font nagłówków (display)
   bodyFontFamily: string; // font tekstu
   /** Skala zaokrągleń narożników (px). Brak = domyślne z globals.css. */
   radius?: { input: number; card: number; button: number };
+}
+
+export interface LookbookItem {
+  image: string;
+  caption?: string;
+  href?: string;
+}
+
+export interface LookbookConfig {
+  visible?: boolean;
+  /** "pairs" = rząd po dwa kadry; "wide" = jeden szeroki na rząd. */
+  layout?: "pairs" | "wide";
+  items: LookbookItem[];
 }
 
 export interface HomeConfig {
@@ -288,6 +309,7 @@ export interface HomeConfig {
   hero: HeroConfig;
   products: ProductsSectionConfig;
   benefits: BenefitsConfig;
+  lookbook?: LookbookConfig;
   reviews: ReviewsConfig;
   guarantee: GuaranteeConfig;
   video: VideoConfig;

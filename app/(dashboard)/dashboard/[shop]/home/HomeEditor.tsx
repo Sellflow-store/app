@@ -192,6 +192,76 @@ function ItemListEditor({
   );
 }
 
+type LookItem = { image: string; caption?: string; href?: string };
+
+function LookbookEditor({
+  items,
+  onChange,
+}: {
+  items: LookItem[];
+  onChange: (items: LookItem[]) => void;
+}) {
+  function update(i: number, patch: Partial<LookItem>) {
+    const next = [...items];
+    next[i] = { ...next[i], ...patch };
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className="p-3 rounded-xl flex gap-3"
+          style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
+        >
+          <div
+            className="w-16 h-20 rounded-lg overflow-hidden shrink-0"
+            style={{ background: "oklch(93% 0 0)" }}
+          >
+            {item.image && (
+              <img src={item.image} alt="" className="w-full h-full object-cover" />
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <Field label="Podpis na zdjęciu (opcjonalnie)">
+              <input
+                value={item.caption ?? ""}
+                onChange={(e) => update(i, { caption: e.target.value })}
+                placeholder="np. Kolekcja wiosna"
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+            <Field label="Dokąd prowadzi (opcjonalnie)">
+              <input
+                value={item.href ?? ""}
+                onChange={(e) => update(i, { href: e.target.value })}
+                placeholder="/produkty"
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+          </div>
+          <button
+            onClick={() => onChange(items.filter((_, j) => j !== i))}
+            aria-label="Usuń kadr"
+            className="p-2 h-8 rounded-lg transition-colors"
+            style={{ color: "oklch(50% 0.15 20)" }}
+          >
+            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+          </button>
+        </div>
+      ))}
+      <ImageUpload
+        label="Dodaj kadry"
+        multiple
+        onUploaded={(urls) => onChange([...items, ...urls.map((image) => ({ image }))])}
+      />
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface Props {
@@ -212,6 +282,14 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
 
   function patch<K extends keyof HomeConfig>(key: K, value: Partial<HomeConfig[K]>) {
     setConfig((prev) => ({ ...prev, [key]: { ...prev[key], ...value } }));
+  }
+
+  /** Jak patch, ale dla sekcji, których w zapisanym configu może w ogóle nie być. */
+  function patch2(key: "lookbook", value: Partial<NonNullable<HomeConfig["lookbook"]>>) {
+    setConfig((prev) => ({
+      ...prev,
+      lookbook: { items: [], ...(prev.lookbook ?? {}), ...value },
+    }));
   }
 
   async function handleSave() {
@@ -300,13 +378,48 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               <option value="split">Dwie kolumny — tekst po lewej, zdjęcie po prawej</option>
               <option value="fullbleed">Zdjęcie na całą szerokość, tekst na dole</option>
               <option value="editorial">Typograficzny — duży tytuł na osi, zdjęcie jako pas</option>
+              <option value="cover">Sam kadr — zdjęcie na pełny ekran, menu na zdjęciu, bez tekstu</option>
             </select>
             <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
               Układ ze zdjęciem na całą szerokość wymaga zdjęcia — bez niego pokaże się układ
               typograficzny. Najlepiej działa z fotografią na modelce lub z sesji.
             </p>
           </Field>
-          {(config.hero.layout === "fullbleed" || config.hero.layout === "editorial") && (
+          {config.hero.layout === "cover" && (
+            <>
+              <Field label="Kolor menu na zdjęciu">
+                <select
+                  value={config.hero.overlayTone ?? "dark"}
+                  onChange={(e) =>
+                    patch("hero", { overlayTone: e.target.value as HomeConfig["hero"]["overlayTone"] })
+                  }
+                  style={inputStyle}
+                >
+                  <option value="dark">Ciemny — do jasnych, studyjnych kadrów</option>
+                  <option value="light">Jasny — do ciemnych zdjęć</option>
+                </select>
+                <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+                  Przy jasnym menu podmienia się też logo, jeśli wgrasz jego jasną wersję
+                  w „Logo i kolorystyka”.
+                </p>
+              </Field>
+              <Field label="Wysokość kadru">
+                <select
+                  value={config.hero.coverHeight ?? "full"}
+                  onChange={(e) =>
+                    patch("hero", { coverHeight: e.target.value as HomeConfig["hero"]["coverHeight"] })
+                  }
+                  style={inputStyle}
+                >
+                  <option value="full">Pełny ekran</option>
+                  <option value="tall">Wysoki, ale widać, że strona idzie dalej</option>
+                </select>
+              </Field>
+            </>
+          )}
+          {(config.hero.layout === "fullbleed" ||
+            config.hero.layout === "editorial" ||
+            config.hero.layout === "cover") && (
             <Field label="Kadrowanie zdjęcia">
               <select
                 value={config.hero.imagePosition ?? "center"}
@@ -428,6 +541,16 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
 
       {/* Products section */}
       <Accordion title="Sekcja Produkty" open={!!open.products} onToggle={() => toggle("products")}>
+        <div className="mb-4">
+          <Toggle
+            checked={config.products.showHeading !== false}
+            onChange={(v) => patch("products", { showHeading: v })}
+            label="Pokaż nagłówek nad produktami"
+          />
+          <p className="text-[11px] mt-2" style={{ color: "oklch(60% 0 0)" }}>
+            Bez nagłówka zostaje sama siatka produktów — spokojniej, gdy nad nią jest lookbook.
+          </p>
+        </div>
         <div className="space-y-0">
           <Field label="Nadtytuł (eyebrow)">
             <input
@@ -569,6 +692,42 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             addLabel="Dodaj punkt gwarancji"
             iconOptions={GUARANTEE_ICONS}
           />
+        </div>
+      </Accordion>
+
+      {/* Lookbook */}
+      <Accordion title="Lookbook (kadry z sesji)" open={!!open.lookbook} onToggle={() => toggle("lookbook")}>
+        <div className="space-y-3">
+          <Toggle
+            checked={config.lookbook?.visible !== false && (config.lookbook?.items?.length ?? 0) > 0}
+            onChange={(v) =>
+              patch2("lookbook", { visible: v, items: config.lookbook?.items ?? [] })
+            }
+            label="Pokaż lookbook na stronie głównej"
+          />
+          <Field label="Układ">
+            <select
+              value={config.lookbook?.layout ?? "pairs"}
+              onChange={(e) =>
+                patch2("lookbook", {
+                  layout: e.target.value as "pairs" | "wide",
+                  items: config.lookbook?.items ?? [],
+                })
+              }
+              style={inputStyle}
+            >
+              <option value="pairs">Po dwa kadry w rzędzie</option>
+              <option value="wide">Jeden szeroki kadr w rzędzie</option>
+            </select>
+          </Field>
+          <LookbookEditor
+            items={config.lookbook?.items ?? []}
+            onChange={(items) => patch2("lookbook", { items })}
+          />
+          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+            Zdjęcia idą pełną szerokością okna, bez cen i przycisków. Najlepiej działają
+            kadry pionowe z sesji — dwa albo cztery.
+          </p>
         </div>
       </Accordion>
 
