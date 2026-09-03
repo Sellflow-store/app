@@ -265,7 +265,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               <option value="editorial">Typograficzny — duży tytuł na osi, zdjęcie jako pas</option>
             </select>
             <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
-              „Zdjęcie na całą szerokość" wymaga zdjęcia — bez niego pokaże się układ
+              Układ ze zdjęciem na całą szerokość wymaga zdjęcia — bez niego pokaże się układ
               typograficzny. Najlepiej działa z fotografią na modelce lub z sesji.
             </p>
           </Field>
