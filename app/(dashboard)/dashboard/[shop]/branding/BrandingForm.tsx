@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Save, X, TriangleAlert } from "lucide-react";
-import type { BrandingConfig } from "@/types/shop";
+import type { BrandingConfig, CardStyle, HeadingWeight } from "@/types/shop";
 import {
   DEFAULT_LOGO_HEIGHT,
   DEFAULT_LOGO_MAX_WIDTH,
@@ -142,6 +142,10 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
   const [primaryColor, setPrimary]    = useState(initialConfig.primaryColor);
   const [accentColor, setAccent]      = useState(initialConfig.accentColor);
   const [paperColor, setPaper]        = useState(initialConfig.paperColor ?? "");
+  const [flatPaper, setFlatPaper]     = useState(initialConfig.flatPaper === true);
+  const [cardStyle, setCardStyle]     = useState<CardStyle>(initialConfig.cardStyle ?? "default");
+  const [headingWeight, setHeadingWeight] = useState<HeadingWeight>(initialConfig.headingWeight ?? "bold");
+  const [logoCaption, setLogoCaption] = useState(initialConfig.logoCaption ?? "");
   const [displayFont, setDisplayFont] = useState(initialConfig.fontFamily || "Space Grotesk");
   const [bodyFont, setBodyFont]       = useState(initialConfig.bodyFontFamily || "Inter Tight");
   const [saveState, setSaveState]     = useState<SaveState>("idle");
@@ -165,6 +169,10 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             primaryColor,
             accentColor,
             paperColor,
+            flatPaper,
+            cardStyle,
+            headingWeight,
+            logoCaption: logoCaption.trim(),
             fontFamily: displayFont,
             bodyFontFamily: bodyFont,
           } satisfies BrandingConfig,
@@ -419,6 +427,17 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onBlur={(e) =>  (e.target.style.borderColor = "oklch(88% 0 0)")}
               />
             </Field>
+            <Field label="Podpis pod logo (opcjonalnie)" id="logo-caption">
+              <input
+                id="logo-caption"
+                value={logoCaption}
+                onChange={(e) => setLogoCaption(e.target.value)}
+                placeholder="np. imię i nazwisko projektantki"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
+                onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+              />
+            </Field>
           </div>
         </div>
       </SectionCard>
@@ -487,6 +506,44 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           </div>
         </div>
 
+        {/* Heading weight */}
+        <div className="pt-4" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+            Grubość nagłówków
+          </p>
+          <select
+            value={headingWeight}
+            onChange={(e) => setHeadingWeight(e.target.value as HeadingWeight)}
+            style={inputStyle}
+          >
+            <option value="bold">Gruba — mocna, wyrazista</option>
+            <option value="regular">Zwykła — spokojna</option>
+            <option value="light">Lekka — elegancka, do cienkich logotypów</option>
+          </select>
+          <p className="text-[11px] mt-1.5 mb-4" style={{ color: "oklch(60% 0 0)" }}>
+            Dotyczy tytułów hero i sekcji. Nie każdy font ma wagę lekką — wtedy pokaże się zwykła.
+          </p>
+        </div>
+
+        {/* Card style */}
+        <div className="pt-4" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+            Karty produktów
+          </p>
+          <select
+            value={cardStyle}
+            onChange={(e) => setCardStyle(e.target.value as CardStyle)}
+            style={inputStyle}
+          >
+            <option value="default">Klasyczne — zaokrąglone zdjęcie, etykieta, torebka na hoverze</option>
+            <option value="minimal">Minimalne — zdjęcie, nazwa, cena; bez zaokrągleń i przycisków</option>
+          </select>
+          <p className="text-[11px] mt-1.5 mb-4" style={{ color: "oklch(60% 0 0)" }}>
+            Minimalne karty pasują do marek modowych i premium — kupujący wchodzi w produkt,
+            zamiast dodawać z listy.
+          </p>
+        </div>
+
         {/* Page background */}
         <div className="pt-4" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
           <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
@@ -525,6 +582,23 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
             />
           </div>
+          <label className="flex items-start gap-2.5 mb-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={flatPaper}
+              onChange={(e) => setFlatPaper(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block text-[12px] font-medium" style={{ color: "oklch(25% 0 0)" }}>
+                Jednolite tło całej strony
+              </span>
+              <span className="block text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+                Sekcje, pasek hero i stopka w tym samym kolorze co strona — rozdzielone tylko
+                cienkimi liniami. Bez tego dostają lekko ciemniejsze odcienie.
+              </span>
+            </span>
+          </label>
           {isDarkBackground(paperColor) && (
             <p
               className="flex items-center gap-1.5 text-[11px] font-medium"

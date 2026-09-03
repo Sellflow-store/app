@@ -38,6 +38,17 @@ const BUNDLED = new Set(["Space Grotesk", "Inter Tight"]);
  *  z listy się nie załaduje. */
 const FONT_WEIGHTS: Record<string, string> = {
   Anton: "400",
+  // rodziny z wagą 300 — potrzebna dla headingWeight="light"
+  "Space Grotesk": "300;400;500;600;700",
+  Outfit: "300;400;500;600;700",
+  Sora: "300;400;500;600;700",
+  Fraunces: "300;400;500;600;700",
+  Inter: "300;400;500;600;700",
+  Manrope: "300;400;500;600;700",
+  Karla: "300;400;500;600;700",
+  Jost: "300;400;500;600;700",
+  "Work Sans": "300;400;500;600;700",
+  // Playfair Display, DM Serif Display, Lora: brak 300 → domyślne
 };
 const DEFAULT_WEIGHTS = "400;500;600;700";
 

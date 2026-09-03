@@ -35,14 +35,16 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
   const logoHeight = branding.logoHeight ?? DEFAULT_LOGO_HEIGHT;
   const logoMaxWidth = branding.logoMaxWidth ?? DEFAULT_LOGO_MAX_WIDTH;
   // wyższe logo rozciąga pasek, żeby nie było przycięte ani ciasno upakowane
-  const rowHeight = Math.max(NAVBAR_MIN_HEIGHT, logoHeight + 16);
+  const caption = branding.logoCaption?.trim() ?? "";
+  // podpis pod logo (np. imię i nazwisko) dokłada jedną linijkę do paska
+  const rowHeight = Math.max(NAVBAR_MIN_HEIGHT, logoHeight + 16 + (caption ? 16 : 0));
 
   return (
     <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-rule">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between" style={{ height: rowHeight }}>
           {/* Logo / shop name */}
-          <Link href={home} className="text-xl font-bold tracking-tight text-ink shrink-0">
+          <Link href={home} className="text-xl font-bold tracking-tight text-ink shrink-0 flex flex-col items-start">
             {branding.logoUrl ? (
               <img
                 src={branding.logoUrl}
@@ -53,6 +55,11 @@ export default function Navbar({ shopSlug, branding, menuItems }: Props) {
               />
             ) : (
               branding.shopName
+            )}
+            {caption && (
+              <span className="mt-1 text-[10px] font-normal tracking-[0.22em] uppercase text-ink-2">
+                {caption}
+              </span>
             )}
           </Link>
 

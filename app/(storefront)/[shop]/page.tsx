@@ -28,7 +28,12 @@ export default async function StorefrontHome({ params }: Props) {
         <TopBar config={shop.home} />
         <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />
         <HeroSection config={shop.home.hero} shopSlug={shop.slug} />
-        <ProductsSection config={shop.home.products} products={shop.products} shopSlug={shop.slug} />
+        <ProductsSection
+          config={shop.home.products}
+          products={shop.products}
+          shopSlug={shop.slug}
+          cardStyle={shop.branding.cardStyle}
+        />
         <BenefitsSection config={shop.home.benefits} />
         <ReviewsSection config={shop.home.reviews} />
         <GuaranteeSection config={shop.home.guarantee} />

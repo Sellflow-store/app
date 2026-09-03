@@ -46,7 +46,13 @@ export default async function ProductsListPage({ params, searchParams }: Props) 
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
                 {sorted.map((product, i) => (
-                  <ProductCard key={product.id} product={product} shopSlug={shop.slug} index={i} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    shopSlug={shop.slug}
+                    index={i}
+                    variant={shop.branding.cardStyle}
+                  />
                 ))}
               </div>
             )}

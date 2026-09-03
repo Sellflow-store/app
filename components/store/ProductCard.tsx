@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Check } from "lucide-react";
-import type { StorefrontProduct } from "@/types/shop";
+import type { StorefrontProduct, CardStyle } from "@/types/shop";
 import { useCart } from "@/lib/cart";
 import { useStoreBase } from "./StoreBaseContext";
 
@@ -11,9 +11,12 @@ interface Props {
   product: StorefrontProduct;
   shopSlug: string;
   index?: number;
+  /** "minimal" = zdjęcie, nazwa, cena i nic więcej: bez zaokrągleń, bez
+   *  torebki na hoverze, lżejsza typografia. Brak = dotychczasowa karta. */
+  variant?: CardStyle;
 }
 
-export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
+export default function ProductCard({ product, shopSlug, variant = "default" }: Props) {
   const mainImage = product.images?.[0] ?? null;
   const { add } = useCart(shopSlug);
   const base = useStoreBase();
@@ -23,6 +26,8 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
   // Rozmiar wybiera się na stronie produktu — szybkie dodawanie z listy
   // wrzuciłoby do koszyka pozycję bez rozmiaru, więc tu tylko prowadzimy dalej.
   const needsSize = (product.sizes?.length ?? 0) > 0;
+  const minimal = variant === "minimal";
+  const href = `${base}/produkty/${product.id}`;
 
   function quickAdd() {
     if (soldOut) return;
@@ -36,6 +41,43 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
+  }
+
+  if (minimal) {
+    return (
+      <Link href={href} className="group block">
+        <div className="relative aspect-[4/5] bg-paper-3 overflow-hidden mb-4">
+          {mainImage ? (
+            <img
+              src={mainImage}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-ink-2/40">
+              <span className="text-2xl font-light">✦</span>
+            </div>
+          )}
+          {soldOut && (
+            <span className="absolute bottom-3 left-3 text-[10px] tracking-[0.18em] uppercase text-ink-2">
+              Wyprzedane
+            </span>
+          )}
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-xs tracking-wide text-ink font-normal">{product.name}</h3>
+          <div className="flex items-center gap-2 text-xs font-light text-ink-2">
+            <span>{product.price} zł</span>
+            {product.oldPrice && <span className="line-through opacity-70">{product.oldPrice} zł</span>}
+          </div>
+          {product.lowestPrice30 && (
+            <p className="text-[10px] text-ink-2/60 font-light">
+              Najniższa cena z 30 dni: {product.lowestPrice30} zł
+            </p>
+          )}
+        </div>
+      </Link>
+    );
   }
 
   return (
@@ -64,7 +106,7 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
         )}
         {!soldOut && needsSize && (
           <Link
-            href={`${base}/produkty/${product.id}`}
+            href={href}
             aria-label={`Wybierz rozmiar — ${product.name}`}
             className="absolute bottom-3 right-3 backdrop-blur-sm p-2.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-sm bg-paper/90 opacity-0 group-hover:opacity-100 hover:bg-ink hover:text-on-ink text-ink-2"
           >
@@ -91,10 +133,7 @@ export default function ProductCard({ product, shopSlug, index = 0 }: Props) {
       </div>
 
       {/* Info */}
-      <Link
-        href={`${base}/produkty/${product.id}`}
-        className="block space-y-1 hover:opacity-80 transition-opacity"
-      >
+      <Link href={href} className="block space-y-1 hover:opacity-80 transition-opacity">
         <p className="text-[10px] tracking-[0.2em] uppercase text-ink-2/70">{product.category}</p>
         <h3 className="text-sm font-medium text-ink tracking-wide">{product.name}</h3>
         <div className="flex items-center gap-2">

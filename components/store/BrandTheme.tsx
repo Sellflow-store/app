@@ -55,11 +55,17 @@ export default function BrandTheme({ branding }: { branding: BrandingConfig }) {
 
   // Custom page background: derive the secondary surfaces (paper-2 hero band,
   // paper-3 image placeholders) by nudging the base toward the ink color.
-  const paperVars = paper
-    ? `--brand-paper:${paper};` +
-      `--brand-paper-2:${mix(paper, ink, 0.04)};` +
-      `--brand-paper-3:${mix(paper, ink, 0.07)};`
-    : "";
+  const paperVars =
+    (paper
+      ? `--brand-paper:${paper};` +
+        `--brand-paper-2:${mix(paper, ink, 0.04)};` +
+        `--brand-paper-3:${mix(paper, ink, 0.07)};`
+      : "") +
+    // Jednolite tło: sekcje i stopka w kolorze strony, dzielą je same hairline'y.
+    // Deklaracja po pochodnych, więc wygrywa w tym samym bloku :root.
+    (branding.flatPaper === true
+      ? `--brand-paper-2:var(--brand-paper);--brand-paper-3:var(--brand-paper);`
+      : "");
 
   const css = `:root{` +
     `--brand-ink:${ink};` +
@@ -78,7 +84,14 @@ export default function BrandTheme({ branding }: { branding: BrandingConfig }) {
     `--font-body:'${fontBody}',ui-sans-serif,system-ui,sans-serif;` +
   `}` +
   `body{font-family:var(--font-body);}` +
-  `h1,h2,h3,h4{font-family:var(--font-display);}`;
+  `h1,h2,h3,h4{font-family:var(--font-display);}` +
+  // Waga nagłówków z brandingu. Nagłówki w komponentach mają klasy font-bold,
+  // a te wygrywają z selektorem elementu — więc tu świadomie !important.
+  (branding.headingWeight === "light"
+    ? `h1,h2,h3,h4{font-weight:300!important;letter-spacing:-0.005em!important;}`
+    : branding.headingWeight === "regular"
+      ? `h1,h2,h3,h4{font-weight:400!important;letter-spacing:-0.01em!important;}`
+      : "");
 
   const fontsHref = googleFontsHref([fontDisplay, fontBody]);
 

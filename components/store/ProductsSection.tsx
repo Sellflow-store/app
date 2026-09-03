@@ -1,13 +1,15 @@
 import ProductCard from "./ProductCard";
 import type { ProductsSectionConfig, StorefrontProduct } from "@/types/shop";
+import type { CardStyle } from "@/types/shop";
 
 interface Props {
   config: ProductsSectionConfig;
   products: StorefrontProduct[];
   shopSlug: string;
+  cardStyle?: CardStyle;
 }
 
-export default function ProductsSection({ config, products, shopSlug }: Props) {
+export default function ProductsSection({ config, products, shopSlug, cardStyle }: Props) {
   const displayed = products.filter((p) => p.visible).slice(0, 3);
 
   return (
@@ -25,7 +27,7 @@ export default function ProductsSection({ config, products, shopSlug }: Props) {
           </p>
         </div>
         <div
-          className={`grid gap-6 lg:gap-8 ${
+          className={`grid ${cardStyle === "minimal" ? "gap-8 lg:gap-12" : "gap-6 lg:gap-8"} ${
             displayed.length === 1
               ? "grid-cols-1 max-w-sm mx-auto"
               : displayed.length === 2
@@ -34,7 +36,7 @@ export default function ProductsSection({ config, products, shopSlug }: Props) {
           }`}
         >
           {displayed.map((product, i) => (
-            <ProductCard key={product.id} product={product} shopSlug={shopSlug} index={i} />
+            <ProductCard key={product.id} product={product} shopSlug={shopSlug} index={i} variant={cardStyle} />
           ))}
         </div>
       </div>

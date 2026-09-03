@@ -248,6 +248,9 @@ export const LOGO_MAX_WIDTH_RANGE = { min: 80, max: 420 };
 /** Minimalna wysokość paska nawigacji (px) — logo może ją podnieść. */
 export const NAVBAR_MIN_HEIGHT = 64;
 
+export type CardStyle = "default" | "minimal";
+export type HeadingWeight = "light" | "regular" | "bold";
+
 export interface BrandingConfig {
   shopName: string;
   tagline: string;
@@ -263,6 +266,15 @@ export interface BrandingConfig {
   secondaryColor?: string;
   /** "" = domyślne jasne tło; hex nadpisuje --brand-paper na storefroncie */
   paperColor: string;
+  /** true = sekcje, pasek hero i stopka na TYM SAMYM kolorze co strona (paper-2 i
+   *  paper-3 = paper), rozdzielone tylko hairline'ami. Brak = odcienie pochodne. */
+  flatPaper?: boolean;
+  /** Grubość nagłówków (h1–h4 na storefroncie). Brak = "bold" (dotychczasowy wygląd). */
+  headingWeight?: HeadingWeight;
+  /** Styl kart produktów. Brak = "default". */
+  cardStyle?: CardStyle;
+  /** Podpis pod logo w navbarze, np. imię i nazwisko projektantki. */
+  logoCaption?: string;
   fontFamily: string; // font nagłówków (display)
   bodyFontFamily: string; // font tekstu
   /** Skala zaokrągleń narożników (px). Brak = domyślne z globals.css. */
