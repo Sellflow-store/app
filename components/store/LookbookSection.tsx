@@ -27,6 +27,33 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
   const base = await storefrontBase(shopSlug);
   const layout = config.layout ?? "pairs";
 
+  // Pas płynący w lewo. Kadry idą w jednym rzędzie i wracają w pętli, więc
+  // liczba kadrów nie ma znaczenia — mieści się ich dowolnie wiele, a strona
+  // główna zostaje krótka. Druga kopia listy jest tylko po to, żeby przejście
+  // z końca na początek nie miało szwu; dla czytnika ekranu jest ukryta.
+  if (layout === "marquee") {
+    const track = [...items, ...items];
+    // Około 7 s na kadr — tempo spaceru, nie karuzeli.
+    const duration = Math.max(28, items.length * 7);
+    return (
+      <section aria-label="Lookbook" className="bg-paper py-10 lg:py-16">
+        <div className="lookbook-marquee-viewport overflow-hidden">
+          <div className="lookbook-marquee flex w-max" style={{ animationDuration: `${duration}s` }}>
+            {track.map((item, i) => (
+              <div
+                key={i}
+                className="w-[58vw] sm:w-[34vw] lg:w-[23vw] shrink-0 mr-3 sm:mr-4 lg:mr-6"
+                aria-hidden={i >= items.length}
+              >
+                <Frame item={item} base={base} aspect="aspect-[3/4]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Układ redakcyjny: dwie kolumny, prawa zsunięta w dół. Kadry rozdzielamy
   // naprzemiennie, więc nieparzysta liczba nie zostawia sieroty w rzędzie —
   // kolumny po prostu kończą się na różnej wysokości, i o to chodzi.

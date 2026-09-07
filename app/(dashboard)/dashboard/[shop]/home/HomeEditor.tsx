@@ -736,7 +736,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               value={config.lookbook?.layout ?? "pairs"}
               onChange={(e) =>
                 patch2("lookbook", {
-                  layout: e.target.value as "pairs" | "wide" | "stagger",
+                  layout: e.target.value as "pairs" | "wide" | "stagger" | "marquee",
                   items: config.lookbook?.items ?? [],
                 })
               }
@@ -745,6 +745,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               <option value="pairs">Po dwa kadry w rzędzie</option>
               <option value="wide">Jeden szeroki kadr w rzędzie</option>
               <option value="stagger">Dwie kolumny z przesunięciem</option>
+              <option value="marquee">Pas płynący w lewo</option>
             </select>
           </Field>
           <LookbookEditor
@@ -754,9 +755,10 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
           <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
             Kadry pionowe z sesji wyglądają najlepiej. Dwa pierwsze układy idą pełną
             szerokością okna i chcą parzystej liczby kadrów. Układ z przesunięciem ma
-            marginesy, przyjmuje dowolną liczbę kadrów i pozwala mieszać zdjęcia
-            z krótkimi filmami. Film leci w pętli, bez dźwięku, a zdjęcie kadru zostaje
-            plakatem na czas wczytywania.
+            marginesy i przyjmuje dowolną liczbę kadrów. Pas płynący w lewo mieści ich
+            najwięcej i zajmuje najmniej strony — zatrzymuje się, gdy ktoś na niego
+            najedzie. Film leci w pętli, bez dźwięku, a zdjęcie kadru zostaje plakatem
+            na czas wczytywania.
           </p>
         </div>
       </Accordion>

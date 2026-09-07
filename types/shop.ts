@@ -350,8 +350,9 @@ export interface LookbookItem {
 export interface LookbookConfig {
   visible?: boolean;
   /** "pairs" = rząd po dwa kadry; "wide" = jeden szeroki na rząd;
-   *  "stagger" = dwie kolumny, prawa przesunięta w dół (układ redakcyjny). */
-  layout?: "pairs" | "wide" | "stagger";
+   *  "stagger" = dwie kolumny, prawa przesunięta w dół (układ redakcyjny);
+   *  "marquee" = jeden pas kadrów płynący w lewo w pętli. */
+  layout?: "pairs" | "wide" | "stagger" | "marquee";
   items: LookbookItem[];
 }
 

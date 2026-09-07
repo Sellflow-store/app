@@ -279,3 +279,32 @@
     @apply font-sans;
   }
 }
+/* ── Lookbook: pas kadrów płynący w lewo ──────────────────────────────────────
+   Ścieżka zawiera listę kadrów DWA razy, więc przesunięcie o 50% jej szerokości
+   wypada dokładnie na początku drugiej kopii — pętla nie ma szwu. Odstępy
+   robimy marginesem każdego kadru, nie `gap`: przy `gap` ostatni kadr nie ma
+   odstępu za sobą i połowa szerokości przestaje się zgadzać o pół przerwy.
+   Czas jednego obiegu ustawia komponent, proporcjonalnie do liczby kadrów. */
+@keyframes lookbook-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.lookbook-marquee {
+  animation-name: lookbook-marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Najechanie zatrzymuje pas — inaczej nie da się przyjrzeć kadrowi ani w niego
+   kliknąć, bo ucieka spod kursora. */
+.lookbook-marquee-viewport:hover .lookbook-marquee {
+  animation-play-state: paused;
+}
+
+/* Przy wyłączonych animacjach w systemie pas stoi, a kadry można przewinąć
+   ręcznie — sam bezruch schowałby połowę kolekcji poza ekranem. */
+@media (prefers-reduced-motion: reduce) {
+  .lookbook-marquee { animation: none; }
+  .lookbook-marquee-viewport { overflow-x: auto; }
+}
