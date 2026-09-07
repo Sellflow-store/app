@@ -7,6 +7,7 @@ import { adminEmailAllowlist } from "@/lib/api";
 import { clerkConfigured } from "@/lib/auth-env";
 import { SLUG_RE, findFreeSlug } from "@/lib/slug";
 import type { StoreBootstrap } from "@/lib/brand/types";
+import { isDataUrl, isImageDataUrl, uploadDataUrl } from "@/lib/blob";
 
 type Body = {
   shopName: string;
@@ -115,8 +116,24 @@ export async function POST(req: NextRequest) {
       .returning();
   }
 
+  // Logo z kreatora jedzie w payloadzie jako data URI (użytkownik bywał
+  // niezalogowany, gdy je wybierał). Tutaj mamy już i sesję, i sklep, więc
+  // przekładamy obraz na Blob i do bazy zapisujemy sam URL — inaczej base64
+  // siedziałoby w `shop_config` i doklejało się do HTML każdej podstrony sklepu.
+  // Gdy storage nie odpowie, zostaje data URI: sklep ma powstać mimo wszystko.
+  const rawLogo = bootstrap?.store.logoDataUrl;
+  let logoUrl = rawLogo ?? "";
+  if (isDataUrl(rawLogo)) {
+    logoUrl = isImageDataUrl(rawLogo)
+      // Nieudany upload (brak storage, za duży plik) nie może kosztować logo —
+      // zostaje base64, czyli zachowanie sprzed tej zmiany.
+      ? (await uploadDataUrl(rawLogo, `shops/${user.id}`, `${shop.slug}-branding-logo`)) ?? rawLogo
+      // Data URI, które nie jest obrazem, w ogóle nie ma czego szukać w brandingu.
+      : "";
+  }
+
   // Seed config — branded if a bootstrap payload was sent, neutral defaults otherwise.
-  await db.insert(shopConfig).values(buildConfigRows(shop.id, shopName.trim(), bootstrap));
+  await db.insert(shopConfig).values(buildConfigRows(shop.id, shopName.trim(), bootstrap, logoUrl));
 
   // Seed products from the bootstrap payload (if any) so the new dashboard
   // isn't empty. Names + prices come from the inferred catalog per category.
@@ -141,8 +158,13 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ shopSlug: shop.slug }, { status: 201 });
 }
 
-function buildConfigRows(shopId: string, shopName: string, bootstrap?: StoreBootstrap) {
-  const branding = brandingFromBootstrap(shopName, bootstrap);
+function buildConfigRows(
+  shopId: string,
+  shopName: string,
+  bootstrap?: StoreBootstrap,
+  logoUrl?: string,
+) {
+  const branding = brandingFromBootstrap(shopName, bootstrap, logoUrl);
   const home = homeFromBootstrap(shopName, bootstrap);
 
   const rows: Array<{ shopId: string; key: string; value: unknown }> = [
@@ -175,11 +197,12 @@ function buildConfigRows(shopId: string, shopName: string, bootstrap?: StoreBoot
   return rows;
 }
 
-function brandingFromBootstrap(shopName: string, b?: StoreBootstrap) {
+function brandingFromBootstrap(shopName: string, b?: StoreBootstrap, logoUrl?: string) {
   return {
     shopName: b?.store.name ?? shopName,
     tagline: b?.store.storyShort ?? "",
-    logoUrl: b?.store.logoDataUrl ?? "",
+    // Adres z Bloba, gdy upload się udał; inaczej to, co przyszło z kreatora.
+    logoUrl: logoUrl ?? b?.store.logoDataUrl ?? "",
     faviconUrl: "",
     primaryColor: b?.brand.palette.ink ?? "#12128c",
     accentColor: b?.brand.palette.accent ?? "#db00b2",

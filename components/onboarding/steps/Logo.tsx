@@ -10,12 +10,35 @@ export default function Logo({ onNext, onBack }: Props) {
   const { state, patchBusiness } = useOnboarding();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Logo jest niesione przez cały onboarding jako base64 (podgląd → payload →
-  // sessionStorage przy rejestracji → POST → baza). Surowy plik potrafi mieć
-  // kilka MB i przekracza limit sessionStorage (QuotaExceededError zrywał zapis
-  // sklepu). Skalujemy raster do maks. 512 px i eksportujemy lekki PNG; SVG jest
-  // wektorem, więc zostaje bez zmian.
-  const MAX_DIM = 512;
+  // Logo jedzie przez kreator jako base64 (podgląd → payload → sessionStorage
+  // przy rejestracji → POST). Surowy plik potrafi mieć kilka MB i przekracza
+  // limit sessionStorage (QuotaExceededError zrywał zapis sklepu), więc raster
+  // skalujemy i przekodowujemy tutaj. Do bazy base64 już nie trafia — serwer
+  // przekłada obraz na Vercel Blob (POST /api/onboarding) i zapisuje sam URL.
+  //
+  // 600 px dłuższego boku: navbar pokazuje logo w kilkudziesięciu pikselach,
+  // więc to nadal zapas na ekrany o podwójnej gęstości, a waga jest mała.
+  // Format dobieramy po przezroczystości — PNG tylko wtedy, gdy jest naprawdę
+  // potrzebny. Logotypy „na białym prostokącie" (a takie ludzie wgrywają
+  // najczęściej) jako PNG ważyły setki kilobajtów, a jako JPEG ważą dziesiątki.
+  // SVG jest wektorem i zostaje bez zmian.
+  const MAX_DIM = 600;
+  const JPEG_QUALITY = 0.85;
+
+  const hasTransparency = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+    try {
+      const { data } = ctx.getImageData(0, 0, w, h);
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 250) return true;
+      }
+      return false;
+    } catch {
+      // getImageData może rzucić przy nietypowych źródłach — wtedy zakładamy
+      // przezroczystość, bo utrata kanału alfa jest gorsza niż większy plik.
+      return true;
+    }
+  };
+
   const handleFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -38,8 +61,12 @@ export default function Logo({ onNext, onBack }: Props) {
           return;
         }
         ctx.drawImage(img, 0, 0, w, h);
-        // PNG zachowuje przezroczystość logo; małe wymiary trzymają rozmiar w ryzach.
-        patchBusiness({ logoDataUrl: canvas.toDataURL("image/png") });
+        const encoded = hasTransparency(ctx, w, h)
+          ? canvas.toDataURL("image/png")
+          : canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+        // Gdyby przekodowanie wyszło większe niż oryginał (małe, już zoptymalizowane
+        // pliki), zostawiamy oryginał.
+        patchBusiness({ logoDataUrl: encoded.length < dataUrl.length ? encoded : dataUrl });
       };
       img.onerror = () => patchBusiness({ logoDataUrl: dataUrl });
       img.src = dataUrl;
