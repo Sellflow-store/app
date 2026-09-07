@@ -4,7 +4,13 @@ import { db } from "@/lib/db";
 import { shops, shopConfig, products, orders } from "@/lib/db/schema";
 import { and, count, desc, eq, gte, inArray, ne, sum } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
-import type { BrandingConfig, CheckoutConfig, LegalConfig, AboutConfig } from "@/types/shop";
+import type {
+  BrandingConfig, CheckoutConfig, LegalConfig, AboutConfig, AccountConfig, LegalDataConfig,
+} from "@/types/shop";
+import {
+  DEFAULT_ABOUT, DEFAULT_ACCOUNT, DEFAULT_CHECKOUT, normalizeDeliveryConfig,
+} from "@/lib/shop";
+import { missingLegalFields, normalizeLegalData, resolveLegalFields } from "@/lib/legal";
 import {
   Package, Palette, Truck, CreditCard, FileText, Info,
   Plus, ClipboardList, Home as HomeIcon, Eye, ArrowRight, Check,
@@ -66,6 +72,25 @@ export default async function DashboardHome({
 
   const shopName = branding?.shopName || shop?.name || shopSlug;
 
+  const savedAccount = (configMap.account as Partial<AccountConfig>) ?? {};
+  const legalComplete =
+    missingLegalFields(
+      resolveLegalFields({
+        legal: normalizeLegalData(configMap.legal as Partial<LegalDataConfig> | undefined),
+        account: {
+          ...DEFAULT_ACCOUNT,
+          ...savedAccount,
+          company: { ...DEFAULT_ACCOUNT.company, ...(savedAccount.company ?? {}) },
+        },
+        about: { ...DEFAULT_ABOUT, ...(about ?? {}) },
+        branding: branding as never,
+        checkout: { ...DEFAULT_CHECKOUT, ...(checkout ?? {}) },
+        delivery: normalizeDeliveryConfig(configMap.delivery as never),
+        shopName,
+        shopUrl: "",
+      })
+    ).length === 0;
+
   // ── Setup checklist ──────────────────────────────────────────────────────
   const steps = [
     { label: "Dodaj pierwszy produkt", href: `${base}/products/new`, done: productCount > 0 },
@@ -76,7 +101,13 @@ export default async function DashboardHome({
       href: `${base}/payments`,
       done: !!checkout && ((checkout.transferEnabled ? !!checkout.bankAccount : false) || !!checkout.codEnabled),
     },
-    { label: "Uzupełnij regulamin", href: `${base}/legal`, done: !!terms?.content?.trim() },
+    {
+      label: "Uzupełnij dane do dokumentów",
+      href: `${base}/legal`,
+      // Dokumenty składają się same, więc „gotowe" nie znaczy „ktoś wkleił
+      // tekst", tylko „nie zostały w nich luki po brakujących danych".
+      done: terms?.mode === "custom" ? !!terms.content?.trim() : legalComplete,
+    },
     { label: "Dodaj dane „O nas” i kontakt", href: `${base}/about`, done: !!(about?.content?.trim() || about?.email?.trim()) },
   ];
   const doneCount = steps.filter((s) => s.done).length;

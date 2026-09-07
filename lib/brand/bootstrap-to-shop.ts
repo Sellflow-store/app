@@ -1,6 +1,6 @@
 import type { ShopContext, StorefrontProduct } from "@/types/shop";
 import type { StoreBootstrap } from "./types";
-import { DEFAULT_DELIVERY, DEFAULT_CHECKOUT, DEFAULT_ABOUT, DEFAULT_FAQ, DEFAULT_LEGAL, DEFAULT_MENU, DEFAULT_FOOTER, DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE } from "@/lib/shop";
+import { DEFAULT_DELIVERY, DEFAULT_CHECKOUT, DEFAULT_ABOUT, DEFAULT_FAQ, DEFAULT_LEGAL, DEFAULT_MENU, DEFAULT_FOOTER, DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE, DEFAULT_LEGAL_DATA } from "@/lib/shop";
 
 /**
  * Map an in-memory StoreBootstrap (built by the onboarding wizard) into the
@@ -130,6 +130,7 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
     footer: DEFAULT_FOOTER,
     integrations: DEFAULT_INTEGRATIONS,
     compliance: DEFAULT_COMPLIANCE,
+    legal: DEFAULT_LEGAL_DATA,
     products,
   };
 }

@@ -8,7 +8,7 @@
 export const CONFIG_KEYS = new Set([
   "branding", "home", "menu", "about", "faq", "terms", "privacy",
   "checkout", "delivery", "popup", "newsletter", "integrations",
-  "brand", "account", "compliance", "footer",
+  "brand", "account", "compliance", "footer", "legal",
 ]);
 
 // 256 KB serialized — generous for the biggest blobs (legal text, home config)

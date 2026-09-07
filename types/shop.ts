@@ -186,8 +186,54 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   { label: "Kontakt", href: "/kontakt" },
 ];
 
+/** Jak powstaje treść dokumentu prawnego.
+ *  "generated" (brak = domyślnie) — składamy dokument z „Danych do dokumentów"
+ *  przy każdym wyświetleniu, więc jedna zmiana (NIP, e-mail, adres zwrotów)
+ *  przechodzi od razu na regulamin, politykę i stronę zwrotów.
+ *  "custom" — merchant przejął treść na własność; renderujemy `content` i nic
+ *  już w nim nie podmieniamy. */
 export interface LegalConfig {
   content: string; // plain text, renderowany z zachowaniem akapitów
+  mode?: "generated" | "custom";
+}
+
+/** Czym sklep handluje — steruje wariantami regulaminu (dostawa, moment zawarcia
+ *  umowy, wyłączenia prawa odstąpienia). */
+export interface SalesProfile {
+  physical: boolean;
+  digital: boolean;
+  services: boolean;
+}
+
+/** Kiedy dochodzi do zawarcia umowy sprzedaży (§2 wzoru regulaminu). */
+export type ContractMoment = "confirmation" | "payButton";
+
+/** JEDNO miejsce z danymi, z których składamy wszystkie dokumenty prawne.
+ *  Puste pole = weź wartość z innej sekcji panelu (konto i firma, „O nas",
+ *  płatności, dostawa) — patrz `resolveLegalVars`. Dzięki temu merchant
+ *  wpisuje NIP raz, a widzi go w regulaminie i w polityce prywatności. */
+export interface LegalDataConfig {
+  /** Dane sprzedawcy. Puste = z Ustawienia → Konto i firma. */
+  companyName: string;
+  companyAddress: string;
+  taxId: string; // NIP
+  regon: string;
+  krs: string;
+  /** Kontakt w dokumentach. Puste = z „O nas" / konta. */
+  email: string;
+  phone: string;
+  /** Adres, na który klient odsyła towar. Puste = adres firmy. */
+  returnAddress: string;
+  sells: SalesProfile;
+  contractMoment: ContractMoment;
+  /** Czas realizacji zamówienia w dniach roboczych, np. "1–3". */
+  fulfillmentDays: string;
+  /** Data wejścia dokumentów w życie (YYYY-MM-DD). */
+  effectiveDate: string;
+  /** Sklep robi produkty personalizowane → wyłączenie prawa odstąpienia. */
+  personalizedProducts: boolean;
+  /** Zaznaczone kategorie klauzul branżowych (id z CLAUSE_GROUPS). */
+  clauses: string[];
 }
 
 export interface AboutConfig {
@@ -434,5 +480,6 @@ export interface ShopContext {
   footer: FooterConfig;
   integrations: IntegrationsConfig;
   compliance: ComplianceConfig;
+  legal: LegalDataConfig;
   products: StorefrontProduct[];
 }

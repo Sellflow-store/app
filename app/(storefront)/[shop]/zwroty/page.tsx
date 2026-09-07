@@ -15,18 +15,25 @@ export default async function ReturnsPage({ params }: Props) {
   if (!shop) notFound();
   const base = await storefrontBase(shop.slug);
 
+  // Ten sam e-mail i adres, które trafiają do regulaminu — merchant podaje je
+  // raz w „Dokumentach prawnych", a nie osobno pod każdą stroną sklepu.
+  const contactEmail = shop.legal.email || shop.about.email;
+  const returnAddress = shop.legal.returnAddress;
+
   const steps = [
     {
       icon: Mail,
       title: "Napisz do nas",
-      text: shop.about.email
-        ? `Wyślij wiadomość na ${shop.about.email} z numerem zamówienia i informacją, co zwracasz.`
+      text: contactEmail
+        ? `Wyślij wiadomość na ${contactEmail} z numerem zamówienia i informacją, co zwracasz.`
         : "Skontaktuj się z nami przez stronę kontaktową, podając numer zamówienia.",
     },
     {
       icon: RotateCcw,
       title: "Odeślij produkt",
-      text: "Masz 14 dni od otrzymania paczki na odstąpienie od umowy bez podania przyczyny — i kolejne 14 dni na odesłanie produktu.",
+      text: returnAddress
+        ? `Masz 14 dni od otrzymania paczki na odstąpienie od umowy bez podania przyczyny — i kolejne 14 dni na odesłanie produktu na adres: ${returnAddress}.`
+        : "Masz 14 dni od otrzymania paczki na odstąpienie od umowy bez podania przyczyny — i kolejne 14 dni na odesłanie produktu.",
     },
     {
       icon: ShieldCheck,

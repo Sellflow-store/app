@@ -2,6 +2,16 @@ import { db } from "./db";
 import { shops, shopConfig, products, blogPosts } from "./db/schema";
 import { eq, and } from "drizzle-orm";
 import { getLowestPrices30 } from "./price-history";
+import {
+  DEFAULT_LEGAL_DATA,
+  normalizeLegalData,
+  resolveLegalFields,
+  resolveLegalVars,
+  missingLegalFields,
+  shopPublicUrl,
+  buildTerms,
+  buildPrivacy,
+} from "./legal";
 import type {
   ShopContext,
   HomeConfig,
@@ -17,6 +27,7 @@ import type {
   AccountConfig,
   IntegrationsConfig,
   ComplianceConfig,
+  LegalDataConfig,
   StorefrontProduct,
 } from "@/types/shop";
 import {
@@ -153,6 +164,8 @@ export const DEFAULT_LEGAL: LegalConfig = { content: "" };
 
 export const DEFAULT_MENU: MenuConfig = { items: DEFAULT_MENU_ITEMS };
 
+export { DEFAULT_LEGAL_DATA };
+
 export const DEFAULT_FOOTER: FooterConfig = {
   description: "",
   social: { instagram: "", facebook: "", x: "", youtube: "", tiktok: "" },
@@ -181,7 +194,7 @@ export const DEFAULT_COMPLIANCE: ComplianceConfig = {
     marketing: true,
     message:
       "Używamy plików cookie, aby zapewnić najlepsze działanie sklepu oraz — za Twoją zgodą — do analityki i marketingu.",
-    policyUrl: "/polityka-prywatnosci",
+    policyUrl: "/prywatnosc",
   },
   omnibus: { enabled: true },
 };
@@ -243,11 +256,11 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     ...DEFAULT_FAQ,
     ...((configMap.faq as Partial<FaqConfig>) ?? {}),
   };
-  const terms: LegalConfig = {
+  const savedTerms: LegalConfig = {
     ...DEFAULT_LEGAL,
     ...((configMap.terms as Partial<LegalConfig>) ?? {}),
   };
-  const privacy: LegalConfig = {
+  const savedPrivacy: LegalConfig = {
     ...DEFAULT_LEGAL,
     ...((configMap.privacy as Partial<LegalConfig>) ?? {}),
   };
@@ -293,6 +306,59 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     cookieBanner: { ...DEFAULT_COMPLIANCE.cookieBanner, ...(savedCompliance.cookieBanner ?? {}) },
     omnibus: { ...DEFAULT_COMPLIANCE.omnibus, ...(savedCompliance.omnibus ?? {}) },
   };
+
+  const account: AccountConfig = {
+    ...DEFAULT_ACCOUNT,
+    ...((configMap.account as Partial<AccountConfig>) ?? {}),
+    company: { ...DEFAULT_ACCOUNT.company, ...((configMap.account as AccountConfig)?.company ?? {}) },
+  };
+
+  const legal: LegalDataConfig = normalizeLegalData(
+    configMap.legal as Partial<LegalDataConfig> | undefined
+  );
+
+  // Dokumenty prawne domyślnie SKŁADAMY z „Danych do dokumentów" przy każdym
+  // wyświetleniu — dzięki temu poprawka NIP-u czy adresu zwrotów w jednym
+  // miejscu od razu widać w regulaminie i w polityce. Merchant, który kliknął
+  // „edytuj ręcznie", ma mode="custom" i wtedy jego treść jest nietykalna.
+  const legalSources = {
+    legal,
+    account,
+    about,
+    branding,
+    checkout,
+    delivery,
+    shopName: shop.name,
+    shopUrl: shopPublicUrl(shop),
+  };
+  const legalVars = resolveLegalVars(legalSources);
+  // Storefront dostaje dane JUŻ rozwiązane (puste pole „legal" zastąpione tym,
+  // co merchant podał w koncie / „O nas"), żeby strony sklepu nie musiały
+  // powtarzać łańcucha fallbacków przy każdym użyciu.
+  const legalResolved: LegalDataConfig = {
+    ...legal,
+    companyName: legalVars.companyName,
+    companyAddress: legalVars.companyAddress,
+    taxId: legalVars.taxId,
+    email: legalVars.email,
+    phone: legalVars.phone,
+    returnAddress: legalVars.returnAddress,
+    fulfillmentDays: legalVars.fulfillmentDays,
+    effectiveDate: legalVars.effectiveDate,
+  };
+
+  // Dokument składany z danych publikujemy dopiero przy komplecie — inaczej
+  // klient sklepu zobaczyłby w regulaminie „[UZUPEŁNIJ: NIP]". Do czasu
+  // uzupełnienia strona pokazuje „dokument w przygotowaniu", a panel liczy braki.
+  const legalComplete = missingLegalFields(resolveLegalFields(legalSources)).length === 0;
+  const terms: LegalConfig =
+    savedTerms.mode === "custom"
+      ? savedTerms
+      : { mode: "generated", content: legalComplete ? buildTerms(legalVars) : "" };
+  const privacy: LegalConfig =
+    savedPrivacy.mode === "custom"
+      ? savedPrivacy
+      : { mode: "generated", content: legalComplete ? buildPrivacy(legalVars) : "" };
 
   // Omnibus: „najniższa cena z 30 dni" tylko dla produktów w promocji (oldPrice),
   // i tylko gdy włączone w ustawieniach zgodności.
@@ -345,6 +411,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     footer,
     integrations,
     compliance,
+    legal: legalResolved,
     products: storefrontProducts,
   };
 }

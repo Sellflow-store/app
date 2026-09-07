@@ -70,7 +70,7 @@ export default function ComplianceSection({
             <Field label="Treść banera">
               <TextInput value={b.message} onChange={(e) => setBanner("message", e.target.value)} />
             </Field>
-            <Field label="Link do polityki prywatności" hint="Ścieżka lub pełny adres, np. /polityka-prywatnosci.">
+            <Field label="Link do polityki prywatności" hint="Ścieżka lub pełny adres. Polityka Twojego sklepu jest pod /prywatnosc.">
               <TextInput value={b.policyUrl} onChange={(e) => setBanner("policyUrl", e.target.value)} />
             </Field>
           </>
