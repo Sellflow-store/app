@@ -27,6 +27,21 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
   const base = await storefrontBase(shopSlug);
   const layout = config.layout ?? "pairs";
 
+  // Siatka po cztery kadry w rzędzie. Nic się nie rusza samo — przy kadrach
+  // filmowych to jedyny ruch na sekcji zostaje w samych filmach, a nie w układzie
+  // pod nimi. Osiem kadrów daje dwa rzędy na desktopie i cztery na telefonie.
+  if (layout === "grid") {
+    return (
+      <section aria-label="Lookbook" className="bg-paper px-4 sm:px-6 lg:px-10 py-10 lg:py-16">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-w-[1600px] mx-auto">
+          {items.map((item, i) => (
+            <Frame key={i} item={item} base={base} aspect="aspect-[3/4]" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   // Pas płynący w lewo. Kadry idą w jednym rzędzie i wracają w pętli, więc
   // liczba kadrów nie ma znaczenia — mieści się ich dowolnie wiele, a strona
   // główna zostaje krótka. Druga kopia listy jest tylko po to, żeby przejście

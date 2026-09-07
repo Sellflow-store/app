@@ -351,8 +351,9 @@ export interface LookbookConfig {
   visible?: boolean;
   /** "pairs" = rząd po dwa kadry; "wide" = jeden szeroki na rząd;
    *  "stagger" = dwie kolumny, prawa przesunięta w dół (układ redakcyjny);
-   *  "marquee" = jeden pas kadrów płynący w lewo w pętli. */
-  layout?: "pairs" | "wide" | "stagger" | "marquee";
+   *  "marquee" = jeden pas kadrów płynący w lewo w pętli;
+   *  "grid" = siatka po cztery kadry w rzędzie, nieruchoma. */
+  layout?: "pairs" | "wide" | "stagger" | "marquee" | "grid";
   items: LookbookItem[];
 }
 
