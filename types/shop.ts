@@ -338,15 +338,20 @@ export interface BrandingConfig {
 }
 
 export interface LookbookItem {
+  /** Zdjęcie kadru. Przy kadrze filmowym pełni rolę plakatu (pierwsza klatka). */
   image: string;
+  /** Kadr filmowy: MP4/WebM odtwarzany w pętli, bez dźwięku. Wtedy `image`
+   *  jest plakatem pokazywanym, zanim film się wczyta. */
+  video?: string;
   caption?: string;
   href?: string;
 }
 
 export interface LookbookConfig {
   visible?: boolean;
-  /** "pairs" = rząd po dwa kadry; "wide" = jeden szeroki na rząd. */
-  layout?: "pairs" | "wide";
+  /** "pairs" = rząd po dwa kadry; "wide" = jeden szeroki na rząd;
+   *  "stagger" = dwie kolumny, prawa przesunięta w dół (układ redakcyjny). */
+  layout?: "pairs" | "wide" | "stagger";
   items: LookbookItem[];
 }
 

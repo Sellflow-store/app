@@ -19,6 +19,10 @@ const ALLOWED = new Set([
   "image/gif",
   "image/svg+xml",
   "image/avif",
+  // Krótkie kadry filmowe do lookbooka. MP4 (H.264) i WebM, bo tylko te dwa
+  // odtworzy każda przeglądarka — HEVC z iPhone'a trzeba wcześniej przekodować.
+  "video/mp4",
+  "video/webm",
 ]);
 
 async function requireShopOwner() {
@@ -56,7 +60,10 @@ export async function POST(req: NextRequest) {
 
   for (const file of files) {
     if (!ALLOWED.has(file.type)) {
-      return NextResponse.json({ error: "Nieobsługiwany format (dozwolone: PNG, JPG, WebP, GIF, SVG, AVIF)." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Nieobsługiwany format (zdjęcia: PNG, JPG, WebP, GIF, SVG, AVIF; filmy: MP4, WebM)." },
+        { status: 400 },
+      );
     }
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: "Plik jest za duży — maksymalnie 4 MB." }, { status: 400 });

@@ -192,7 +192,7 @@ function ItemListEditor({
   );
 }
 
-type LookItem = { image: string; caption?: string; href?: string };
+type LookItem = { image: string; video?: string; caption?: string; href?: string };
 
 function LookbookEditor({
   items,
@@ -216,11 +216,19 @@ function LookbookEditor({
           style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
         >
           <div
-            className="w-16 h-20 rounded-lg overflow-hidden shrink-0"
+            className="w-16 h-20 rounded-lg overflow-hidden shrink-0 relative"
             style={{ background: "oklch(93% 0 0)" }}
           >
             {item.image && (
               <img src={item.image} alt="" className="w-full h-full object-cover" />
+            )}
+            {item.video && (
+              <span
+                className="absolute inset-x-0 bottom-0 text-[9px] text-center py-0.5 tracking-wider uppercase"
+                style={{ background: "oklch(20% 0 0 / 0.7)", color: "white" }}
+              >
+                film
+              </span>
             )}
           </div>
           <div className="flex-1 space-y-2">
@@ -242,6 +250,23 @@ function LookbookEditor({
                 {...focusProps}
               />
             </Field>
+            <div className="flex items-center gap-2 flex-wrap">
+              <ImageUpload
+                label={item.video ? "Zmień film" : "Dodaj film do tego kadru"}
+                accept="video/mp4,video/webm"
+                onUploaded={(urls) => urls[0] && update(i, { video: urls[0] })}
+              />
+              {item.video && (
+                <button
+                  type="button"
+                  onClick={() => update(i, { video: undefined })}
+                  className="text-[11px] underline underline-offset-2"
+                  style={{ color: "oklch(50% 0 0)" }}
+                >
+                  Usuń film, zostaw zdjęcie
+                </button>
+              )}
+            </div>
           </div>
           <button
             onClick={() => onChange(items.filter((_, j) => j !== i))}
@@ -711,7 +736,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               value={config.lookbook?.layout ?? "pairs"}
               onChange={(e) =>
                 patch2("lookbook", {
-                  layout: e.target.value as "pairs" | "wide",
+                  layout: e.target.value as "pairs" | "wide" | "stagger",
                   items: config.lookbook?.items ?? [],
                 })
               }
@@ -719,6 +744,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             >
               <option value="pairs">Po dwa kadry w rzędzie</option>
               <option value="wide">Jeden szeroki kadr w rzędzie</option>
+              <option value="stagger">Dwie kolumny z przesunięciem</option>
             </select>
           </Field>
           <LookbookEditor
@@ -726,8 +752,11 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             onChange={(items) => patch2("lookbook", { items })}
           />
           <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
-            Zdjęcia idą pełną szerokością okna, bez cen i przycisków. Najlepiej działają
-            kadry pionowe z sesji — dwa albo cztery.
+            Kadry pionowe z sesji wyglądają najlepiej. Dwa pierwsze układy idą pełną
+            szerokością okna i chcą parzystej liczby kadrów. Układ z przesunięciem ma
+            marginesy, przyjmuje dowolną liczbę kadrów i pozwala mieszać zdjęcia
+            z krótkimi filmami. Film leci w pętli, bez dźwięku, a zdjęcie kadru zostaje
+            plakatem na czas wczytywania.
           </p>
         </div>
       </Accordion>

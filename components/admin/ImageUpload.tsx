@@ -11,12 +11,15 @@ interface Props {
   onUploaded: (urls: string[]) => void;
   label?: string;
   multiple?: boolean;
+  /** Filtr okna wyboru pliku. Domyślnie obrazy; lookbook podaje tu film. */
+  accept?: string;
 }
 
 export default function ImageUpload({
   onUploaded,
   label = "Wgraj zdjęcie",
   multiple = false,
+  accept = "image/*",
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +51,7 @@ export default function ImageUpload({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={accept}
         multiple={multiple}
         className="hidden"
         onChange={(e) => {
