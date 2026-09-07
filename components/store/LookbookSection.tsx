@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { LookbookConfig, LookbookItem } from "@/types/shop";
 import { storefrontBase } from "@/lib/storefront-base";
+import LookbookVideo from "./LookbookVideo";
 
 interface Props {
   config: LookbookConfig | undefined;
@@ -16,9 +17,10 @@ interface Props {
  * krawędzi ekranu.
  *
  * Kadr może być zdjęciem albo krótkim filmem (`item.video`). Film leci w pętli,
- * bez dźwięku i bez kontrolek — ma się zachowywać jak ożywione zdjęcie, nie jak
- * odtwarzacz. `image` zostaje wtedy plakatem na czas wczytywania i dla
- * przeglądarek, które blokują autoodtwarzanie.
+ * bez dźwięku i bez kontrolek, w zwolnionym tempie — ma się zachowywać jak
+ * ożywione zdjęcie, nie jak odtwarzacz (zob. LookbookVideo). `image` zostaje
+ * wtedy plakatem na czas wczytywania i dla przeglądarek, które blokują
+ * autoodtwarzanie.
  */
 export default async function LookbookSection({ config, shopSlug }: Props) {
   const items = (config?.items ?? []).filter((i) => i.image || i.video);
@@ -26,6 +28,7 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
 
   const base = await storefrontBase(shopSlug);
   const layout = config.layout ?? "pairs";
+  const speed = config.videoSpeed;
 
   // Siatka po cztery kadry w rzędzie. Nic się nie rusza samo — przy kadrach
   // filmowych to jedyny ruch na sekcji zostaje w samych filmach, a nie w układzie
@@ -35,7 +38,7 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
       <section aria-label="Lookbook" className="bg-paper px-4 sm:px-6 lg:px-10 py-10 lg:py-16">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-w-[1600px] mx-auto">
           {items.map((item, i) => (
-            <Frame key={i} item={item} base={base} aspect="aspect-[3/4]" />
+            <Frame key={i} item={item} base={base} aspect="aspect-[3/4]" speed={speed} />
           ))}
         </div>
       </section>
@@ -60,7 +63,7 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
                 className="w-[58vw] sm:w-[34vw] lg:w-[23vw] shrink-0 mr-3 sm:mr-4 lg:mr-6"
                 aria-hidden={i >= items.length}
               >
-                <Frame item={item} base={base} aspect="aspect-[3/4]" />
+                <Frame item={item} base={base} aspect="aspect-[3/4]" speed={speed} />
               </div>
             ))}
           </div>
@@ -83,7 +86,7 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
               className={`flex flex-col gap-4 sm:gap-6 lg:gap-10 ${c === 1 ? "sm:mt-16 lg:mt-28" : ""}`}
             >
               {column.map((item, i) => (
-                <Frame key={i} item={item} base={base} aspect="aspect-[3/4]" />
+                <Frame key={i} item={item} base={base} aspect="aspect-[3/4]" speed={speed} />
               ))}
             </div>
           ))}
@@ -97,29 +100,33 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
     <section aria-label="Lookbook" className="bg-paper">
       <div className={pairs ? "grid grid-cols-1 sm:grid-cols-2" : "grid grid-cols-1"}>
         {items.map((item, i) => (
-          <Frame key={i} item={item} base={base} aspect={pairs ? "aspect-[3/4]" : "aspect-[16/9]"} />
+          <Frame key={i} item={item} base={base} aspect={pairs ? "aspect-[3/4]" : "aspect-[16/9]"} speed={speed} />
         ))}
       </div>
     </section>
   );
 }
 
-function Frame({ item, base, aspect }: { item: LookbookItem; base: string; aspect: string }) {
+function Frame({
+  item,
+  base,
+  aspect,
+  speed,
+}: {
+  item: LookbookItem;
+  base: string;
+  aspect: string;
+  speed?: number;
+}) {
   const figure = (
     <figure className="relative group overflow-hidden bg-paper-3">
       <div className={aspect}>
         {item.video ? (
-          <video
+          <LookbookVideo
             src={item.video}
-            poster={item.image || undefined}
-            autoPlay
-            loop
-            muted
-            playsInline
-            // preload="metadata": kilka kadrów filmowych na stronie głównej nie
-            // może kosztować kilku megabajtów transferu przy pierwszym wejściu.
-            preload="metadata"
-            aria-label={item.caption ?? "Kadr z sesji"}
+            poster={item.image}
+            label={item.caption}
+            speed={speed}
             className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
           />
         ) : (

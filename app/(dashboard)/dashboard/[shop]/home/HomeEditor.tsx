@@ -749,6 +749,24 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               <option value="grid">Siatka po cztery w rzędzie</option>
             </select>
           </Field>
+          <Field label="Tempo kadrów filmowych">
+            <select
+              value={String(config.lookbook?.videoSpeed ?? 0.5)}
+              onChange={(e) =>
+                patch2("lookbook", {
+                  videoSpeed: Number(e.target.value),
+                  items: config.lookbook?.items ?? [],
+                })
+              }
+              style={inputStyle}
+            >
+              <option value="0.35">Bardzo wolno</option>
+              <option value="0.5">Wolno</option>
+              <option value="0.65">Lekko zwolnione</option>
+              <option value="0.8">Prawie normalnie</option>
+              <option value="1">Tempo oryginalne</option>
+            </select>
+          </Field>
           <LookbookEditor
             items={config.lookbook?.items ?? []}
             onChange={(items) => patch2("lookbook", { items })}
@@ -760,7 +778,10 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             dużo i nic w niej nie rusza się samo — to najspokojniejszy układ, gdy kadry
             są filmowe. Pas płynący w lewo zajmuje najmniej strony i zatrzymuje się,
             gdy ktoś na niego najedzie. Film leci w pętli, bez dźwięku, a zdjęcie kadru
-            zostaje plakatem na czas wczytywania.
+            zostaje plakatem na czas wczytywania. Krótkie klipy z sesji w oryginalnym
+            tempie migają — dlatego domyślnie zwalniamy je o połowę. Za mocne
+            spowolnienie potrafi je z kolei zaciąć, bo przeglądarka nie dokłada
+            klatek, tylko trzyma każdą dłużej.
           </p>
         </div>
       </Accordion>

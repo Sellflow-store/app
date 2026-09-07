@@ -354,6 +354,9 @@ export interface LookbookConfig {
    *  "marquee" = jeden pas kadrów płynący w lewo w pętli;
    *  "grid" = siatka po cztery kadry w rzędzie, nieruchoma. */
   layout?: "pairs" | "wide" | "stagger" | "marquee" | "grid";
+  /** Tempo kadrów filmowych, 1 = oryginalne. Krótkie klipy z sesji w oryginalnym
+   *  tempie migają; spowolnienie czyta się jak powolne ujęcie. Brak = 0.5. */
+  videoSpeed?: number;
   items: LookbookItem[];
 }
 
