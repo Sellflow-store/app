@@ -91,10 +91,12 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <script {...jsonLdProps(productLd)} />
-      <script {...jsonLdProps(breadcrumbLd)} />
-      <BrandTheme branding={shop.branding} />
+      {/* Kolejność jak w StorefrontShell: najpierw kontener treści, dopiero
+          w środku węzły bez wysokości (motyw, dane strukturalne). */}
       <div className="min-h-screen bg-paper">
+        <script {...jsonLdProps(productLd)} />
+        <script {...jsonLdProps(breadcrumbLd)} />
+        <BrandTheme branding={shop.branding} />
         <TopBar config={shop.home} />
         <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />
 

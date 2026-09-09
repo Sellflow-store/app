@@ -5,6 +5,7 @@ import { Instagram, Facebook, Twitter, Youtube, Tiktok } from "@/components/icon
 import type { BrandingConfig, FooterConfig, SocialLinks } from "@/types/shop";
 import { useStoreBase } from "./StoreBaseContext";
 import NavLink from "./NavLink";
+import SellflowWordmark from "@/components/icons/SellflowWordmark";
 
 interface Props {
   shopSlug: string;
@@ -122,9 +123,14 @@ export default function Footer({ branding, footer }: Props) {
   );
 }
 
-/** Podpis platformy w stopce każdego sklepu — jak „Powered by Shopify". */
-const SELLFLOW_LOGO = "https://sell-flow.store/assets/sellflow-logo-navy.png";
-
+/**
+ * Podpis platformy w stopce każdego sklepu — jak „Powered by Shopify".
+ *
+ * Wordmark jest wektorem w `currentColor`, więc bierze kolor tekstu stopki
+ * danego sklepu. Podpis ma być widoczny, ale nie ma konkurować z marką
+ * klienta: stoi w tym samym przygaszonym odcieniu co nota o prawach
+ * autorskich obok i dopiero po najechaniu dochodzi do pełnej mocy.
+ */
 function PoweredBy() {
   const landing = `https://${process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store"}`;
   return (
@@ -135,8 +141,7 @@ function PoweredBy() {
       className="inline-flex items-center gap-2 text-xs text-ink-2/70 hover:text-ink transition-colors"
     >
       <span>Zbudowane w Polsce</span>
-      {/* logo 2211×504 → przy 14 px wysokości ok. 61 px szerokości */}
-      <img src={SELLFLOW_LOGO} alt="Sellflow" className="h-3.5 w-auto" loading="lazy" />
+      <SellflowWordmark className="h-3" />
     </a>
   );
 }

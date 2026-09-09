@@ -14,8 +14,15 @@ export default function StorefrontShell({
 }) {
   return (
     <>
-      <BrandTheme branding={shop.branding} />
+      {/* UWAGA NA KOLEJNOŚĆ: pierwszym elementem strony musi być prawdziwy
+          kontener treści. BrandTheme oddaje <link> i <style>, które React
+          wynosi do <head>; jako pierwszy węzeł segmentu mają zerową wysokość
+          przy górnej krawędzi okna, więc Next uznaje, że góra nowej strony
+          jest już widoczna i NIE przewija na początek. Efekt: przejście
+          z długiej listy produktów na krótkie FAQ zostawiało czytelnika
+          w połowie strony. */}
       <div className="min-h-screen bg-paper flex flex-col">
+        <BrandTheme branding={shop.branding} />
         <TopBar config={shop.home} />
         <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />
         <main className="flex-1 w-full">{children}</main>
