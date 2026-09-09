@@ -81,6 +81,17 @@ export async function POST(req: NextRequest, { params }: Params) {
     return bad("Część produktów z koszyka jest już niedostępna. Odśwież koszyk.", 409);
   }
 
+  // ── Produkty „na zapytanie" nie mają ceny, więc nie mają czego policzyć ──
+  // Storefront ich nie doda do koszyka, ale stary koszyk w localStorage albo
+  // ręcznie sklejone żądanie mogłyby przepchnąć zamówienie za 0 zł.
+  const onRequest = dbProducts.filter((p) => p.priceOnRequest);
+  if (onRequest.length > 0) {
+    return bad(
+      `Produkt „${onRequest[0].name}" jest dostępny na zapytanie — skontaktuj się z nami, żeby ustalić cenę. Usuń go z koszyka, aby dokończyć zamówienie.`,
+      409
+    );
+  }
+
   // ── Rozmiar — nigdy z klienta na wiarę ──────────────────────────────────
   // Produkt z rozmiarami musi dostać jeden z SWOICH rozmiarów; produkt bez
   // rozmiarów dostaje null, choćby przeglądarka coś przysłała.

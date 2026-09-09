@@ -22,6 +22,8 @@ export interface ProductFormData {
   category: string;
   price: string;
   oldPrice: string;
+  /** true = produkt na zamówienie: bez ceny, bez koszyka, z zapytaniem mailem. */
+  priceOnRequest: boolean;
   badge: string;
   visible: boolean;
   shortDesc: string;
@@ -52,6 +54,7 @@ const EMPTY: ProductFormData = {
   category: "",
   price: "",
   oldPrice: "",
+  priceOnRequest: false,
   badge: "",
   visible: true,
   shortDesc: "",
@@ -189,13 +192,15 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       setValidationError("Podaj nazwę produktu.");
       return;
     }
-    const price = normalizePrice(form.price);
+    // Produkt na zamówienie nie ma ceny do sprawdzenia — API wpisze 0.00.
+    const price = form.priceOnRequest ? "0.00" : normalizePrice(form.price);
     if (!price) {
       setValidationError("Podaj poprawną cenę, np. 129,99.");
       return;
     }
-    const oldPrice = form.oldPrice.trim() ? normalizePrice(form.oldPrice) : null;
-    if (form.oldPrice.trim() && !oldPrice) {
+    const oldPrice =
+      !form.priceOnRequest && form.oldPrice.trim() ? normalizePrice(form.oldPrice) : null;
+    if (!form.priceOnRequest && form.oldPrice.trim() && !oldPrice) {
       setValidationError("Cena przed obniżką jest niepoprawna.");
       return;
     }
@@ -260,6 +265,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       category: form.category.trim() || undefined,
       price,
       oldPrice,
+      priceOnRequest: form.priceOnRequest,
       badge: form.badge.trim() || undefined,
       visible: form.visible,
       shortDesc: form.shortDesc.trim() || undefined,
@@ -491,6 +497,27 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
 
       {/* Pricing */}
       <SectionCard title="Cena">
+        <label className="flex items-center gap-2.5 cursor-pointer w-fit mb-1">
+          <div
+            className="relative w-9 h-5 rounded-full transition-all shrink-0"
+            style={{ background: form.priceOnRequest ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+            onClick={() => patch({ priceOnRequest: !form.priceOnRequest })}
+          >
+            <div
+              className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+              style={{ left: form.priceOnRequest ? "1.125rem" : "0.125rem" }}
+            />
+          </div>
+          <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>
+            Cena na zapytanie (produkt na zamówienie)
+          </span>
+        </label>
+        <p className="text-[11px] mb-1" style={{ color: "oklch(60% 0 0)" }}>
+          Zamiast ceny klient zobaczy &bdquo;Cena na zapytanie&rdquo; i przycisk, który otwiera
+          wiadomość do Ciebie. Takiego produktu nie da się dodać do koszyka.
+        </p>
+
+        {!form.priceOnRequest && (
         <div className="grid grid-cols-2 gap-4">
           <Field label="Cena (zł)" id="p-price">
             <input
@@ -515,9 +542,12 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             />
           </Field>
         </div>
-        <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
-          Po podaniu ceny przed obniżką klient zobaczy ją przekreśloną obok aktualnej.
-        </p>
+        )}
+        {!form.priceOnRequest && (
+          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+            Po podaniu ceny przed obniżką klient zobaczy ją przekreśloną obok aktualnej.
+          </p>
+        )}
       </SectionCard>
 
       {/* Digital delivery */}

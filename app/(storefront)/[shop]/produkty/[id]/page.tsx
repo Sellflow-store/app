@@ -9,7 +9,9 @@ import Navbar from "@/components/store/Navbar";
 import Footer from "@/components/store/Footer";
 import ProductGallery from "@/components/store/ProductGallery";
 import AddToCartButton from "@/components/store/AddToCartButton";
+import InquiryCta from "@/components/store/InquiryCta";
 import { toSafeHtml } from "@/lib/sanitize";
+import { PRICE_ON_REQUEST_LABEL } from "@/lib/storefront-products";
 
 interface Props {
   params: Promise<{ shop: string; id: string }>;
@@ -66,18 +68,26 @@ export default async function ProductPage({ params }: Props) {
               </h1>
 
               <div className="mt-4 mb-6">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-2xl font-semibold text-ink">{product.price} zł</span>
-                  {product.oldPrice && (
-                    <span className="text-base text-ink-2/70 line-through">
-                      {product.oldPrice} zł
-                    </span>
-                  )}
-                </div>
-                {product.lowestPrice30 && (
-                  <p className="text-xs text-ink-2/60 mt-1.5">
-                    Najniższa cena z 30 dni przed obniżką: {product.lowestPrice30} zł
-                  </p>
+                {product.priceOnRequest ? (
+                  <span className="text-2xl font-semibold text-ink">
+                    {PRICE_ON_REQUEST_LABEL}
+                  </span>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-2xl font-semibold text-ink">{product.price} zł</span>
+                      {product.oldPrice && (
+                        <span className="text-base text-ink-2/70 line-through">
+                          {product.oldPrice} zł
+                        </span>
+                      )}
+                    </div>
+                    {product.lowestPrice30 && (
+                      <p className="text-xs text-ink-2/60 mt-1.5">
+                        Najniższa cena z 30 dni przed obniżką: {product.lowestPrice30} zł
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -126,18 +136,27 @@ export default async function ProductPage({ params }: Props) {
                 </p>
               )}
 
-              <AddToCartButton
-                shopSlug={shop.slug}
-                product={{
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  image: product.images[0] ?? null,
-                  stock: product.stock,
-                  type: product.type,
-                  sizes: product.sizes,
-                }}
-              />
+              {product.priceOnRequest ? (
+                <InquiryCta
+                  productName={product.name}
+                  email={shop.about.email}
+                  base={base}
+                  sizes={product.sizes}
+                />
+              ) : (
+                <AddToCartButton
+                  shopSlug={shop.slug}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.images[0] ?? null,
+                    stock: product.stock,
+                    type: product.type,
+                    sizes: product.sizes,
+                  }}
+                />
+              )}
 
               {/* Benefits */}
               {product.benefits.length > 0 && (

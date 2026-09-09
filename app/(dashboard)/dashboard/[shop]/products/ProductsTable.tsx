@@ -9,6 +9,7 @@ export interface Product {
   name: string;
   category: string;
   price: string;
+  priceOnRequest: boolean;
   visible: boolean;
   badge?: string;
   stock?: number | null;
@@ -208,7 +209,7 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
 
               {/* Price */}
               <span className="text-xs font-semibold" style={{ color: "oklch(11% 0.10 275)" }}>
-                {formatPrice(product.price)}
+                {product.priceOnRequest ? "Na zapytanie" : formatPrice(product.price)}
               </span>
 
               {/* Visibility toggle */}

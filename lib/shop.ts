@@ -363,7 +363,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   // Omnibus: „najniższa cena z 30 dni" tylko dla produktów w promocji (oldPrice),
   // i tylko gdy włączone w ustawieniach zgodności.
   const omnibusIds = compliance.omnibus.enabled
-    ? shopProducts.filter((p) => p.oldPrice).map((p) => p.id)
+    ? shopProducts.filter((p) => p.oldPrice && !p.priceOnRequest).map((p) => p.id)
     : [];
   const lowestMap = await getLowestPrices30(omnibusIds);
 
@@ -372,8 +372,9 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     name: p.name,
     category: p.category,
     price: p.price,
-    oldPrice: p.oldPrice,
-    lowestPrice30: p.oldPrice ? (lowestMap.get(p.id) ?? null) : null,
+    oldPrice: p.priceOnRequest ? null : p.oldPrice,
+    priceOnRequest: p.priceOnRequest,
+    lowestPrice30: p.oldPrice && !p.priceOnRequest ? (lowestMap.get(p.id) ?? null) : null,
     badge: p.badge,
     rating: p.rating,
     reviews: p.reviews,

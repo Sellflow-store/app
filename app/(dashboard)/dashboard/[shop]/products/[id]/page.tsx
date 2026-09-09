@@ -39,8 +39,9 @@ export default async function EditProductPage({
   const initial: ProductFormData = {
     name: product.name,
     category: product.category ?? "",
-    price: product.price,
+    price: product.priceOnRequest ? "" : product.price,
     oldPrice: product.oldPrice ?? "",
+    priceOnRequest: product.priceOnRequest,
     badge: product.badge ?? "",
     visible: product.visible,
     shortDesc: product.shortDesc ?? "",

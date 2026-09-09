@@ -29,6 +29,7 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
     name: p.name,
     category: store.category,
     price: p.price,
+    priceOnRequest: false,
     oldPrice: p.originalPrice ?? null,
     lowestPrice30: null,
     badge: p.badge ?? null,

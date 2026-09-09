@@ -112,6 +112,10 @@ export const products = pgTable(
     category: text("category"),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
     oldPrice: numeric("old_price", { precision: 10, scale: 2 }),
+    // Produkt bez ceny półkowej: szyty na miarę / wyceniany indywidualnie.
+    // `price` zostaje 0.00 jako wypełniacz — storefront go nie pokazuje,
+    // a zamówienia takiego produktu odrzuca API.
+    priceOnRequest: boolean("price_on_request").notNull().default(false),
     badge: text("badge"),
     rating: numeric("rating", { precision: 3, scale: 1 }).default("5.0"),
     reviews: integer("reviews").default(0),

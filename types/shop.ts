@@ -408,6 +408,9 @@ export interface StorefrontProduct {
   category: string | null;
   price: string;
   oldPrice: string | null;
+  /** true = „cena na zapytanie": produkt na zamówienie, bez ceny półkowej.
+   *  Nie da się go dodać do koszyka; storefront zaprasza do kontaktu. */
+  priceOnRequest: boolean;
   /** Najniższa cena z 30 dni (Omnibus). null = nie pokazuj (brak historii,
    *  brak promocji lub wyłączone w ustawieniach zgodności). */
   lowestPrice30: string | null;

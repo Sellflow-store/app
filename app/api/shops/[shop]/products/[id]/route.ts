@@ -16,6 +16,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     name: string;
     price: string;
     oldPrice: string | null;
+    priceOnRequest: boolean;
     category: string;
     badge: string;
     visible: boolean;
@@ -39,10 +40,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     "name", "price", "oldPrice", "category", "badge", "visible",
     "shortDesc", "description", "images", "colors", "sizes",
     "benefits", "specs", "stock", "weightGrams", "dimensions",
-    "sortOrder", "type", "fulfillment",
+    "sortOrder", "type", "fulfillment", "priceOnRequest",
   ] as const;
   for (const f of fields) {
     if (body[f] !== undefined) updates[f] = body[f];
+  }
+
+  // Włączenie „ceny na zapytanie" zeruje cenę i promocję, żeby po powrocie do
+  // zwykłej sprzedaży nie wyskoczyła stara kwota, której nikt nie potwierdził.
+  if (body.priceOnRequest === true) {
+    updates.price = "0.00";
+    updates.oldPrice = null;
   }
 
   const [updated] = await db
@@ -54,7 +62,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Omnibus: zapisz nowy punkt historii, gdy cena sprzedaży się zmieniła.
-  if (body.price !== undefined) {
+  // Produkt „na zapytanie" nie ma ceny półkowej, więc nie zapisujemy 0.00.
+  if (body.price !== undefined && !updated.priceOnRequest) {
     await recordPrice(access.shopId, updated.id, updated.price);
   }
 

@@ -31,6 +31,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     name: string;
     price: string;
     oldPrice?: string | null;
+    priceOnRequest?: boolean;
     category?: string;
     badge?: string;
     sizes?: string[];
@@ -47,7 +48,9 @@ export async function POST(req: NextRequest, { params }: Params) {
     fulfillment?: Record<string, unknown>;
   };
 
-  if (!body.name?.trim() || !body.price) {
+  // Produkt „na zapytanie" nie ma ceny do podania — reszta musi ją mieć.
+  const priceOnRequest = body.priceOnRequest === true;
+  if (!body.name?.trim() || (!priceOnRequest && !body.price)) {
     return NextResponse.json({ error: "name and price required" }, { status: 400 });
   }
 
@@ -76,8 +79,11 @@ export async function POST(req: NextRequest, { params }: Params) {
     .values({
       shopId: access.shopId,
       name: body.name.trim(),
-      price: body.price,
-      oldPrice: body.oldPrice ?? null,
+      // 0.00 to wypełniacz kolumny NOT NULL — przy `priceOnRequest` nigdzie
+      // się nie pokazuje ani nie wchodzi do wyliczeń zamówienia.
+      price: priceOnRequest ? "0.00" : body.price,
+      oldPrice: priceOnRequest ? null : (body.oldPrice ?? null),
+      priceOnRequest,
       category: body.category,
       badge: body.badge,
       sizes: Array.isArray(body.sizes) ? body.sizes.filter((s) => typeof s === "string") : [],
@@ -95,8 +101,11 @@ export async function POST(req: NextRequest, { params }: Params) {
     })
     .returning();
 
-  // Omnibus: zapisz punkt startowy historii cen.
-  await recordPrice(access.shopId, product.id, product.price);
+  // Omnibus: zapisz punkt startowy historii cen. Produkt bez ceny półkowej
+  // nie ma czego zapisywać — 0.00 zafałszowałoby „najniższą cenę z 30 dni".
+  if (!priceOnRequest) {
+    await recordPrice(access.shopId, product.id, product.price);
+  }
 
   return NextResponse.json(product, { status: 201 });
 }

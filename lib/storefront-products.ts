@@ -1,5 +1,9 @@
 import type { StorefrontProduct } from "@/types/shop";
 
+/** Jedna etykieta dla produktów bez ceny półkowej — używana na karcie,
+ *  liście, stronie produktu i w panelu, żeby nazywały to tak samo. */
+export const PRICE_ON_REQUEST_LABEL = "Cena na zapytanie";
+
 export type SortOption = "polecane" | "cena-rosnaco" | "cena-malejaco" | "nazwa";
 
 export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -15,6 +19,15 @@ export function parseSort(value: string | undefined): SortOption {
 
 function isSoldOut(p: StorefrontProduct): boolean {
   return p.stock != null && p.stock <= 0;
+}
+
+/** Komparator cenowy, który spycha produkty bez ceny na koniec listy. */
+function byPrice(compare: (a: number, b: number) => number) {
+  return (a: StorefrontProduct, b: StorefrontProduct) => {
+    if (a.priceOnRequest !== b.priceOnRequest) return a.priceOnRequest ? 1 : -1;
+    if (a.priceOnRequest) return a.sortOrder - b.sortOrder;
+    return compare(parseFloat(a.price), parseFloat(b.price));
+  };
 }
 
 /** Filtruje produkty po frazie — wszystkie słowa muszą wystąpić w nazwie/kategorii/opisie. */
@@ -38,11 +51,13 @@ export function sortProducts(
 ): StorefrontProduct[] {
   let list = hideUnavailable ? products.filter((p) => !isSoldOut(p)) : [...products];
   switch (sort) {
+    // Produkty „na zapytanie" nie mają ceny do porównania — lądują na końcu
+    // obu list cenowych, zamiast udawać, że kosztują 0 zł.
     case "cena-rosnaco":
-      list = list.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      list = list.sort(byPrice((a, b) => a - b));
       break;
     case "cena-malejaco":
-      list = list.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      list = list.sort(byPrice((a, b) => b - a));
       break;
     case "nazwa":
       list = list.sort((a, b) => a.name.localeCompare(b.name, "pl"));

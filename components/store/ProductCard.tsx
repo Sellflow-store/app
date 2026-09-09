@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShoppingBag, Check } from "lucide-react";
+import { ShoppingBag, Check, Mail } from "lucide-react";
 import type { StorefrontProduct, CardStyle } from "@/types/shop";
 import { useCart } from "@/lib/cart";
+import { PRICE_ON_REQUEST_LABEL } from "@/lib/storefront-products";
 import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
@@ -23,9 +24,11 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
   const [added, setAdded] = useState(false);
 
   const soldOut = product.stock != null && product.stock <= 0;
+  const onRequest = product.priceOnRequest;
   // Rozmiar wybiera się na stronie produktu — szybkie dodawanie z listy
   // wrzuciłoby do koszyka pozycję bez rozmiaru, więc tu tylko prowadzimy dalej.
-  const needsSize = (product.sizes?.length ?? 0) > 0;
+  // Produkt bez ceny w ogóle nie trafia do koszyka — też prowadzi do strony.
+  const needsSize = (product.sizes?.length ?? 0) > 0 || onRequest;
   const minimal = variant === "minimal";
   const href = `${base}/produkty/${product.id}`;
 
@@ -67,8 +70,16 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
         <div className="space-y-1">
           <h3 className="text-xs tracking-wide text-ink font-normal">{product.name}</h3>
           <div className="flex items-center gap-2 text-xs font-light text-ink-2">
-            <span>{product.price} zł</span>
-            {product.oldPrice && <span className="line-through opacity-70">{product.oldPrice} zł</span>}
+            {onRequest ? (
+              <span>{PRICE_ON_REQUEST_LABEL}</span>
+            ) : (
+              <>
+                <span>{product.price} zł</span>
+                {product.oldPrice && (
+                  <span className="line-through opacity-70">{product.oldPrice} zł</span>
+                )}
+              </>
+            )}
           </div>
           {product.lowestPrice30 && (
             <p className="text-[10px] text-ink-2/60 font-light">
@@ -107,10 +118,16 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
         {!soldOut && needsSize && (
           <Link
             href={href}
-            aria-label={`Wybierz rozmiar — ${product.name}`}
+            aria-label={
+              onRequest ? `Zapytaj o cenę — ${product.name}` : `Wybierz rozmiar — ${product.name}`
+            }
             className="absolute bottom-3 right-3 backdrop-blur-sm p-2.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-sm bg-paper/90 opacity-0 group-hover:opacity-100 hover:bg-ink hover:text-on-ink text-ink-2"
           >
-            <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+            {onRequest ? (
+              <Mail className="w-4 h-4" strokeWidth={1.5} />
+            ) : (
+              <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+            )}
           </Link>
         )}
         {!soldOut && !needsSize && (
@@ -137,9 +154,15 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
         <p className="text-[10px] tracking-[0.2em] uppercase text-ink-2/70">{product.category}</p>
         <h3 className="text-sm font-medium text-ink tracking-wide">{product.name}</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-ink">{product.price} zł</span>
-          {product.oldPrice && (
-            <span className="text-xs text-ink-2/70 line-through">{product.oldPrice} zł</span>
+          {onRequest ? (
+            <span className="text-sm font-medium text-ink">{PRICE_ON_REQUEST_LABEL}</span>
+          ) : (
+            <>
+              <span className="text-sm font-semibold text-ink">{product.price} zł</span>
+              {product.oldPrice && (
+                <span className="text-xs text-ink-2/70 line-through">{product.oldPrice} zł</span>
+              )}
+            </>
           )}
         </div>
         {product.lowestPrice30 && (
