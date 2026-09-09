@@ -308,3 +308,58 @@
   .lookbook-marquee { animation: none; }
   .lookbook-marquee-viewport { overflow-x: auto; }
 }
+
+/* ── Nawigacja: „tu jesteś" i „kliknięcie doszło" ─────────────────────────────
+   Jedna kreska pod etykietą obsługuje oba stany, żeby menu i stopka mówiły tym
+   samym językiem. Bieżąca strona ma kreskę spokojną, na pełną szerokość.
+   Kliknięty link ma tę samą kreskę w ruchu — przebiega od lewej, dopóki nowa
+   strona się nie pojawi. Kolor bierzemy z `currentColor`, więc kreska działa
+   tak samo na białym pasku, na ciemnym zdjęciu hero i w stopce, bez osobnych
+   wariantów per motyw sklepu. */
+.nav-link {
+  position: relative;
+}
+
+.nav-rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
+  transform-origin: left center;
+}
+
+/* Ładowanie: kreska w kółko przebiega od lewej do prawej. Sam ruch niesie
+   komunikat, więc nie zmieniamy ani koloru, ani grubości. */
+.nav-rule--pending {
+  opacity: 0.7;
+  animation: nav-rule-sweep 900ms ease-in-out infinite;
+}
+
+@keyframes nav-rule-sweep {
+  0%   { transform: scaleX(0);   transform-origin: left center; }
+  50%  { transform: scaleX(1);   transform-origin: left center; }
+  51%  { transform: scaleX(1);   transform-origin: right center; }
+  100% { transform: scaleX(0);   transform-origin: right center; }
+}
+
+/* Linki-ikony (koszyk) nie mają etykiety, pod którą zmieściłaby się kreska —
+   na czas ładowania pulsują kryciem. */
+.nav-icon--pending {
+  display: inline-flex;
+  animation: nav-icon-pulse 900ms ease-in-out infinite;
+}
+
+@keyframes nav-icon-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* Przy wyłączonych animacjach zostaje sam fakt: kreska stoi na pełnej
+   szerokości, ikona przygasa. Informacja ta sama, bez ruchu. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-rule--pending { animation: none; opacity: 0.7; }
+  .nav-icon--pending { animation: none; opacity: 0.5; }
+}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Instagram, Facebook, Twitter, Youtube, Tiktok } from "@/components/icons/social";
 import type { BrandingConfig, FooterConfig, SocialLinks } from "@/types/shop";
 import { useStoreBase } from "./StoreBaseContext";
+import NavLink from "./NavLink";
 
 interface Props {
   shopSlug: string;
@@ -96,12 +97,13 @@ export default function Footer({ branding, footer }: Props) {
               <ul className="space-y-2.5">
                 {items.map((item) => (
                   <li key={item.label}>
-                    <Link
+                    <NavLink
                       href={item.href}
-                      className="text-sm text-ink-2 hover:text-ink transition-colors font-light"
+                      className="inline-block text-sm text-ink-2 hover:text-ink transition-colors font-light"
+                      activeClassName="text-ink"
                     >
                       {item.label}
-                    </Link>
+                    </NavLink>
                   </li>
                 ))}
               </ul>

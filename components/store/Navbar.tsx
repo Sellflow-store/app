@@ -11,6 +11,7 @@ import {
   NAVBAR_MIN_HEIGHT,
 } from "@/types/shop";
 import { useCart } from "@/lib/cart";
+import NavLink, { IconNavLink } from "./NavLink";
 import { useStoreBase } from "./StoreBaseContext";
 import ProductSearch from "./ProductSearch";
 
@@ -123,12 +124,13 @@ export default function Navbar({
           <ul className="hidden md:flex items-center gap-8">
             {NAV_ITEMS.map((item) => (
               <li key={item.label}>
-                <Link
+                <NavLink
                   href={item.href}
                   className={`text-sm tracking-wide transition-colors duration-200 ${muted}`}
+                  activeClassName={onImage ? "text-white" : "text-ink"}
                 >
                   {item.label}
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>
@@ -139,7 +141,11 @@ export default function Navbar({
             <button className={`hidden sm:block transition-colors ${muted}`}>
               <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
             </button>
-            <Link href={`${base}/koszyk`} className={`relative transition-colors ${muted}`}>
+            <IconNavLink
+              href={`${base}/koszyk`}
+              aria-label="Koszyk"
+              className={`relative transition-colors ${muted}`}
+            >
               <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={1.5} />
               {cartCount > 0 && (
                 <span
@@ -150,7 +156,7 @@ export default function Navbar({
                   {cartCount}
                 </span>
               )}
-            </Link>
+            </IconNavLink>
             <button
               className={`md:hidden transition-colors ${muted}`}
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -167,13 +173,14 @@ export default function Navbar({
           <ul className="px-6 py-4 space-y-3">
             {NAV_ITEMS.map((item) => (
               <li key={item.label}>
-                <Link
+                <NavLink
                   href={item.href}
-                  className="block text-sm tracking-wide text-ink-2 hover:text-ink py-1.5"
+                  className="inline-block text-sm tracking-wide text-ink-2 hover:text-ink py-1.5"
+                  activeClassName="text-ink"
                   onClick={() => setMobileOpen(false)}
                 >
                   {item.label}
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>
