@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
 import StorefrontShell from "@/components/store/StorefrontShell";
+import ContactForm from "@/components/store/ContactForm";
 
 interface Props {
   params: Promise<{ shop: string }>;
@@ -59,11 +60,20 @@ export default async function ContactPage({ params }: Props) {
               </div>
             )}
           </div>
-        ) : (
-          <p className="text-sm text-ink-2/70 font-light">
-            Dane kontaktowe pojawią się tu wkrótce.
+        ) : null}
+
+        {/* Formularz jest zawsze — także gdy sprzedawca nie podał jeszcze
+            adresu ani telefonu. Wcześniej taka strona kończyła się zdaniem
+            „dane pojawią się wkrótce", czyli ślepym zaułkiem dla klienta. */}
+        <div className={hasAny ? "mt-12 pt-10 border-t border-rule" : ""}>
+          <h2 className="text-lg font-semibold tracking-tight text-ink mb-1">
+            Napisz do nas
+          </h2>
+          <p className="text-sm text-ink-2 font-light mb-6">
+            Wypełnij formularz, a odpowiemy na podany adres e-mail.
           </p>
-        )}
+          <ContactForm shopSlug={shop.slug} />
+        </div>
       </div>
     </StorefrontShell>
   );

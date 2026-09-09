@@ -212,3 +212,47 @@ export function orderShippedEmail(params: {
     html: shell(shopName, body),
   };
 }
+
+/**
+ * Wiadomość z formularza kontaktowego na storefroncie → skrzynka sprzedawcy.
+ * Treść od klienta jest ekranowana i wstawiana jako tekst; `replyTo` na
+ * adresie nadawcy ustawia endpoint, więc odpowiedź w kliencie pocztowym idzie
+ * wprost do klienta, a nie na adres platformy.
+ */
+export function contactFormEmail(params: {
+  shopName: string;
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+}): { subject: string; html: string } {
+  const { shopName, name, email, phone, message } = params;
+  const phoneRow = phone
+    ? `<tr>
+        <td style="padding:4px 0;font-size:13px;color:#777777;">Telefon</td>
+        <td style="padding:4px 0;font-size:13px;color:#222222;">${esc(phone)}</td>
+      </tr>`
+    : "";
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Nowa wiadomość ze sklepu</h1>
+    <p style="margin:0 0 16px;font-size:14px;color:#444444;">
+      Ktoś napisał przez formularz kontaktowy. Odpowiedz na tę wiadomość, a trafi
+      wprost do nadawcy.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+      <tr>
+        <td style="padding:4px 0;font-size:13px;color:#777777;width:90px;">Od</td>
+        <td style="padding:4px 0;font-size:13px;color:#222222;">${esc(name)}</td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0;font-size:13px;color:#777777;">E-mail</td>
+        <td style="padding:4px 0;font-size:13px;color:#222222;">${esc(email)}</td>
+      </tr>
+      ${phoneRow}
+    </table>
+    <div style="background:#f8f8f7;border-radius:12px;padding:16px 20px;">
+      <p style="margin:0;font-size:14px;color:#222222;white-space:pre-wrap;">${esc(message)}</p>
+    </div>
+  `;
+  return { subject: `Wiadomość ze sklepu ${shopName} — ${name}`, html: shell(shopName, body) };
+}

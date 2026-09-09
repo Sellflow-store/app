@@ -57,9 +57,9 @@ export async function GET(_req: Request, { params }: Params) {
   if (shop.about.content?.trim()) {
     entries.push({ path: "/o-nas", priority: "0.5", changefreq: "monthly" });
   }
-  if (shop.about.email || shop.about.phone || shop.about.address) {
-    entries.push({ path: "/kontakt", priority: "0.5", changefreq: "monthly" });
-  }
+  // Kontakt ma zawsze treść — formularz jest tam niezależnie od tego, czy
+  // sprzedawca podał adres i telefon.
+  entries.push({ path: "/kontakt", priority: "0.5", changefreq: "monthly" });
   if (shop.faq.items.length > 0) {
     entries.push({ path: "/faq", priority: "0.5", changefreq: "monthly" });
   }
