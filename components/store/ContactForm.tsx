@@ -25,6 +25,7 @@ export default function ContactForm({ shopSlug }: Props) {
   const base = useStoreBase();
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [fallbackEmail, setFallbackEmail] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "", firma: "" });
 
   function patch(updates: Partial<typeof form>) {
@@ -43,8 +44,11 @@ export default function ContactForm({ shopSlug }: Props) {
         body: JSON.stringify(form),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string; fallbackEmail?: string }
+          | null;
         setError(data?.error ?? "Nie udało się wysłać wiadomości.");
+        setFallbackEmail(data?.fallbackEmail ?? null);
         setState("error");
         return;
       }
@@ -150,9 +154,21 @@ export default function ContactForm({ shopSlug }: Props) {
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-ink">
-          {error}
-        </p>
+        <div role="alert" className="border border-rule rounded-input px-4 py-3">
+          <p className="text-sm text-ink">{error}</p>
+          {fallbackEmail && (
+            <p className="text-sm text-ink-2 font-light mt-1">
+              Napisz do nas bezpośrednio na{" "}
+              <a
+                href={`mailto:${fallbackEmail}`}
+                className="text-ink underline underline-offset-2"
+              >
+                {fallbackEmail}
+              </a>
+              .
+            </p>
+          )}
+        </div>
       )}
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-1">

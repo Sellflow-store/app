@@ -25,7 +25,10 @@ function bad(error: string, status = 400) {
  * Bez żadnego z nich formularz się nie pokazuje, więc nie da się wysłać
  * wiadomości donikąd.
  */
-async function recipientFor(shopId: string, ownerId: string): Promise<string | null> {
+async function recipientFor(
+  shopId: string,
+  ownerId: string
+): Promise<{ to: string | null; publiczny: string | null }> {
   const rows = await db
     .select()
     .from(shopConfig)
@@ -34,12 +37,21 @@ async function recipientFor(shopId: string, ownerId: string): Promise<string | n
   const about = (map.about ?? {}) as Partial<AboutConfig>;
   const account = (map.account ?? {}) as Partial<AccountConfig>;
 
+  // Adres z „O nas" jest jedynym, który wolno pokazać odwiedzającemu przy
+  // awarii wysyłki — i tak widnieje na stronie. Adresu konta ani właściciela
+  // nie ujawniamy nigdy.
+  const publiczny =
+    typeof about.email === "string" && EMAIL_RE.test(about.email.trim())
+      ? about.email.trim()
+      : null;
+
   const candidates = [about.email, account.contactEmail];
   for (const c of candidates) {
-    if (typeof c === "string" && EMAIL_RE.test(c.trim())) return c.trim();
+    if (typeof c === "string" && EMAIL_RE.test(c.trim())) return { to: c.trim(), publiczny };
   }
   const owner = await db.query.users.findFirst({ where: eq(users.id, ownerId) });
-  return owner?.email && EMAIL_RE.test(owner.email) ? owner.email : null;
+  const to = owner?.email && EMAIL_RE.test(owner.email) ? owner.email : null;
+  return { to, publiczny };
 }
 
 /** Publiczny endpoint — formularz kontaktowy na storefroncie wysyła tutaj. */
@@ -79,7 +91,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (message.length < 10) return bad("Napisz kilka słów więcej — wiadomość jest za krótka.");
   if (message.length > MAX_MESSAGE) return bad("Wiadomość jest za długa.");
 
-  const to = await recipientFor(shop.id, shop.ownerId);
+  const { to, publiczny } = await recipientFor(shop.id, shop.ownerId);
   if (!to) {
     return bad(
       "Sklep nie ma jeszcze skonfigurowanego adresu kontaktowego. Spróbuj później.",
@@ -99,7 +111,15 @@ export async function POST(req: NextRequest, { params }: Params) {
   // pocztowym i trafia do klienta, a nie na adres platformy.
   const sent = await sendEmail({ to, ...mail, replyTo: email });
   if (!sent) {
-    return bad("Nie udało się wysłać wiadomości. Spróbuj ponownie za chwilę.", 502);
+    // Nieudana wysyłka nie może kończyć się ślepym zaułkiem — jeśli sklep ma
+    // publiczny adres, oddajemy go, żeby odwiedzający napisał bezpośrednio.
+    return NextResponse.json(
+      {
+        error: "Nie udało się wysłać wiadomości.",
+        fallbackEmail: publiczny ?? undefined,
+      },
+      { status: 502 }
+    );
   }
 
   return NextResponse.json({ ok: true }, { status: 201 });
