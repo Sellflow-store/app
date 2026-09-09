@@ -509,12 +509,12 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             />
           </div>
           <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>
-            Cena na zapytanie (produkt na zamówienie)
+            Produkt na zamówienie (bez ceny)
           </span>
         </label>
         <p className="text-[11px] mb-1" style={{ color: "oklch(60% 0 0)" }}>
-          Zamiast ceny klient zobaczy &bdquo;Cena na zapytanie&rdquo; i przycisk, który otwiera
-          wiadomość do Ciebie. Takiego produktu nie da się dodać do koszyka.
+          Zamiast ceny klient zobaczy &bdquo;Produkt na zamówienie&rdquo; i przycisk, który
+          otwiera wiadomość do Ciebie. Takiego produktu nie da się dodać do koszyka.
         </p>
 
         {!form.priceOnRequest && (

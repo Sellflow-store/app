@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ShoppingBag, Check, Mail } from "lucide-react";
 import type { StorefrontProduct, CardStyle } from "@/types/shop";
 import { useCart } from "@/lib/cart";
-import { PRICE_ON_REQUEST_LABEL } from "@/lib/storefront-products";
+import { MADE_TO_ORDER_LABEL } from "@/lib/storefront-products";
 import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
@@ -71,7 +71,7 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
           <h3 className="text-xs tracking-wide text-ink font-normal">{product.name}</h3>
           <div className="flex items-center gap-2 text-xs font-light text-ink-2">
             {onRequest ? (
-              <span>{PRICE_ON_REQUEST_LABEL}</span>
+              <span>{MADE_TO_ORDER_LABEL}</span>
             ) : (
               <>
                 <span>{product.price} zł</span>
@@ -119,7 +119,7 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
           <Link
             href={href}
             aria-label={
-              onRequest ? `Zapytaj o cenę — ${product.name}` : `Wybierz rozmiar — ${product.name}`
+              onRequest ? `Napisz w sprawie — ${product.name}` : `Wybierz rozmiar — ${product.name}`
             }
             className="absolute bottom-3 right-3 backdrop-blur-sm p-2.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-sm bg-paper/90 opacity-0 group-hover:opacity-100 hover:bg-ink hover:text-on-ink text-ink-2"
           >
@@ -155,7 +155,7 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
         <h3 className="text-sm font-medium text-ink tracking-wide">{product.name}</h3>
         <div className="flex items-center gap-2">
           {onRequest ? (
-            <span className="text-sm font-medium text-ink">{PRICE_ON_REQUEST_LABEL}</span>
+            <span className="text-sm font-medium text-ink">{MADE_TO_ORDER_LABEL}</span>
           ) : (
             <>
               <span className="text-sm font-semibold text-ink">{product.price} zł</span>

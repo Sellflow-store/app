@@ -11,7 +11,6 @@ import ProductGallery from "@/components/store/ProductGallery";
 import AddToCartButton from "@/components/store/AddToCartButton";
 import InquiryCta from "@/components/store/InquiryCta";
 import { toSafeHtml } from "@/lib/sanitize";
-import { PRICE_ON_REQUEST_LABEL } from "@/lib/storefront-products";
 
 interface Props {
   params: Promise<{ shop: string; id: string }>;
@@ -67,29 +66,27 @@ export default async function ProductPage({ params }: Props) {
                 {product.name}
               </h1>
 
-              <div className="mt-4 mb-6">
-                {product.priceOnRequest ? (
-                  <span className="text-2xl font-semibold text-ink">
-                    {PRICE_ON_REQUEST_LABEL}
-                  </span>
-                ) : (
-                  <>
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-2xl font-semibold text-ink">{product.price} zł</span>
-                      {product.oldPrice && (
-                        <span className="text-base text-ink-2/70 line-through">
-                          {product.oldPrice} zł
-                        </span>
-                      )}
-                    </div>
-                    {product.lowestPrice30 && (
-                      <p className="text-xs text-ink-2/60 mt-1.5">
-                        Najniższa cena z 30 dni przed obniżką: {product.lowestPrice30} zł
-                      </p>
+              {/* Produkt na zamówienie nie ma czego pokazać w miejscu ceny —
+                  mówi o tym dopiero przycisk pod opisem. */}
+              {product.priceOnRequest ? (
+                <div className="mt-4" />
+              ) : (
+                <div className="mt-4 mb-6">
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl font-semibold text-ink">{product.price} zł</span>
+                    {product.oldPrice && (
+                      <span className="text-base text-ink-2/70 line-through">
+                        {product.oldPrice} zł
+                      </span>
                     )}
-                  </>
-                )}
-              </div>
+                  </div>
+                  {product.lowestPrice30 && (
+                    <p className="text-xs text-ink-2/60 mt-1.5">
+                      Najniższa cena z 30 dni przed obniżką: {product.lowestPrice30} zł
+                    </p>
+                  )}
+                </div>
+              )}
 
               {product.type === "digital" && (
                 <div className="flex items-center gap-2 mb-6 text-sm text-ink-2">

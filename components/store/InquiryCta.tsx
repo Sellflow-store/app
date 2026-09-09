@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, Ruler } from "lucide-react";
+import { MADE_TO_ORDER_LABEL } from "@/lib/storefront-products";
 
 interface Props {
   /** Nazwa produktu — trafia do tematu wiadomości, żeby sprzedawca wiedział, o co pytanie. */
@@ -13,7 +14,7 @@ interface Props {
 }
 
 /**
- * Zamiennik przycisku „Dodaj do koszyka" dla produktów bez ceny półkowej.
+ * Zamiennik przycisku „Dodaj do koszyka" dla produktów szytych na zamówienie.
  * Sprzedaż takiego produktu zaczyna się od rozmowy, więc jedyne, co robimy,
  * to otwieramy tę rozmowę z wypełnionym tematem.
  */
@@ -48,14 +49,15 @@ export default function InquiryCta({ productName, email, base, sizes = [] }: Pro
         className="w-full flex items-center justify-center gap-2 bg-accent-brand text-on-accent font-semibold text-sm tracking-wide px-8 py-4 rounded-button hover:opacity-90 transition-opacity"
       >
         <Mail className="w-4 h-4" strokeWidth={1.5} />
-        Zapytaj o cenę
+        {MADE_TO_ORDER_LABEL}
       </a>
 
       <p className="flex items-start gap-2 text-xs text-ink-2 font-light leading-relaxed mt-3">
         <Ruler className="w-3.5 h-3.5 mt-0.5 shrink-0" strokeWidth={1.5} />
         <span>
-          Ten model powstaje na zamówienie — cenę i termin ustalamy indywidualnie.
-          {email ? " Napisz do nas, odpowiemy z wyceną." : " Dane kontaktowe znajdziesz na stronie kontaktu."}
+          {email
+            ? "Napisz do nas — cenę i termin ustalamy indywidualnie."
+            : "Cenę i termin ustalamy indywidualnie. Dane kontaktowe znajdziesz na stronie kontaktu."}
         </span>
       </p>
 

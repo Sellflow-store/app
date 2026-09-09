@@ -1,8 +1,9 @@
 import type { StorefrontProduct } from "@/types/shop";
 
-/** Jedna etykieta dla produktów bez ceny półkowej — używana na karcie,
- *  liście, stronie produktu i w panelu, żeby nazywały to tak samo. */
-export const PRICE_ON_REQUEST_LABEL = "Cena na zapytanie";
+/** Jedna etykieta dla produktów bez ceny półkowej — używana na karcie, liście
+ *  i przycisku, żeby wszędzie nazywały się tak samo. Mówimy o produkcie
+ *  („powstaje na zamówienie"), nie o brakującej cenie. */
+export const MADE_TO_ORDER_LABEL = "Produkt na zamówienie";
 
 export type SortOption = "polecane" | "cena-rosnaco" | "cena-malejaco" | "nazwa";
 
@@ -51,7 +52,7 @@ export function sortProducts(
 ): StorefrontProduct[] {
   let list = hideUnavailable ? products.filter((p) => !isSoldOut(p)) : [...products];
   switch (sort) {
-    // Produkty „na zapytanie" nie mają ceny do porównania — lądują na końcu
+    // Produkty na zamówienie nie mają ceny do porównania — lądują na końcu
     // obu list cenowych, zamiast udawać, że kosztują 0 zł.
     case "cena-rosnaco":
       list = list.sort(byPrice((a, b) => a - b));

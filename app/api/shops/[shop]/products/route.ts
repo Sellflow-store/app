@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     fulfillment?: Record<string, unknown>;
   };
 
-  // Produkt „na zapytanie" nie ma ceny do podania — reszta musi ją mieć.
+  // Produkt na zamówienie nie ma ceny do podania — reszta musi ją mieć.
   const priceOnRequest = body.priceOnRequest === true;
   if (!body.name?.trim() || (!priceOnRequest && !body.price)) {
     return NextResponse.json({ error: "name and price required" }, { status: 400 });

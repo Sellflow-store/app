@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (body[f] !== undefined) updates[f] = body[f];
   }
 
-  // Włączenie „ceny na zapytanie" zeruje cenę i promocję, żeby po powrocie do
+  // Włączenie trybu „na zamówienie" zeruje cenę i promocję, żeby po powrocie do
   // zwykłej sprzedaży nie wyskoczyła stara kwota, której nikt nie potwierdził.
   if (body.priceOnRequest === true) {
     updates.price = "0.00";
@@ -62,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Omnibus: zapisz nowy punkt historii, gdy cena sprzedaży się zmieniła.
-  // Produkt „na zapytanie" nie ma ceny półkowej, więc nie zapisujemy 0.00.
+  // Produkt na zamówienie nie ma ceny półkowej, więc nie zapisujemy 0.00.
   if (body.price !== undefined && !updated.priceOnRequest) {
     await recordPrice(access.shopId, updated.id, updated.price);
   }

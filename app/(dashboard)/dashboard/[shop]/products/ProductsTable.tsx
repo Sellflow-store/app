@@ -209,7 +209,7 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
 
               {/* Price */}
               <span className="text-xs font-semibold" style={{ color: "oklch(11% 0.10 275)" }}>
-                {product.priceOnRequest ? "Na zapytanie" : formatPrice(product.price)}
+                {product.priceOnRequest ? "Na zamówienie" : formatPrice(product.price)}
               </span>
 
               {/* Visibility toggle */}
