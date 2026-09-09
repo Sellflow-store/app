@@ -5,6 +5,7 @@ import { asc, count, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { planLimits } from "@/lib/plans";
 import { recordPrice } from "@/lib/price-history";
+import { findFreeProductSlug } from "@/lib/slug";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const body = (await req.json()) as {
     name: string;
+    slug?: string;
     price: string;
     oldPrice?: string | null;
     priceOnRequest?: boolean;
@@ -74,11 +76,16 @@ export async function POST(req: NextRequest, { params }: Params) {
     );
   }
 
+  // Adres z nazwy, chyba że merchant podał własny. Kolizje w obrębie sklepu
+  // rozwiązuje sufiks -2, -3…
+  const slug = await findFreeProductSlug(access.shopId, body.slug?.trim() || body.name);
+
   const [product] = await db
     .insert(products)
     .values({
       shopId: access.shopId,
       name: body.name.trim(),
+      slug,
       // 0.00 to wypełniacz kolumny NOT NULL — przy `priceOnRequest` nigdzie
       // się nie pokazuje ani nie wchodzi do wyliczeń zamówienia.
       price: priceOnRequest ? "0.00" : body.price,

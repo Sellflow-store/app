@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
 import StorefrontShell from "@/components/store/StorefrontShell";
 import ProductCard from "@/components/store/ProductCard";
 import ProductControls from "@/components/store/ProductControls";
@@ -67,5 +68,12 @@ export async function generateMetadata({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
-  return { title: `Produkty` };
+  const base = await storefrontBase(shop.slug);
+  return {
+    title: `Produkty`,
+    description: `Wszystkie produkty w sklepie ${shop.branding.shopName}.`,
+    // Sortowanie i filtr to ta sama lista pod innym adresem — kanoniczny
+    // zostaje jeden, żeby nie mnożyć duplikatów w indeksie.
+    alternates: { canonical: `${base}/produkty` },
+  };
 }

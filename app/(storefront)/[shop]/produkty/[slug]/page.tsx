@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Check, Download, Clock } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
@@ -10,25 +10,89 @@ import Footer from "@/components/store/Footer";
 import ProductGallery from "@/components/store/ProductGallery";
 import AddToCartButton from "@/components/store/AddToCartButton";
 import InquiryCta from "@/components/store/InquiryCta";
-import { toSafeHtml } from "@/lib/sanitize";
+import { toSafeHtml, stripHtml } from "@/lib/sanitize";
+import { absoluteUrl, jsonLdProps, shopOrigin } from "@/lib/seo";
+import type { StorefrontProduct } from "@/types/shop";
 
 interface Props {
-  params: Promise<{ shop: string; id: string }>;
+  params: Promise<{ shop: string; slug: string }>;
+}
+
+/** Adresy produktów były kiedyś identyfikatorami — takie linki nadal krążą. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Znajduje produkt po adresie. Gdy w adresie siedzi stary identyfikator,
+ * zwraca produkt i informację, że trzeba przekierować na właściwy adres —
+ * jeden trwały przeskok zamiast 404 dla każdego linku sprzed zmiany.
+ */
+function resolveProduct(products: StorefrontProduct[], segment: string) {
+  const bySlug = products.find((p) => p.slug === segment);
+  if (bySlug) return { product: bySlug, stale: false };
+  if (UUID_RE.test(segment)) {
+    const byId = products.find((p) => p.id === segment);
+    if (byId) return { product: byId, stale: true };
+  }
+  return { product: null, stale: false };
 }
 
 export default async function ProductPage({ params }: Props) {
-  const { shop: shopSlug, id } = await params;
+  const { shop: shopSlug, slug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) notFound();
 
   // getShopBySlug returns visible products only, so hidden products 404 here
-  const product = shop.products.find((p) => p.id === id);
+  const { product, stale } = resolveProduct(shop.products, slug);
   if (!product) notFound();
 
   const base = await storefrontBase(shop.slug);
+  if (stale) permanentRedirect(`${base}/produkty/${product.slug}`);
+
+  const origin = await shopOrigin();
+  const url = absoluteUrl(origin, base, `/produkty/${product.slug}`);
+
+  // Dane strukturalne — to z nich Google bierze cenę, dostępność i zdjęcie do
+  // wyniku wyszukiwania. Produkt na zamówienie NIE dostaje bloku `offers`:
+  // oferta bez ceny jest niepoprawna, a 0 zł byłoby kłamstwem.
+  const productLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    url,
+    sku: product.id,
+    image: product.images.map((src) => (src.startsWith("http") ? src : `${origin}${src}`)),
+    description: product.shortDesc ?? stripHtml(product.description),
+    brand: { "@type": "Brand", name: shop.branding.shopName },
+  };
+  if (product.category) productLd.category = product.category;
+  if (!product.priceOnRequest) {
+    productLd.offers = {
+      "@type": "Offer",
+      url,
+      price: product.price,
+      priceCurrency: "PLN",
+      itemCondition: "https://schema.org/NewCondition",
+      availability:
+        product.stock != null && product.stock <= 0
+          ? "https://schema.org/OutOfStock"
+          : "https://schema.org/InStock",
+    };
+  }
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: shop.branding.shopName, item: absoluteUrl(origin, base) },
+      { "@type": "ListItem", position: 2, name: "Produkty", item: absoluteUrl(origin, base, "/produkty") },
+      { "@type": "ListItem", position: 3, name: product.name, item: url },
+    ],
+  };
 
   return (
     <>
+      <script {...jsonLdProps(productLd)} />
+      <script {...jsonLdProps(breadcrumbLd)} />
       <BrandTheme branding={shop.branding} />
       <div className="min-h-screen bg-paper">
         <TopBar config={shop.home} />
@@ -145,6 +209,7 @@ export default async function ProductPage({ params }: Props) {
                   shopSlug={shop.slug}
                   product={{
                     id: product.id,
+                    slug: product.slug,
                     name: product.name,
                     price: product.price,
                     image: product.images[0] ?? null,
@@ -217,13 +282,22 @@ export default async function ProductPage({ params }: Props) {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { shop: shopSlug, id } = await params;
+  const { shop: shopSlug, slug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
-  const product = shop.products.find((p) => p.id === id);
+  const { product } = resolveProduct(shop.products, slug);
   if (!product) return {};
+  const base = await storefrontBase(shop.slug);
   return {
     title: `${product.name}`,
-    description: product.shortDesc ?? product.description ?? undefined,
+    description: product.shortDesc ?? stripHtml(product.description) ?? undefined,
+    // Kanoniczny jest adres tekstowy, także gdy ktoś wszedł starym linkiem.
+    alternates: { canonical: `${base}/produkty/${product.slug}` },
+    openGraph: {
+      title: product.name,
+      description: product.shortDesc ?? undefined,
+      images: product.images.length > 0 ? [product.images[0]] : undefined,
+      type: "website",
+    },
   };
 }

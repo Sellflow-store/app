@@ -10,6 +10,7 @@ interface Props {
   shopSlug: string;
   product: {
     id: string;
+    slug: string;
     name: string;
     price: string;
     image: string | null;
@@ -44,6 +45,7 @@ export default function AddToCartButton({ shopSlug, product }: Props) {
     add(
       {
         productId: product.id,
+        slug: product.slug,
         name: product.name,
         price: product.price,
         image: product.image,

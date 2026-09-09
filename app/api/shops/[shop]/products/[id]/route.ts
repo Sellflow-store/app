@@ -4,6 +4,7 @@ import { products } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { recordPrice } from "@/lib/price-history";
+import { findFreeProductSlug } from "@/lib/slug";
 
 type Params = { params: Promise<{ shop: string; id: string }> };
 
@@ -14,6 +15,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const body = (await req.json()) as Partial<{
     name: string;
+    slug: string;
     price: string;
     oldPrice: string | null;
     priceOnRequest: boolean;
@@ -40,10 +42,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     "name", "price", "oldPrice", "category", "badge", "visible",
     "shortDesc", "description", "images", "colors", "sizes",
     "benefits", "specs", "stock", "weightGrams", "dimensions",
-    "sortOrder", "type", "fulfillment", "priceOnRequest",
+    "sortOrder", "type", "fulfillment", "priceOnRequest", "slug",
   ] as const;
   for (const f of fields) {
     if (body[f] !== undefined) updates[f] = body[f];
+  }
+
+  // Adres zmienia się TYLKO wtedy, gdy merchant świadomie go wpisze. Zmiana
+  // nazwy go nie rusza — inaczej każda korekta literówki zrywałaby linki
+  // i pozycję w wyszukiwarce. Puste pole = zostaw dotychczasowy.
+  if (typeof body.slug === "string" && body.slug.trim()) {
+    updates.slug = await findFreeProductSlug(access.shopId, body.slug, id);
+  } else {
+    delete updates.slug;
   }
 
   // Włączenie trybu „na zamówienie" zeruje cenę i promocję, żeby po powrocie do

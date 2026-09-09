@@ -51,7 +51,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
           <div key={key} className="flex items-center gap-4 py-5">
             {/* Thumbnail */}
             <Link
-              href={`${base}/produkty/${item.productId}`}
+              href={`${base}/produkty/${item.slug ?? item.productId}`}
               className="w-20 h-20 bg-paper-3 rounded-input overflow-hidden shrink-0"
             >
               {item.image ? (
@@ -66,7 +66,7 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
             {/* Name + unit price */}
             <div className="flex-1 min-w-0">
               <Link
-                href={`${base}/produkty/${item.productId}`}
+                href={`${base}/produkty/${item.slug ?? item.productId}`}
                 className="text-sm font-medium text-ink hover:opacity-70 transition-opacity line-clamp-2"
               >
                 {item.name}

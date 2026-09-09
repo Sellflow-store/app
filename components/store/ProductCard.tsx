@@ -30,12 +30,13 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
   // Produkt bez ceny w ogóle nie trafia do koszyka — też prowadzi do strony.
   const needsSize = (product.sizes?.length ?? 0) > 0 || onRequest;
   const minimal = variant === "minimal";
-  const href = `${base}/produkty/${product.id}`;
+  const href = `${base}/produkty/${product.slug}`;
 
   function quickAdd() {
     if (soldOut) return;
     add({
       productId: product.id,
+      slug: product.slug,
       name: product.name,
       price: product.price,
       image: mainImage,

@@ -19,6 +19,8 @@ export type ServiceMode = "online" | "onsite" | "both";
 
 export interface ProductFormData {
   name: string;
+  /** Adres w sklepie. Puste przy nowym produkcie = wyliczony z nazwy. */
+  slug: string;
   category: string;
   price: string;
   oldPrice: string;
@@ -51,6 +53,7 @@ export interface ProductFormData {
 
 const EMPTY: ProductFormData = {
   name: "",
+  slug: "",
   category: "",
   price: "",
   oldPrice: "",
@@ -262,6 +265,8 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
 
     const payload = {
       name: form.name.trim(),
+      // Puste pole przy edycji = zostaw dotychczasowy adres nietknięty.
+      slug: form.slug.trim() || undefined,
       category: form.category.trim() || undefined,
       price,
       oldPrice,
@@ -461,6 +466,22 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             />
           </Field>
         </div>
+        <Field label="Adres produktu (URL)" id="p-slug">
+          <input
+            id="p-slug"
+            value={form.slug}
+            onChange={(e) => patch({ slug: e.target.value })}
+            placeholder={isEdit ? "" : "wyliczy się z nazwy"}
+            style={inputStyle}
+            {...focusProps}
+          />
+          <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+            {isEdit
+              ? "Zmieniaj tylko świadomie — stary adres przestanie być tym właściwym, a linki i pozycja w Google prowadzą pod niego. Zmiana nazwy produktu adresu nie rusza."
+              : "Zostaw puste, a adres powstanie z nazwy produktu."}
+          </p>
+        </Field>
+
         <Field label="Rozmiary (po przecinku)" id="p-sizes">
           <input
             id="p-sizes"

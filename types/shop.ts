@@ -404,6 +404,9 @@ export interface ProductFaq {
 
 export interface StorefrontProduct {
   id: string;
+  /** Adres produktu: /produkty/{slug}. Identyfikator zostaje na potrzeby
+   *  koszyka, zamówień i przekierowań ze starych adresów. */
+  slug: string;
   name: string;
   category: string | null;
   price: string;

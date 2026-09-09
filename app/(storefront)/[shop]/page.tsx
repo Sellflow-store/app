@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
+import { absoluteUrl, jsonLdProps, shopOrigin } from "@/lib/seo";
 import BrandTheme from "@/components/store/BrandTheme";
 import TopBar from "@/components/store/TopBar";
 import Navbar from "@/components/store/Navbar";
@@ -27,8 +29,51 @@ export default async function StorefrontHome({ params }: Props) {
   const coverHero = shop.home.hero.layout === "cover" && !!shop.home.hero.image;
   const overlayNav = coverHero && !shop.home.topBar.visible;
 
+  const [base, origin] = await Promise.all([storefrontBase(shop.slug), shopOrigin()]);
+  const home = absoluteUrl(origin, base);
+
+  // Tożsamość sklepu dla wyszukiwarki: nazwa, logo i kanały kontaktu w jednym
+  // miejscu, żeby wyniki nie sklejały marki z przypadkowych fragmentów strony.
+  const orgLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: shop.branding.shopName,
+    url: home,
+  };
+  if (shop.branding.logoUrl) orgLd.logo = shop.branding.logoUrl;
+  if (shop.about.content?.trim()) orgLd.description = shop.about.content.slice(0, 300);
+  if (shop.about.email || shop.about.phone) {
+    orgLd.contactPoint = {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      ...(shop.about.email ? { email: shop.about.email } : {}),
+      ...(shop.about.phone ? { telephone: shop.about.phone } : {}),
+    };
+  }
+  const socials = Object.values(shop.footer.social ?? {}).filter(
+    (v): v is string => typeof v === "string" && v.trim().length > 0
+  );
+  if (socials.length > 0) orgLd.sameAs = socials;
+
+  const websiteLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: shop.branding.shopName,
+    url: home,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${absoluteUrl(origin, base, "/szukaj")}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <>
+      <script {...jsonLdProps(orgLd)} />
+      <script {...jsonLdProps(websiteLd)} />
       <BrandTheme branding={shop.branding} />
       <div className="min-h-screen bg-paper">
         <TopBar config={shop.home} />
@@ -64,8 +109,10 @@ export async function generateMetadata({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
+  const base = await storefrontBase(shop.slug);
   return {
     title: shop.branding.shopName,
     description: shop.home.hero.description,
+    alternates: { canonical: base || "/" },
   };
 }

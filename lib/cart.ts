@@ -4,6 +4,9 @@ import { useCallback, useSyncExternalStore } from "react";
 
 export interface CartItem {
   productId: string;
+  /** Adres produktu do linków z koszyka. Stare koszyki go nie mają — wtedy
+   *  linkujemy identyfikatorem, a strona produktu przekieruje. */
+  slug?: string;
   name: string;
   price: string; // "129.99" — display only; checkout recomputes from DB
   image: string | null;

@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { shops } from "./db/schema";
-import { inArray } from "drizzle-orm";
+import { products, shops } from "./db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
@@ -34,6 +34,31 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 50)
     .replace(/-+$/g, "");
+}
+
+/**
+ * Wolny adres produktu w obrębie JEDNEGO sklepu (dwa sklepy mogą mieć
+ * „sukienka-lniana" — indeks unikalny jest na parze sklep+adres). Wzorowane na
+ * tym, co blog robi od początku. `excludeId` pozwala zapisać produkt jego
+ * własnym adresem przy edycji.
+ */
+export async function findFreeProductSlug(
+  shopId: string,
+  base: string,
+  excludeId?: string
+): Promise<string> {
+  const root = slugify(base) || "produkt";
+  const rows = await db
+    .select({ slug: products.slug, id: products.id })
+    .from(products)
+    .where(eq(products.shopId, shopId));
+  const taken = new Set(rows.filter((r) => r.id !== excludeId).map((r) => r.slug));
+  if (!taken.has(root)) return root;
+  for (let i = 2; i < 100; i++) {
+    const candidate = `${root}-${i}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${root}-${Date.now()}`;
 }
 
 /**

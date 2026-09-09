@@ -369,6 +369,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
 
   const storefrontProducts: StorefrontProduct[] = shopProducts.map((p) => ({
     id: p.id,
+    slug: p.slug,
     name: p.name,
     category: p.category,
     price: p.price,

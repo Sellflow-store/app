@@ -13,6 +13,26 @@ const ALLOWED_TAGS = new Set([
   "ul", "ol", "li", "a", "h3", "h4", "blockquote", "span", "div",
 ]);
 
+/**
+ * Goły tekst z HTML-a — do meta description i danych strukturalnych, gdzie
+ * znaczniki są śmieciem. Encje zamieniane na znaki, białe znaki zwijane.
+ */
+export function stripHtml(html: string | null | undefined, maxLen = 300): string | undefined {
+  if (!html) return undefined;
+  const text = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return undefined;
+  return text.length > maxLen ? `${text.slice(0, maxLen - 1).trimEnd()}…` : text;
+}
+
 /** True when the HTML carries no visible text (empty editor state). */
 export function htmlIsEmpty(html: string | null | undefined): boolean {
   if (!html) return true;

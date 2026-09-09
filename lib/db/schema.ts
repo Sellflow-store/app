@@ -109,6 +109,10 @@ export const products = pgTable(
       .notNull()
       .references(() => shops.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    // Adres produktu w sklepie: /produkty/{slug}. Nadawany raz, przy zakładaniu,
+    // i NIE zmienia się przy zmianie nazwy — inaczej każda korekta literówki
+    // zrywałaby linki i pozycję w wyszukiwarce. Merchant może go nadpisać ręcznie.
+    slug: text("slug").notNull(),
     category: text("category"),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(),
     oldPrice: numeric("old_price", { precision: 10, scale: 2 }),
@@ -148,6 +152,7 @@ export const products = pgTable(
   (t) => [
     index("products_shop_idx").on(t.shopId),
     index("products_visible_idx").on(t.shopId, t.visible),
+    uniqueIndex("products_shop_slug_idx").on(t.shopId, t.slug),
   ]
 );
 

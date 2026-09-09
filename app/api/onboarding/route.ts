@@ -5,7 +5,7 @@ import { users, shops, shopConfig, products as productsTable } from "@/lib/db/sc
 import { eq } from "drizzle-orm";
 import { adminEmailAllowlist } from "@/lib/api";
 import { clerkConfigured } from "@/lib/auth-env";
-import { SLUG_RE, findFreeSlug } from "@/lib/slug";
+import { SLUG_RE, findFreeSlug, slugify } from "@/lib/slug";
 import type { StoreBootstrap } from "@/lib/brand/types";
 import { isDataUrl, isImageDataUrl, uploadDataUrl } from "@/lib/blob";
 
@@ -138,9 +138,21 @@ export async function POST(req: NextRequest) {
   // Seed products from the bootstrap payload (if any) so the new dashboard
   // isn't empty. Names + prices come from the inferred catalog per category.
   if (bootstrap?.store.products?.length) {
+    // Sklep jest świeży, więc kolizje adresów rozstrzygamy w pamięci — dwa
+    // produkty o tej samej nazwie dostają „-2", „-3" jak wszędzie indziej.
+    const usedSlugs = new Set<string>();
+    const uniqueSlug = (name: string) => {
+      const root = slugify(name) || "produkt";
+      if (!usedSlugs.has(root)) return usedSlugs.add(root), root;
+      for (let i = 2; ; i++) {
+        const candidate = `${root}-${i}`;
+        if (!usedSlugs.has(candidate)) return usedSlugs.add(candidate), candidate;
+      }
+    };
     const rows = bootstrap.store.products.slice(0, 20).map((p, i) => ({
       shopId: shop.id,
       name: p.name,
+      slug: uniqueSlug(p.name),
       category: bootstrap.store.category,
       price: p.price,
       oldPrice: p.originalPrice ?? null,

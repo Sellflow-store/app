@@ -26,6 +26,7 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
 
   const products: StorefrontProduct[] = store.products.map((p, i) => ({
     id: `preview-${i}`,
+    slug: `preview-${i}`,
     name: p.name,
     category: store.category,
     price: p.price,
