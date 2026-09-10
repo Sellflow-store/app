@@ -36,8 +36,10 @@ const LEGAL = {
   returnAddress: "",
   sells: { physical: true, digital: false, services: false },
   contractMoment: "confirmation",
-  // Domyślne „1–3" zostaje — realnego czasu wysyłki HAGI nie znam.
-  fulfillmentDays: "1–3",
+  // Od klientki (2026-09-10): średnio 7 dni, przy zamówieniach szytych na
+  // miarę do 14. Szablon dokleja „dni roboczych", więc wartość to sam człon
+  // liczbowy zdania.
+  fulfillmentDays: "7, a przy zamówieniach szytych na miarę do 14",
   effectiveDate: "2026-09-10",
   // Spódnice i spodnie szyte na miarę = produkty personalizowane. Klauzula
   // dotyczy WYŁĄCZNIE ich, standardowa rozmiarówka zachowuje 14 dni na zwrot.
