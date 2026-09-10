@@ -6,10 +6,9 @@
  * treści. `account.company` wypełniam tym samym, żeby panel „Konto i firma"
  * nie świecił pustkami.
  *
- * NIE ustawiam `email` — HAGA nadal nie ma skrzynki (haga@sell-flow.store to
- * zaślepka konta właściciela). Bez niego `missingLegalFields` zwraca „e-mail
- * kontaktowy" i strony /regulamin i /prywatnosc pokazują „dokument w
- * przygotowaniu". To jedyne, co blokuje publikację.
+ * E-mail kontaktowy (kontakt@hagastore.pl) idzie w trzy miejsca naraz: do
+ * dokumentów, do konta i do sekcji „O nas" — z tej ostatniej bierze go strona
+ * „Kontakt" i przycisk produktów na zamówienie.
  *
  *   node_modules/.bin/tsx scripts/haga-dane-firmy.ts
  */
@@ -23,6 +22,7 @@ const sql = neon(process.env.DATABASE_URL!);
 const COMPANY_NAME = "HAGA Agnieszka Hetman";
 const COMPANY_ADDRESS = "ul. Konwaliowa 12/1, 62-052 Komorniki, Polska";
 const TAX_ID = "777 119 33 60";
+const EMAIL = "kontakt@hagastore.pl";
 
 const LEGAL = {
   companyName: COMPANY_NAME,
@@ -30,7 +30,7 @@ const LEGAL = {
   taxId: TAX_ID,
   regon: "",
   krs: "",
-  email: "",
+  email: EMAIL,
   phone: "",
   // Puste = adres do zwrotów spada na adres siedziby (fallback „auto").
   returnAddress: "",
@@ -50,7 +50,7 @@ const LEGAL = {
 const ACCOUNT = {
   firstName: "Agnieszka",
   lastName: "Hetman",
-  contactEmail: "",
+  contactEmail: EMAIL,
   phone: "",
   company: { name: COMPANY_NAME, taxId: TAX_ID, address: COMPANY_ADDRESS },
 };
@@ -70,7 +70,13 @@ async function main() {
   if (!shop) throw new Error("Nie ma sklepu haga");
   await upsert(shop.id, "legal", LEGAL);
   await upsert(shop.id, "account", ACCOUNT);
-  console.log("\nBrakuje jeszcze: e-mail kontaktowy — bez niego regulamin i polityka nie wyjdą z trybu „w przygotowaniu”.");
+
+  // Ten sam adres na stronie „Kontakt" i w CTA produktów na zamówienie —
+  // reszta klucza `about` (treść „O nas", telefon, adres) zostaje nietknięta.
+  const [aboutRow] = await sql`
+    select value from shop_config where shop_id = ${shop.id} and key = ${"about"}`;
+  const about = { ...((aboutRow?.value as Record<string, unknown>) ?? {}), email: EMAIL };
+  await upsert(shop.id, "about", about);
 }
 
 main();
