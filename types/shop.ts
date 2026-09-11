@@ -157,6 +157,8 @@ export interface PickupPoint {
 export interface DeliveryConfig {
   methods: DeliveryMethod[];
   freeShippingFrom: string; // "" = brak progu darmowej dostawy
+  /** Wysyłka poza Polskę tylko po wcześniejszym kontakcie — /dostawa odsyła wtedy do formularza. */
+  abroadOnRequest?: boolean;
 }
 
 export interface CheckoutConfig {

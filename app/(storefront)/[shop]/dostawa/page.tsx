@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Truck } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
+import { storefrontBase } from "@/lib/storefront-base";
 import StorefrontShell from "@/components/store/StorefrontShell";
 
 interface Props {
@@ -13,6 +15,7 @@ export default async function ShippingPage({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) notFound();
+  const base = await storefrontBase(shop.slug);
 
   const methods = shop.delivery.methods.filter((m) => m.enabled);
   const freeFrom = parseFloat(shop.delivery.freeShippingFrom);
@@ -54,6 +57,16 @@ export default async function ShippingPage({ params }: Props) {
               <span className="font-semibold">{pln(shop.delivery.freeShippingFrom)}</span>.
             </p>
           </div>
+        )}
+
+        {shop.delivery.abroadOnRequest && (
+          <p className="text-sm text-ink-2 font-light mt-8">
+            Wysyłka za granicę? Zanim złożysz zamówienie,{" "}
+            <Link href={`${base}/kontakt`} className="underline underline-offset-2 hover:text-ink">
+              napisz do nas
+            </Link>{" "}
+            — podamy koszt i sposób dostawy.
+          </p>
         )}
       </div>
     </StorefrontShell>

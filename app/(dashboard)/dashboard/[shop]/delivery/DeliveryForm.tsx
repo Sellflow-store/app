@@ -69,6 +69,7 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
   const [methods, setMethods] = useState<DeliveryMethod[]>(initialConfig.methods);
   const [freeFrom, setFreeFrom] = useState(initialConfig.freeShippingFrom);
+  const [abroad, setAbroad] = useState(initialConfig.abroadOnRequest ?? false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -107,7 +108,7 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
     setValidationError(null);
     setSaveState("saving");
     try {
-      const value: DeliveryConfig = { methods: normalized, freeShippingFrom };
+      const value: DeliveryConfig = { methods: normalized, freeShippingFrom, abroadOnRequest: abroad };
       const res = await fetch(`/api/shops/${shopSlug}/config`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -316,6 +317,28 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
           >
             zł i więcej
           </span>
+        </div>
+      </div>
+
+      {/* Abroad */}
+      <div
+        className="rounded-2xl p-5 mt-5"
+        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+      >
+        <div className="flex items-start gap-3">
+          <Toggle checked={abroad} onChange={setAbroad} />
+          <div>
+            <h2
+              className="text-sm font-semibold mb-1"
+              style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            >
+              Wysyłka za granicę na zapytanie
+            </h2>
+            <p className="text-xs" style={{ color: "oklch(50% 0 0)" }}>
+              Metody powyżej obowiązują w Polsce. Po włączeniu strona Dostawa poprosi klientów
+              spoza Polski o kontakt przez formularz, zanim złożą zamówienie.
+            </p>
+          </div>
         </div>
       </div>
     </div>
