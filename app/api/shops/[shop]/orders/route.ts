@@ -122,6 +122,11 @@ export async function POST(req: NextRequest, { params }: Params) {
   const zip = body.address?.zip?.trim() ?? "";
   const city = body.address?.city?.trim() ?? "";
   if (hasPhysical && (!zip || !city)) return bad("Uzupełnij adres dostawy.");
+  // Telefon przy przesyłce jest wymagany: awizo kuriera i kod do paczkomatu idą
+  // SMS-em, a broker (Furgonetka) odrzuci nadanie bez numeru.
+  if (hasPhysical && !phone) {
+    return bad("Podaj numer telefonu — kurier i paczkomat wysyłają na niego powiadomienia o paczce.");
+  }
 
   // ── Load config ─────────────────────────────────────────────────────────
   const configs = await db

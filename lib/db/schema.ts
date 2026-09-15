@@ -244,6 +244,37 @@ export const orders = pgTable(
   ]
 );
 
+// ─── Integracje merchanta (broker wysyłkowy) ──────────────────────────────────
+// Osobna tabela, nie klucz w `shop_config`: tamten worek jest w całości czytany
+// przez storefront i wraca merchantowi w GET /config, a tu leży sekret. Klucz
+// złożony (shopId, provider) zostawia miejsce na kolejnych brokerów obok
+// Furgonetki bez zmiany kształtu tabeli.
+
+export const shopIntegrations = pgTable(
+  "shop_integrations",
+  {
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(), // "furgonetka"
+    enabled: boolean("enabled").notNull().default(false),
+    // Token trzymamy WYŁĄCZNIE jako skrót SHA-256. Merchant widzi go raz, przy
+    // generowaniu — wyciek bazy nie daje wtedy czytania cudzych zamówień.
+    tokenHash: text("token_hash"),
+    tokenHint: text("token_hint"), // 4 ostatnie znaki, żeby poznał, który to token
+    tokenCreatedAt: timestamp("token_created_at"),
+    // { serviceByMethod: { <deliveryMethodId>: "dpd" | "inpost" | … } }
+    settings: jsonb("settings").notNull().default({}),
+    // Ślad po ostatnim kontakcie — panel pokazuje go jako dowód, że działa.
+    lastPullAt: timestamp("last_pull_at"),
+    lastPullCount: integer("last_pull_count"),
+    lastPushAt: timestamp("last_push_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.shopId, t.provider] })]
+);
+
 // ─── Customers ────────────────────────────────────────────────────────────────
 
 export const customers = pgTable(
@@ -391,6 +422,7 @@ export type Shop = typeof shops.$inferSelect;
 export type NewShop = typeof shops.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+export type ShopIntegration = typeof shopIntegrations.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
 export type Customer = typeof customers.$inferSelect;

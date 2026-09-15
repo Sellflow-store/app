@@ -6,7 +6,7 @@ import {
   Home, Package, ShoppingBag, Info, HelpCircle, FileText, ShieldCheck, Settings,
   BarChart2, X, ChevronRight, Users, Eye, CreditCard, ClipboardList,
   Truck, Tag, Mail, Palette, Megaphone, Scale, Layers, Store, RotateCcw,
-  MenuIcon, LayoutDashboard, PanelBottom,
+  MenuIcon, LayoutDashboard, PanelBottom, PackageCheck,
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -28,6 +28,7 @@ const NAV_SECTIONS = [
       { slug: "categories", label: "Kategorie",        icon: Layers },
       { slug: "payments",   label: "Płatności i VAT",  icon: CreditCard },
       { slug: "delivery",   label: "Dostawa",          icon: Truck },
+      { slug: "furgonetka", label: "Furgonetka",       icon: PackageCheck },
     ],
   },
   {

@@ -329,8 +329,11 @@ export default function CheckoutForm({
                   <input id="co-name" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Jan Kowalski" />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="co-phone">Telefon</FieldLabel>
-                  <input id="co-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="600 000 000" />
+                  <FieldLabel htmlFor="co-phone">Telefon{hasPhysical ? " *" : ""}</FieldLabel>
+                  <input id="co-phone" type="tel" required={hasPhysical} value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="600 000 000" />
+                  {hasPhysical && (
+                    <p className="text-xs mt-1 opacity-60">Kurier i paczkomat wysyłają na ten numer powiadomienia o paczce.</p>
+                  )}
                 </div>
               </div>
             </div>

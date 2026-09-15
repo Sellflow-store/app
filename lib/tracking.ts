@@ -14,6 +14,7 @@ export const CARRIERS = [
   { id: "gls", label: "GLS", url: "https://gls-group.eu/PL/pl/sledzenie-paczek?match=" },
   { id: "poczta", label: "Poczta Polska", url: "https://emonitoring.poczta-polska.pl/?numer=" },
   { id: "fedex", label: "FedEx", url: "https://www.fedex.com/fedextrack/?trknbr=" },
+  { id: "orlen", label: "Orlen Paczka", url: "https://www.orlenpaczka.pl/sledz-przesylke/?numer=" },
   // Numer zapisujemy, ale linku nie zmyślamy — klient dostanie sam numer.
   { id: "other", label: "Inny przewoźnik", url: null },
 ] as const;
