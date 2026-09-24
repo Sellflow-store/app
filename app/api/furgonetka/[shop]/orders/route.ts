@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, products, shopIntegrations } from "@/lib/db/schema";
 import { authorizeFurgonetka, FURGONETKA_PROVIDER } from "@/lib/furgonetka-access";
@@ -16,6 +16,16 @@ import { mapOrderToFurgonetka, type ParcelSize } from "@/lib/furgonetka";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ shop: string }> };
+
+const shippableOrder = sql`(
+  coalesce(${orders.shippingAddress}->>'deliveryMethodKind', '') <> 'pickup'
+  AND btrim(coalesce(${orders.shippingAddress}->>'city', '')) <> ''
+  AND btrim(coalesce(${orders.shippingAddress}->>'zip', '')) <> ''
+  AND (
+    btrim(coalesce(${orders.shippingAddress}->>'street', '')) <> ''
+    OR coalesce(${orders.pickupPoint}->>'code', '') <> ''
+  )
+)`;
 
 // Ich dokumentacja deklaruje 100 na stronę; trzymamy to jako twardy sufit,
 // żeby literówka w parametrze nie ściągnęła całej historii sklepu naraz.
@@ -47,9 +57,16 @@ export async function GET(req: NextRequest, { params }: Params) {
     .where(
       and(
         eq(orders.shopId, access.shopId),
-        // Anulowanych nie podajemy — z takiego zamówienia nie ma co nadawać.
-        ne(orders.status, "cancelled"),
-        ...(validSince ? [gt(orders.updatedAt, validSince)] : []),
+        // Przy pierwszej synchronizacji anulowane pomijamy: nie ma czego nadawać.
+        // Przy kolejnych podajemy je dalej ze statusem "cancelled", bo zamówienie
+        // mogło już trafić do Furgonetki: bez tego anulowanie nigdy by tam nie
+        // dotarło, a paczka (także za pobraniem) mogłaby zostać nadana.
+        ...(validSince ? [gt(orders.updatedAt, validSince)] : [ne(orders.status, "cancelled")]),
+        // Te same warunki, co w mapOrderToFurgonetka, ale w SQL-u: odfiltrowane
+        // dopiero po LIMIT-cie zamówienia (odbiór osobisty, brak adresu) mogły
+        // zapełnić całą stronę. Pusta odpowiedź nie przesuwa kursora Furgonetki,
+        // więc synchronizacja stawała na zawsze.
+        shippableOrder,
       ),
     )
     .orderBy(asc(orders.updatedAt))

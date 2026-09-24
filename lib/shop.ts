@@ -98,12 +98,12 @@ export const DEFAULT_HOME: HomeConfig = {
     enabled: false,
     delaySeconds: 5,
     title: "Zapisz się do newslettera",
-    description: "Otrzymaj kod rabatowy na pierwsze zamówienie.",
-    buttonLabel: "Odbierz rabat",
+    description: "Nowości i oferty tylko dla subskrybentów.",
+    buttonLabel: "Zapisz się",
     placeholder: "Twój adres e-mail",
     disclaimer: "Żadnego spamu.",
     successTitle: "Dziękujemy!",
-    successText: "Kod został wysłany na Twojego maila.",
+    successText: "Sprawdź skrzynkę i potwierdź zapis.",
   },
 };
 
@@ -199,6 +199,27 @@ export const DEFAULT_COMPLIANCE: ComplianceConfig = {
   omnibus: { enabled: true },
 };
 
+/** The reward code stays on the server: the popup only needs to know one exists. */
+function publicPopup(p: HomeConfig["popup"]): HomeConfig["popup"] {
+  const { rewardCode, ...rest } = p;
+  return { ...rest, hasReward: Boolean(rewardCode?.trim()) };
+}
+
+/**
+ * Storefront products reach client components (ProductCard), so everything in
+ * them ends up in the public RSC payload. The fulfillment blob also holds what
+ * the buyer pays for (download URL, access link, license keys, access
+ * instructions): only the descriptive fields may leave the server.
+ */
+function publicFulfillment(raw: unknown): StorefrontProduct["fulfillment"] {
+  const f = (raw ?? {}) as StorefrontProduct["fulfillment"];
+  return {
+    ...(f.duration ? { duration: f.duration } : {}),
+    ...(f.mode ? { mode: f.mode } : {}),
+    ...(f.details ? { details: f.details } : {}),
+  };
+}
+
 export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, slug),
@@ -232,7 +253,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     guarantee: { ...DEFAULT_HOME.guarantee, ...((configMap.home as HomeConfig)?.guarantee ?? {}) },
     video: { ...DEFAULT_HOME.video, ...((configMap.home as HomeConfig)?.video ?? {}) },
     discounts: { ...DEFAULT_HOME.discounts, ...((configMap.home as HomeConfig)?.discounts ?? {}) },
-    popup: { ...DEFAULT_HOME.popup, ...((configMap.home as HomeConfig)?.popup ?? {}) },
+    popup: publicPopup({ ...DEFAULT_HOME.popup, ...((configMap.home as HomeConfig)?.popup ?? {}) }),
     // Sekcja opcjonalna — nie ma jej w DEFAULT_HOME, więc przepisujemy wprost.
     // (Ten obiekt jest składany klucz po kluczu, więc każdy NOWY klucz configu
     // trzeba tu dopisać — inaczej po cichu ginie w drodze do storefrontu.)
@@ -363,7 +384,9 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   // Omnibus: „najniższa cena z 30 dni" tylko dla produktów w promocji (oldPrice),
   // i tylko gdy włączone w ustawieniach zgodności.
   const omnibusIds = compliance.omnibus.enabled
-    ? shopProducts.filter((p) => p.oldPrice && !p.priceOnRequest).map((p) => p.id)
+    ? shopProducts
+        .filter((p) => p.oldPrice && !p.priceOnRequest)
+        .map((p) => ({ id: p.id, price: p.price }))
     : [];
   const lowestMap = await getLowestPrices30(omnibusIds);
 
@@ -394,7 +417,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     deliveryInfo: (p.deliveryInfo as string[]) ?? [],
     sortOrder: p.sortOrder,
     type: (p.type as StorefrontProduct["type"]) ?? "physical",
-    fulfillment: (p.fulfillment as StorefrontProduct["fulfillment"]) ?? {},
+    fulfillment: publicFulfillment(p.fulfillment),
   }));
 
   return {

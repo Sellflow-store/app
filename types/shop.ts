@@ -123,7 +123,14 @@ export interface PopupConfig {
   placeholder: string;
   disclaimer: string;
   successTitle: string;
+  /** Nieużywane od double opt-in: po zapisie popup zawsze prosi o potwierdzenie
+   *  w mailu (stare teksty obiecywały kod „już wysłany”). Zostaje dla zgodności. */
   successText: string;
+  /** Kod z Rabatów wysyłany mailem po potwierdzeniu zapisu. Tylko w panelu:
+   *  storefront dostaje zamiast niego samo `hasReward`, żeby kodu nie dało się
+   *  wyczytać ze strony bez zapisu. */
+  rewardCode?: string;
+  hasReward?: boolean;
 }
 
 /** Czym metoda dostawy JEST — etykieta i cena tego nie mówią, a od tego zależy,

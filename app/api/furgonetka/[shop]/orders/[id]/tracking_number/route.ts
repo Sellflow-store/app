@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, shopIntegrations } from "@/lib/db/schema";
 import { authorizeFurgonetka, FURGONETKA_PROVIDER } from "@/lib/furgonetka-access";
@@ -65,18 +65,32 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const [updated] = await db
     .update(orders)
-    .set({
-      carrier,
-      trackingNumber: number,
-      ...(becomesShipped ? { status: "shipped" } : {}),
-      updatedAt: new Date(),
-    })
+    .set({ carrier, trackingNumber: number, updatedAt: new Date() })
     .where(and(eq(orders.shopId, access.shopId), eq(orders.orderNumber, id)))
     .returning();
 
+  // Status zmieniamy osobnym, warunkowym UPDATE-em: gdy równolegle przyjdzie
+  // powtórzone żądanie Furgonetki albo merchant kliknie „wysłane" w panelu,
+  // tylko jedno wejście w „wysłane" dostanie wiersz, więc mail pójdzie raz.
+  let shippedNow = false;
+  if (becomesShipped) {
+    const moved = await db
+      .update(orders)
+      .set({ status: "shipped", updatedAt: new Date() })
+      .where(
+        and(
+          eq(orders.shopId, access.shopId),
+          eq(orders.orderNumber, id),
+          inArray(orders.status, ["pending", "processing"]),
+        ),
+      )
+      .returning({ id: orders.id });
+    shippedNow = moved.length > 0;
+  }
+
   // Mail leci raz — przy wejściu w „wysłane". Powtórzony numer (korekta po
   // stronie merchanta) aktualizuje zamówienie, ale nie zasypuje klienta.
-  if (becomesShipped) {
+  if (shippedNow) {
     try {
       const email = orderShippedEmail({
         shopName: access.shopName,

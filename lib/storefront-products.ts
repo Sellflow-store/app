@@ -1,3 +1,4 @@
+import { stripHtml } from "./sanitize";
 import type { StorefrontProduct } from "@/types/shop";
 
 /** Jedna etykieta dla produktów bez ceny półkowej — używana na karcie, liście
@@ -36,7 +37,9 @@ export function searchProducts(products: StorefrontProduct[], query: string): St
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (terms.length === 0) return [];
   return products.filter((p) => {
-    const haystack = [p.name, p.category, p.shortDesc, p.description]
+    // Opis to HTML z edytora: szukamy w tekście, nie w znacznikach, inaczej
+    // „strong” czy „span” pasowałyby do prawie każdego produktu.
+    const haystack = [p.name, p.category, p.shortDesc, stripHtml(p.description, 5000)]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();

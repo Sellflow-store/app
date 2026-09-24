@@ -42,37 +42,33 @@ export default async function LegalPage({
   let terms: LegalConfig = DEFAULT_LEGAL;
   let privacy: LegalConfig = DEFAULT_LEGAL;
 
-  try {
-    const access = await getShopAccess(shopSlug);
-    if (access) {
-      const [shop, rows] = await Promise.all([
-        db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
-        db.select().from(shopConfig).where(eq(shopConfig.shopId, access.shopId)),
-      ]);
-      const cfg = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  const access = await getShopAccess(shopSlug);
+  if (access) {
+    const [shop, rows] = await Promise.all([
+      db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
+      db.select().from(shopConfig).where(eq(shopConfig.shopId, access.shopId)),
+    ]);
+    const cfg = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
-      if (shop) {
-        shopName = shop.name;
-        shopUrl = shopPublicUrl(shop);
-      }
-
-      const savedAccount = (cfg.account as Partial<AccountConfig>) ?? {};
-      account = {
-        ...DEFAULT_ACCOUNT,
-        ...savedAccount,
-        company: { ...DEFAULT_ACCOUNT.company, ...(savedAccount.company ?? {}) },
-      };
-      about = { ...DEFAULT_ABOUT, ...((cfg.about as Partial<AboutConfig>) ?? {}) };
-      const savedBranding = (cfg.branding as Partial<BrandingConfig>) ?? {};
-      branding = { ...DEFAULT_BRANDING, ...savedBranding, shopName: savedBranding.shopName || shopName };
-      checkout = { ...DEFAULT_CHECKOUT, ...((cfg.checkout as Partial<CheckoutConfig>) ?? {}) };
-      delivery = normalizeDeliveryConfig(cfg.delivery as Partial<DeliveryConfig> | undefined);
-      legal = normalizeLegalData(cfg.legal as Partial<LegalDataConfig> | undefined);
-      terms = { ...DEFAULT_LEGAL, ...((cfg.terms as Partial<LegalConfig>) ?? {}) };
-      privacy = { ...DEFAULT_LEGAL, ...((cfg.privacy as Partial<LegalConfig>) ?? {}) };
+    if (shop) {
+      shopName = shop.name;
+      shopUrl = shopPublicUrl(shop);
     }
-  } catch {
-    // Baza jeszcze nieskonfigurowana — pokaż pusty formularz zamiast błędu.
+
+    const savedAccount = (cfg.account as Partial<AccountConfig>) ?? {};
+    account = {
+      ...DEFAULT_ACCOUNT,
+      ...savedAccount,
+      company: { ...DEFAULT_ACCOUNT.company, ...(savedAccount.company ?? {}) },
+    };
+    about = { ...DEFAULT_ABOUT, ...((cfg.about as Partial<AboutConfig>) ?? {}) };
+    const savedBranding = (cfg.branding as Partial<BrandingConfig>) ?? {};
+    branding = { ...DEFAULT_BRANDING, ...savedBranding, shopName: savedBranding.shopName || shopName };
+    checkout = { ...DEFAULT_CHECKOUT, ...((cfg.checkout as Partial<CheckoutConfig>) ?? {}) };
+    delivery = normalizeDeliveryConfig(cfg.delivery as Partial<DeliveryConfig> | undefined);
+    legal = normalizeLegalData(cfg.legal as Partial<LegalDataConfig> | undefined);
+    terms = { ...DEFAULT_LEGAL, ...((cfg.terms as Partial<LegalConfig>) ?? {}) };
+    privacy = { ...DEFAULT_LEGAL, ...((cfg.privacy as Partial<LegalConfig>) ?? {}) };
   }
 
   return (

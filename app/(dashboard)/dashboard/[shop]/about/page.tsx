@@ -14,18 +14,14 @@ export default async function AboutPage({
   const { shop: shopSlug } = await params;
   let initialConfig: AboutConfig = DEFAULT_ABOUT;
 
-  try {
-    const access = await getShopAccess(shopSlug);
-    if (access) {
-      const row = await db.query.shopConfig.findFirst({
-        where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "about")),
-      });
-      if (row?.value) {
-        initialConfig = { ...DEFAULT_ABOUT, ...(row.value as Partial<AboutConfig>) };
-      }
+  const access = await getShopAccess(shopSlug);
+  if (access) {
+    const row = await db.query.shopConfig.findFirst({
+      where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "about")),
+    });
+    if (row?.value) {
+      initialConfig = { ...DEFAULT_ABOUT, ...(row.value as Partial<AboutConfig>) };
     }
-  } catch {
-    // DB not configured yet — render with defaults
   }
 
   return <AboutForm shopSlug={shopSlug} initialConfig={initialConfig} />;

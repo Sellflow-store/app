@@ -14,18 +14,14 @@ export default async function DeliveryPage({
   const { shop: shopSlug } = await params;
   let initialConfig: DeliveryConfig = DEFAULT_DELIVERY;
 
-  try {
-    const access = await getShopAccess(shopSlug);
-    if (access) {
-      const row = await db.query.shopConfig.findFirst({
-        where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "delivery")),
-      });
-      if (row?.value) {
-        initialConfig = normalizeDeliveryConfig(row.value as Partial<DeliveryConfig>);
-      }
+  const access = await getShopAccess(shopSlug);
+  if (access) {
+    const row = await db.query.shopConfig.findFirst({
+      where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "delivery")),
+    });
+    if (row?.value) {
+      initialConfig = normalizeDeliveryConfig(row.value as Partial<DeliveryConfig>);
     }
-  } catch {
-    // DB not configured yet — render with defaults
   }
 
   return <DeliveryForm shopSlug={shopSlug} initialConfig={initialConfig} />;

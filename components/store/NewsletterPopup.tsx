@@ -91,7 +91,13 @@ export default function NewsletterPopup({ shopSlug, config }: Props) {
             <h2 className="text-xl font-bold tracking-tight text-ink mb-2">
               {config.successTitle || "Dziękujemy!"}
             </h2>
-            <p className="text-sm text-ink-2 font-light">{config.successText}</p>
+            {/* Fixed copy: double opt-in means nothing is sent or saved until
+                the link in the e-mail is confirmed, whatever older saved
+                texts ("the code has been sent") used to promise. */}
+            <p className="text-sm text-ink-2 font-light">
+              Wysłaliśmy Ci e-mail z linkiem. Kliknij go, żeby potwierdzić zapis
+              {config.hasReward ? ", a od razu wyślemy Ci kod rabatowy." : "."}
+            </p>
           </div>
         ) : (
           <>

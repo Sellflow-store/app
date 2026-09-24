@@ -7,12 +7,14 @@ import { searchProducts } from "@/lib/storefront-products";
 
 interface Props {
   params: Promise<{ shop: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string | string[] }>;
 }
 
 export default async function SearchPage({ params, searchParams }: Props) {
   const { shop: shopSlug } = await params;
-  const { q = "" } = await searchParams;
+  // ?q=a&q=b arrives as an array; take the first instead of crashing on .trim().
+  const { q: rawQ } = await searchParams;
+  const q = (Array.isArray(rawQ) ? rawQ[0] : rawQ) ?? "";
   const shop = await getShopBySlug(shopSlug);
   if (!shop) notFound();
   const base = await storefrontBase(shop.slug);
@@ -69,7 +71,9 @@ export default async function SearchPage({ params, searchParams }: Props) {
 
 export async function generateMetadata({ params, searchParams }: Props) {
   const { shop: shopSlug } = await params;
-  const { q = "" } = await searchParams;
+  // ?q=a&q=b arrives as an array; take the first instead of crashing on .trim().
+  const { q: rawQ } = await searchParams;
+  const q = (Array.isArray(rawQ) ? rawQ[0] : rawQ) ?? "";
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
   const query = q.trim();

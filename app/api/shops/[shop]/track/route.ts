@@ -19,9 +19,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, shopSlug),
-    columns: { id: true, active: true, suspended: true },
+    columns: { id: true, active: true, suspended: true, deletedAt: true },
   });
-  if (!shop || !shop.active || shop.suspended) {
+  if (!shop || !shop.active || shop.suspended || shop.deletedAt) {
     return NextResponse.json({ error: "Shop not found" }, { status: 404 });
   }
 

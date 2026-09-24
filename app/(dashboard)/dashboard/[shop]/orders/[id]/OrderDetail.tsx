@@ -86,7 +86,9 @@ export default function OrderDetail({ shopSlug, order }: Props) {
         body: JSON.stringify(patch),
       });
       if (!res.ok) {
-        setError("Nie udało się zapisać zmiany. Spróbuj ponownie.");
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? "Nie udało się zapisać zmiany. Spróbuj ponownie.");
+        router.refresh();
         return;
       }
       router.refresh();

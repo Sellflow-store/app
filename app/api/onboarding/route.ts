@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { adminEmailAllowlist } from "@/lib/api";
 import { clerkConfigured } from "@/lib/auth-env";
 import { SLUG_RE, findFreeSlug, slugify } from "@/lib/slug";
+import { toShopSlug } from "@/lib/slug-rules";
 import type { StoreBootstrap } from "@/lib/brand/types";
 import { isDataUrl, isImageDataUrl, uploadDataUrl } from "@/lib/blob";
 
@@ -39,7 +40,10 @@ export async function POST(req: NextRequest) {
   if (!shopName?.trim()) {
     return NextResponse.json({ error: "Nazwa sklepu jest wymagana." }, { status: 400 });
   }
-  if (!SLUG_RE.test(slug)) {
+  // Repair instead of rejecting: the user may already have signed up, and the
+  // save page's retry resends the same payload, so a 400 here is a dead end.
+  const baseSlug = SLUG_RE.test(slug ?? "") ? slug : toShopSlug(slug || shopName);
+  if (!SLUG_RE.test(baseSlug)) {
     return NextResponse.json(
       { error: "Adres może zawierać tylko małe litery, cyfry i myślniki (min. 3 znaki)." },
       { status: 400 },
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
   // base-3, …). At this point the user may have already signed up — a 409
   // here would strand them on /onboarding/save with no way to change the
   // name, so we rename instead and the wizard's name step warns up front.
-  const finalSlug = await findFreeSlug(slug);
+  const finalSlug = await findFreeSlug(baseSlug);
 
   // Upsert user against Clerk identity (or dev fallback).
   let email = "dev@sellflow.local";
@@ -284,12 +288,12 @@ function homeFromBootstrap(shopName: string, b?: StoreBootstrap) {
       enabled: false,
       delaySeconds: 5,
       title: "Zapisz się do newslettera",
-      description: "Otrzymaj kod rabatowy na pierwsze zamówienie.",
-      buttonLabel: "Odbierz rabat",
+      description: "Nowości i oferty tylko dla subskrybentów.",
+      buttonLabel: "Zapisz się",
       placeholder: "Twój adres e-mail",
       disclaimer: "Żadnego spamu.",
       successTitle: "Dziękujemy!",
-      successText: "Kod został wysłany na Twojego maila.",
+      successText: "Sprawdź skrzynkę i potwierdź zapis.",
     },
   };
 }

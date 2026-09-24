@@ -44,8 +44,10 @@ export default function StyleSection({ shopSlug, initialBranding, initialBrand }
     setSelected(id);
     setStatus("saving");
 
-    const nextBranding: BrandingConfig = {
-      ...branding,
+    // Only the preset-owned fields go to the API (it merges branding), so a
+    // stale copy of logo/name/fonts edited on the Branding page can't be
+    // written back from this tab's load-time state.
+    const presetBranding = {
       primaryColor: p.palette.ink,
       accentColor: p.palette.accent,
       secondaryColor: p.palette.secondary,
@@ -53,7 +55,8 @@ export default function StyleSection({ shopSlug, initialBranding, initialBrand }
       fontFamily: p.fonts.display,
       bodyFontFamily: p.fonts.body,
       radius: p.radius,
-    };
+    } satisfies Partial<BrandingConfig>;
+    const nextBranding: BrandingConfig = { ...branding, ...presetBranding };
     const nextBrand = {
       ...(brand ?? {}),
       preset: p.id,
@@ -63,7 +66,7 @@ export default function StyleSection({ shopSlug, initialBranding, initialBrand }
       layout_type: p.layout_type,
     };
 
-    const okBranding = await saveConfig(shopSlug, "branding", nextBranding);
+    const okBranding = await saveConfig(shopSlug, "branding", presetBranding);
     const okBrand = await saveConfig(shopSlug, "brand", nextBrand);
 
     if (okBranding && okBrand) {

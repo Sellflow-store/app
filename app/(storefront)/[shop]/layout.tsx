@@ -89,7 +89,10 @@ export default async function ShopLayout({
   return (
     <StoreBaseProvider base={base}>
       {children}
-      <TrackVisit slug={shop} />
+      <TrackVisit
+        slug={shop}
+        bannerEnabled={(data?.compliance ?? DEFAULT_COMPLIANCE).cookieBanner.enabled}
+      />
       {data && <StorefrontScripts integrations={data.integrations} compliance={data.compliance} />}
     </StoreBaseProvider>
   );

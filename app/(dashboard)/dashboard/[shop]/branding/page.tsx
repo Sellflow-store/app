@@ -1,24 +1,10 @@
 import { db } from "@/lib/db";
-import { shopConfig, shops, users } from "@/lib/db/schema";
+import { shopConfig, shops } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
-import { auth } from "@clerk/nextjs/server";
+import { getShopAccess } from "@/lib/api";
+import { DEFAULT_BRANDING } from "@/lib/shop";
 import type { BrandingConfig } from "@/types/shop";
-import { DEFAULT_LOGO_HEIGHT, DEFAULT_LOGO_MAX_WIDTH } from "@/types/shop";
 import BrandingForm from "./BrandingForm";
-
-const DEFAULT_BRANDING: BrandingConfig = {
-  shopName: "Mój sklep",
-  tagline: "",
-  logoUrl: "",
-  logoHeight: DEFAULT_LOGO_HEIGHT,
-  logoMaxWidth: DEFAULT_LOGO_MAX_WIDTH,
-  faviconUrl: "",
-  primaryColor: "#12128c",
-  accentColor: "#db00b2",
-  paperColor: "",
-  fontFamily: "Space Grotesk",
-  bodyFontFamily: "Inter Tight",
-};
 
 export default async function BrandingPage({
   params,
@@ -29,38 +15,25 @@ export default async function BrandingPage({
   let initialConfig: BrandingConfig = DEFAULT_BRANDING;
   let dbShopName = "";
 
-  try {
-    const { userId: clerkId } = await auth();
-    if (clerkId) {
-      const user = await db.query.users.findFirst({
-        where: eq(users.clerkId, clerkId),
-      });
-      if (user) {
-        const shop = await db.query.shops.findFirst({
-          where: and(eq(shops.slug, shopSlug), eq(shops.ownerId, user.id)),
-        });
-        if (shop) {
-          dbShopName = shop.name;
-          const row = await db.query.shopConfig.findFirst({
-            where: and(
-              eq(shopConfig.shopId, shop.id),
-              eq(shopConfig.key, "branding")
-            ),
-          });
-          if (row?.value) {
-            initialConfig = {
-              ...DEFAULT_BRANDING,
-              ...(row.value as Partial<BrandingConfig>),
-              shopName: (row.value as BrandingConfig).shopName ?? shop.name,
-            };
-          } else {
-            initialConfig = { ...DEFAULT_BRANDING, shopName: shop.name };
-          }
-        }
-      }
+  // getShopAccess, not an ownerId lookup: an admin using "login as owner" must
+  // see (and save over) the merchant's real branding, not the defaults.
+  // Errors propagate to error.tsx: rendering defaults on a failed load would
+  // let one click of "Save" overwrite the real config with them.
+  const access = await getShopAccess(shopSlug);
+  if (access) {
+    const [shop, row] = await Promise.all([
+      db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
+      db.query.shopConfig.findFirst({
+        where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "branding")),
+      }),
+    ]);
+    if (shop) {
+      dbShopName = shop.name;
+      const saved = (row?.value as Partial<BrandingConfig> | undefined) ?? {};
+      // Same defaults as the storefront (lib/shop), so the form shows the
+      // colors the shop actually renders with.
+      initialConfig = { ...DEFAULT_BRANDING, ...saved, shopName: saved.shopName ?? shop.name };
     }
-  } catch {
-    // DB not configured yet — render with defaults
   }
 
   return (

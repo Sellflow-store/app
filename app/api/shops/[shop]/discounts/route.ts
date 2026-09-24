@@ -45,7 +45,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
   let expiresAt: Date | null = null;
   if (body.expiresAt) {
-    expiresAt = new Date(body.expiresAt);
+    // Zapisujemy sam dzień (północ UTC); checkDiscountCode liczy z niego
+    // koniec tego dnia czasu polskiego (lib/discounts.ts → discountDeadline).
+    const day = /^(\d{4})-(\d{2})-(\d{2})/.exec(body.expiresAt);
+    expiresAt = day ? new Date(Date.UTC(+day[1], +day[2] - 1, +day[3])) : new Date(NaN);
     if (isNaN(expiresAt.getTime())) {
       return NextResponse.json({ error: "Niepoprawna data wygaśnięcia." }, { status: 400 });
     }

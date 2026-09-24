@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { shopConfig } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { CONFIG_KEYS, MAX_CONFIG_BYTES, scrubConfigValue } from "@/lib/config-validation";
 
 type Params = { params: Promise<{ shop: string }> };
+
+// Keys written by more than one screen (Branding page + Settings → Style).
+// Each screen sends only the fields it edits and the database merges them
+// into the stored object (jsonb ||, top level), so saving one screen can no
+// longer roll back what the other just saved. Every other key belongs to a
+// single form that sends its whole blob, and a full replace is what lets that
+// form remove entries.
+const MERGED_KEYS = new Set(["branding"]);
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const { shop } = await params;
@@ -52,7 +60,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     })
     .onConflictDoUpdate({
       target: [shopConfig.shopId, shopConfig.key],
-      set: { value: clean, updatedAt: new Date() },
+      set: {
+        value: MERGED_KEYS.has(key)
+          ? sql`${shopConfig.value} || excluded.value`
+          : clean,
+        updatedAt: new Date(),
+      },
     });
 
   return NextResponse.json({ ok: true });

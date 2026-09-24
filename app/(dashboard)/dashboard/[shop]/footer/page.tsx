@@ -14,21 +14,17 @@ export default async function FooterPage({
   const { shop: shopSlug } = await params;
   let initialConfig: FooterConfig = DEFAULT_FOOTER;
 
-  try {
-    const access = await getShopAccess(shopSlug);
-    if (access) {
-      const row = await db.query.shopConfig.findFirst({
-        where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "footer")),
-      });
-      const saved = (row?.value as Partial<FooterConfig>) ?? {};
-      initialConfig = {
-        ...DEFAULT_FOOTER,
-        ...saved,
-        social: { ...DEFAULT_FOOTER.social, ...(saved.social ?? {}) },
-      };
-    }
-  } catch {
-    // DB not configured yet — render with defaults
+  const access = await getShopAccess(shopSlug);
+  if (access) {
+    const row = await db.query.shopConfig.findFirst({
+      where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "footer")),
+    });
+    const saved = (row?.value as Partial<FooterConfig>) ?? {};
+    initialConfig = {
+      ...DEFAULT_FOOTER,
+      ...saved,
+      social: { ...DEFAULT_FOOTER.social, ...(saved.social ?? {}) },
+    };
   }
 
   return <FooterForm shopSlug={shopSlug} initialConfig={initialConfig} />;

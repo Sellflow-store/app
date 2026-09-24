@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { shops, shopConfig, products, orders, customers, users, discountCodes } from "@/lib/db/schema";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { shops, shopConfig, products, orders, customers, users } from "@/lib/db/schema";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { DEFAULT_CHECKOUT, normalizeDeliveryConfig } from "@/lib/shop";
-import { checkDiscountCode } from "@/lib/discounts";
+import { checkDiscountCode, claimDiscountUse, releaseDiscountUse } from "@/lib/discounts";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationEmail, merchantNewOrderEmail } from "@/lib/email-templates";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (limited) return limited;
 
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
-  if (!shop || !shop.active || shop.suspended) return bad("Shop not found", 404);
+  if (!shop || !shop.active || shop.suspended || shop.deletedAt) return bad("Shop not found", 404);
 
   let body: OrderRequest;
   try {
@@ -247,88 +247,132 @@ export async function POST(req: NextRequest, { params }: Params) {
     codFee: codFee > 0 ? codFee.toFixed(2) : undefined,
   };
 
-  // ── Insert order; sequential number per shop, retry on collision ────────
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(orders)
-    .where(eq(orders.shopId, shop.id));
+  // ── Reserve discount + stock, then insert the order ────────────────────
+  // neon-http has no transactions, so each reservation is a conditional
+  // UPDATE that the database itself refuses when the limit is gone. Two
+  // shoppers racing for the last item or the last use of a code can't both
+  // win. Whatever was reserved is handed back if a later step fails.
+  const reservedStock: { id: string; qty: number }[] = [];
+  let discountClaimed = false;
 
-  let order: typeof orders.$inferSelect | null = null;
-  for (let attempt = 0; attempt < 3 && !order; attempt++) {
-    const orderNumber = `ZAM-${String(count + 1 + attempt).padStart(5, "0")}`;
-    try {
-      const [inserted] = await db
-        .insert(orders)
-        .values({
-          shopId: shop.id,
-          orderNumber,
-          customerEmail: email,
-          customerName: name,
-          customerPhone: phone,
-          items: orderItems,
-          subtotal: subtotal.toFixed(2),
-          shippingCost: shippingCost.toFixed(2),
-          discountAmount: discountAmount.toFixed(2),
-          discountCode: appliedDiscount?.code ?? null,
-          total: total.toFixed(2),
-          paymentMethod: body.paymentMethod,
-          shippingAddress,
-          pickupPoint: pickupPoint ?? {},
-          carrier: pickupPoint ? "inpost" : null,
-          notes: body.notes?.trim() || null,
-        })
-        .returning();
-      order = inserted;
-    } catch (e) {
-      // unique violation on (shopId, orderNumber) — concurrent order, bump and retry
-      const isUnique = e instanceof Error && /unique|duplicate/i.test(e.message);
-      if (!isUnique || attempt === 2) throw e;
-    }
-  }
-  if (!order) return bad("Nie udało się zapisać zamówienia. Spróbuj ponownie.", 500);
-
-  if (appliedDiscount) {
-    await db
-      .update(discountCodes)
-      .set({ usesCount: sql`${discountCodes.usesCount} + 1` })
-      .where(eq(discountCodes.id, appliedDiscount.id));
-  }
-
-  // ── Decrement stock for tracked products (floor at 0) ───────────────────
-  // Validated above; the small validate→decrement race is acceptable at MVP
-  // scale and GREATEST() guarantees stock never goes negative.
-  for (const [id, qty] of requested) {
-    const p = productMap.get(id)!;
-    if (p.stock != null) {
+  const releaseReservations = async () => {
+    for (const r of reservedStock) {
       await db
         .update(products)
-        .set({ stock: sql`GREATEST(${products.stock} - ${qty}, 0)`, updatedAt: new Date() })
-        .where(and(eq(products.id, id), eq(products.shopId, shop.id)));
+        .set({ stock: sql`${products.stock} + ${r.qty}`, updatedAt: new Date() })
+        .where(and(eq(products.id, r.id), eq(products.shopId, shop.id), sql`${products.stock} IS NOT NULL`))
+        .catch((e) => console.error("Order: stock release failed", r.id, e));
     }
+    if (discountClaimed && appliedDiscount) {
+      await releaseDiscountUse(appliedDiscount.id).catch((e) =>
+        console.error("Order: discount release failed", appliedDiscount?.id, e),
+      );
+    }
+  };
+
+  let order: typeof orders.$inferSelect | null = null;
+  try {
+    if (appliedDiscount) {
+      discountClaimed = await claimDiscountUse(appliedDiscount.id);
+      if (!discountClaimed) {
+        return bad("Limit użyć tego kodu został właśnie wyczerpany. Usuń kod i złóż zamówienie ponownie.", 409);
+      }
+    }
+
+    for (const [id, qty] of requested) {
+      const p = productMap.get(id)!;
+      if (p.stock == null) continue; // untracked (digital, service, made to order)
+      const [taken] = await db
+        .update(products)
+        .set({ stock: sql`${products.stock} - ${qty}`, updatedAt: new Date() })
+        .where(and(eq(products.id, id), eq(products.shopId, shop.id), gte(products.stock, qty)))
+        .returning({ id: products.id });
+      if (!taken) {
+        await releaseReservations();
+        return bad(`Produkt „${p.name}" został właśnie wykupiony. Zmniejsz ilość albo usuń go z koszyka.`, 409);
+      }
+      reservedStock.push({ id, qty });
+    }
+
+    // Sequential number per shop. MAX (not COUNT) so a missing row can't make
+    // the next number collide forever; the unique index settles real races
+    // and the loop simply takes the next number.
+    for (let attempt = 0; attempt < 6 && !order; attempt++) {
+      const [{ last }] = await db
+        .select({
+          last: sql<number>`coalesce(max(nullif(regexp_replace(${orders.orderNumber}, '[^0-9]', '', 'g'), '')::bigint), 0)::int`,
+        })
+        .from(orders)
+        .where(eq(orders.shopId, shop.id));
+      const orderNumber = `ZAM-${String(last + 1).padStart(5, "0")}`;
+      try {
+        const [inserted] = await db
+          .insert(orders)
+          .values({
+            shopId: shop.id,
+            orderNumber,
+            customerEmail: email,
+            customerName: name,
+            customerPhone: phone,
+            items: orderItems,
+            subtotal: subtotal.toFixed(2),
+            shippingCost: shippingCost.toFixed(2),
+            discountAmount: discountAmount.toFixed(2),
+            discountCode: appliedDiscount?.code ?? null,
+            total: total.toFixed(2),
+            paymentMethod: body.paymentMethod,
+            shippingAddress,
+            pickupPoint: pickupPoint ?? {},
+            carrier: pickupPoint ? "inpost" : null,
+            notes: body.notes?.trim() || null,
+          })
+          .returning();
+        order = inserted;
+      } catch (e) {
+        // unique violation on (shopId, orderNumber): a concurrent order took
+        // this number, read the new maximum and try again.
+        const isUnique = e instanceof Error && /unique|duplicate/i.test(e.message);
+        if (!isUnique) throw e;
+        await new Promise((r) => setTimeout(r, 20 + Math.random() * 80));
+      }
+    }
+  } catch (e) {
+    await releaseReservations();
+    throw e;
+  }
+  if (!order) {
+    await releaseReservations();
+    return bad("Nie udało się zapisać zamówienia. Spróbuj ponownie.", 500);
   }
 
   // ── Upsert customer aggregate ────────────────────────────────────────────
-  await db
-    .insert(customers)
-    .values({
-      shopId: shop.id,
-      email,
-      name,
-      phone,
-      address: { street, zip, city },
-      totalOrders: 1,
-      totalSpent: total.toFixed(2),
-    })
-    .onConflictDoUpdate({
-      target: [customers.shopId, customers.email],
-      set: {
+  // The order already exists: a failure here must not answer 500, or the
+  // shopper retries and places a duplicate order.
+  try {
+    await db
+      .insert(customers)
+      .values({
+        shopId: shop.id,
+        email,
         name,
         phone,
         address: { street, zip, city },
-        totalOrders: sql`${customers.totalOrders} + 1`,
-        totalSpent: sql`${customers.totalSpent} + ${total.toFixed(2)}`,
-      },
-    });
+        totalOrders: 1,
+        totalSpent: total.toFixed(2),
+      })
+      .onConflictDoUpdate({
+        target: [customers.shopId, customers.email],
+        set: {
+          name,
+          phone,
+          address: { street, zip, city },
+          totalOrders: sql`${customers.totalOrders} + 1`,
+          totalSpent: sql`${customers.totalSpent} + ${total.toFixed(2)}`,
+        },
+      });
+  } catch (e) {
+    console.error("Order: customer upsert failed", order.orderNumber, e);
+  }
 
   // ── Emails — best-effort, never fail the order on email problems ────────
   const transferTitle = `Zamówienie ${order.orderNumber}`;

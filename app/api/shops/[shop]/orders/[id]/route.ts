@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { orders, shops } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
+import { canTransition, isOrderStatus, releaseCancelledOrder } from "@/lib/order-lifecycle";
 import { getShopAccess } from "@/lib/api";
 import { sendEmail } from "@/lib/email";
 import { orderShippedEmail } from "@/lib/email-templates";
@@ -15,7 +16,6 @@ import {
 
 type Params = { params: Promise<{ shop: string; id: string }> };
 
-const STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"] as const;
 const PAYMENT_STATUSES = ["unpaid", "paid", "refunded"] as const;
 
 export async function PATCH(req: NextRequest, { params }: Params) {
@@ -31,11 +31,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }>;
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
-  if (body.status !== undefined) {
-    if (!STATUSES.includes(body.status as (typeof STATUSES)[number])) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-    }
-    updates.status = body.status;
+  if (body.status !== undefined && !isOrderStatus(body.status)) {
+    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
   if (body.paymentStatus !== undefined) {
     if (!PAYMENT_STATUSES.includes(body.paymentStatus as (typeof PAYMENT_STATUSES)[number])) {
@@ -74,14 +71,45 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const statusChange =
+    body.status !== undefined && isOrderStatus(body.status) && body.status !== existing.status
+      ? body.status
+      : null;
+  if (statusChange && !canTransition(existing.status, statusChange)) {
+    return NextResponse.json(
+      { error: "Tej zmiany statusu nie da się wykonać dla zamówienia w obecnym stanie." },
+      { status: 409 },
+    );
+  }
+  if (statusChange) updates.status = statusChange;
+
+  // The status condition makes the transition happen exactly once: a double
+  // click or a concurrent Furgonetka update finds the status already changed
+  // and gets no row, so stock, discount and the shipped email are handled once.
   const [updated] = await db
     .update(orders)
     .set(updates)
-    .where(and(eq(orders.id, id), eq(orders.shopId, access.shopId)))
+    .where(
+      and(
+        eq(orders.id, id),
+        eq(orders.shopId, access.shopId),
+        ...(statusChange ? [eq(orders.status, existing.status)] : []),
+      ),
+    )
     .returning();
+  if (!updated) {
+    return NextResponse.json(
+      { error: "Zamówienie zmieniło się w międzyczasie. Odśwież stronę i spróbuj ponownie." },
+      { status: 409 },
+    );
+  }
+
+  if (statusChange === "cancelled") {
+    await releaseCancelledOrder(updated);
+  }
 
   // Notify the customer once, on the transition into "shipped"
-  if (updates.status === "shipped" && existing.status !== "shipped") {
+  if (statusChange === "shipped") {
     try {
       const shop = await db.query.shops.findFirst({ where: eq(shops.id, access.shopId) });
       if (shop) {

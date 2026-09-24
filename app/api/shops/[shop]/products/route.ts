@@ -34,12 +34,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     price: string;
     oldPrice?: string | null;
     priceOnRequest?: boolean;
-    category?: string;
-    badge?: string;
+    category?: string | null;
+    badge?: string | null;
     sizes?: string[];
     visible?: boolean;
-    shortDesc?: string;
-    description?: string;
+    shortDesc?: string | null;
+    description?: string | null;
     images?: string[];
     specs?: { key: string; value: string }[];
     stock?: number | null;

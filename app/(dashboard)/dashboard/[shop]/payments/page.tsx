@@ -14,18 +14,14 @@ export default async function PaymentsPage({
   const { shop: shopSlug } = await params;
   let initialConfig: CheckoutConfig = DEFAULT_CHECKOUT;
 
-  try {
-    const access = await getShopAccess(shopSlug);
-    if (access) {
-      const row = await db.query.shopConfig.findFirst({
-        where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "checkout")),
-      });
-      if (row?.value) {
-        initialConfig = { ...DEFAULT_CHECKOUT, ...(row.value as Partial<CheckoutConfig>) };
-      }
+  const access = await getShopAccess(shopSlug);
+  if (access) {
+    const row = await db.query.shopConfig.findFirst({
+      where: and(eq(shopConfig.shopId, access.shopId), eq(shopConfig.key, "checkout")),
+    });
+    if (row?.value) {
+      initialConfig = { ...DEFAULT_CHECKOUT, ...(row.value as Partial<CheckoutConfig>) };
     }
-  } catch {
-    // DB not configured yet — render with defaults
   }
 
   return <PaymentsForm shopSlug={shopSlug} initialConfig={initialConfig} />;

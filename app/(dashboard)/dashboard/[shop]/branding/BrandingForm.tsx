@@ -159,8 +159,10 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           key: "branding",
+          // Only the fields this form edits: the API merges branding, so
+          // fields owned by Settings → Style (radius, secondaryColor) stay as
+          // they are instead of being reset to this page's load-time snapshot.
           value: {
-            ...initialConfig,
             shopName,
             tagline,
             logoUrl,
@@ -177,7 +179,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             logoUrlLight,
             fontFamily: displayFont,
             bodyFontFamily: bodyFont,
-          } satisfies BrandingConfig,
+          } satisfies Partial<BrandingConfig>,
         }),
       });
       setSaveState(res.ok ? "saved" : "error");
