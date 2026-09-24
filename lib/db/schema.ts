@@ -61,7 +61,10 @@ export const shops = pgTable(
   (t) => [
     uniqueIndex("shops_slug_idx").on(t.slug),
     uniqueIndex("shops_custom_domain_idx").on(t.customDomain),
-    index("shops_owner_idx").on(t.ownerId),
+    // One shop per account (soft-deleted ones included, as the onboarding
+    // guard counts them too). Unique so two concurrent onboarding requests
+    // (two tabs, a double submit) can't both create a shop.
+    uniqueIndex("shops_owner_unique_idx").on(t.ownerId),
   ]
 );
 

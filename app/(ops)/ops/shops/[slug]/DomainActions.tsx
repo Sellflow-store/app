@@ -9,15 +9,26 @@ interface DnsRecord {
   name: string;
   value: string;
 }
+interface OwnershipRecord {
+  type: "TXT";
+  name: string;
+  fqdn: string;
+  value: string;
+}
 interface DomainStatus {
   configured: boolean;
   verified: boolean;
   misconfigured: boolean;
+  /** TXT proving this shop's claim is published (lib/domain-ownership). */
+  ownershipVerified?: boolean;
+  /** Domain serves the shop: DNS + Vercel + ownership. */
+  active?: boolean;
   verification: { type: string; domain: string; value: string }[];
 }
 interface DomainResponse {
   domain: string | null;
   dns?: DnsRecord;
+  ownership?: OwnershipRecord | null;
   status?: DomainStatus;
   error?: string;
 }
@@ -38,6 +49,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
   const [domain, setDomain] = useState<string | null>(initialDomain);
   const [input, setInput] = useState("");
   const [dns, setDns] = useState<DnsRecord | null>(null);
+  const [ownership, setOwnership] = useState<OwnershipRecord | null>(null);
   const [status, setStatus] = useState<DomainStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -51,6 +63,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
         const data = (await res.json()) as DomainResponse;
         setDomain(data.domain);
         setDns(data.dns ?? null);
+        setOwnership(data.ownership ?? null);
         setStatus(data.status ?? null);
       }
     } finally {
@@ -68,6 +81,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
       if (cancelled) return;
       setDomain(data.domain);
       setDns(data.dns ?? null);
+      setOwnership(data.ownership ?? null);
       setStatus(data.status ?? null);
     })();
     return () => {
@@ -93,6 +107,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
       }
       setDomain(data.domain);
       setDns(data.dns ?? null);
+      setOwnership(data.ownership ?? null);
       setStatus(data.status ?? null);
       setInput("");
       router.refresh();
@@ -112,6 +127,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
       if (res.ok) {
         setDomain(null);
         setDns(null);
+        setOwnership(null);
         setStatus(null);
         router.refresh();
       } else {
@@ -195,6 +211,12 @@ export default function DomainActions({ slug, initialDomain }: Props) {
               >
                 <span style={{ color: "var(--brand-ink-2)" }}>DNS: </span>
                 {dns.type} &nbsp; {dns.name} &nbsp;→&nbsp; {dns.value}
+                {ownership && (
+                  <div className="mt-1">
+                    <span style={{ color: "var(--brand-ink-2)" }}>TXT (własność{status?.ownershipVerified ? ", OK" : ", brak"}): </span>
+                    {ownership.fqdn} &nbsp;→&nbsp; {ownership.value}
+                  </div>
+                )}
                 {status?.verification?.map((v, i) => (
                   <div key={i} className="mt-1">
                     <span style={{ color: "var(--brand-ink-2)" }}>TXT: </span>
@@ -240,7 +262,7 @@ function StatusBadge({ status }: { status: DomainStatus }) {
       </span>
     );
   }
-  if (status.verified && !status.misconfigured) {
+  if (status.active ?? (status.verified && !status.misconfigured)) {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
         style={{ background: "oklch(60% 0.16 145 / 0.14)", color: "oklch(45% 0.16 145)" }}>
@@ -248,10 +270,12 @@ function StatusBadge({ status }: { status: DomainStatus }) {
       </span>
     );
   }
+  const dnsOk = status.verified && !status.misconfigured;
   return (
     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
       style={{ background: "oklch(75% 0.15 75 / 0.16)", color: "oklch(48% 0.13 66)" }}>
-      <Clock className="w-3 h-3" strokeWidth={2} /> Oczekuje na DNS
+      <Clock className="w-3 h-3" strokeWidth={2} />{" "}
+      {dnsOk && status.ownershipVerified === false ? "Brak TXT właściciela" : "Oczekuje na DNS"}
     </span>
   );
 }
