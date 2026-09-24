@@ -19,11 +19,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     price: string;
     oldPrice: string | null;
     priceOnRequest: boolean;
-    category: string;
-    badge: string;
+    category: string | null;
+    badge: string | null;
     visible: boolean;
-    shortDesc: string;
-    description: string;
+    shortDesc: string | null;
+    description: string | null;
     images: string[];
     colors: string[];
     sizes: string[];

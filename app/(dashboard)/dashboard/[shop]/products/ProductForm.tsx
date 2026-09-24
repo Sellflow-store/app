@@ -267,14 +267,16 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       name: form.name.trim(),
       // Puste pole przy edycji = zostaw dotychczasowy adres nietknięty.
       slug: form.slug.trim() || undefined,
-      category: form.category.trim() || undefined,
+      // Puste pole = wyczyść (null). undefined zniknęłoby z JSON-a i API
+      // zostawiłoby starą wartość: skasowany badge „Promocja” wracał po zapisie.
+      category: form.category.trim() || null,
       price,
       oldPrice,
       priceOnRequest: form.priceOnRequest,
-      badge: form.badge.trim() || undefined,
+      badge: form.badge.trim() || null,
       visible: form.visible,
-      shortDesc: form.shortDesc.trim() || undefined,
-      description: htmlIsEmpty(form.description) ? undefined : form.description,
+      shortDesc: form.shortDesc.trim() || null,
+      description: htmlIsEmpty(form.description) ? null : form.description,
       images: form.images,
       sizes: parseSizes(form.sizes),
       // Stock only applies to physical products; others are unlimited.

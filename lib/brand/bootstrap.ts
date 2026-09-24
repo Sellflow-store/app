@@ -1,6 +1,7 @@
 import { fillBusinessDefaults, inferBrand, inferProducts } from "./inference";
 import { getStylePreset } from "./presets";
 import type { Brand, Business, StoreBootstrap } from "./types";
+import { toShopSlug } from "@/lib/slug-rules";
 
 /**
  * Compose the full bootstrap payload the storefront + API need to render +
@@ -62,20 +63,10 @@ function getShortId(): string {
   return id;
 }
 
-/** Strip diacritics + Polish ł, lowercase, dash-separated. Matches existing
- *  OnboardingForm.toSlug so the two flows produce the same shapes. */
+/** Shop name → slug. Same function the server uses to repair a slug
+ *  (lib/slug-rules), so what the name step checks is what gets created. */
 export function slugifyName(name: string): string {
-  const cleaned = (name || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/ł/g, "l")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 32);
-  return cleaned || "sklep";
+  return toShopSlug(name);
 }
 
 /** Combined slug for the preview iframe + initial handoff. The /api/onboarding

@@ -106,17 +106,26 @@ export default function SettingsPanel(props: Props) {
       {/* content */}
       <div className="flex-1 min-w-0 p-6 lg:p-8">
         <div className="max-w-2xl">
-          {active === "account" && (
+          {/* Sections stay mounted and are only hidden: remounting would seed
+              them again from the page's server props, which predate any save
+              made in this visit, and the next save would write that stale
+              state back. DomainSection is the exception: it re-reads the live
+              domain status from the API on mount, so fresh mounts are wanted. */}
+          <div hidden={active !== "account"}>
             <AccountSection shopSlug={props.shopSlug} accountEmail={props.accountEmail} userId={props.userId} initial={props.account} />
-          )}
-          {active === "plan" && <PlanSection currentPlan={props.plan} />}
-          {active === "theme" && <ThemeSection />}
-          {active === "shop" && (
+          </div>
+          <div hidden={active !== "plan"}>
+            <PlanSection currentPlan={props.plan} />
+          </div>
+          <div hidden={active !== "theme"}>
+            <ThemeSection />
+          </div>
+          <div hidden={active !== "shop"}>
             <ShopSection shopSlug={props.shopSlug} initialName={props.shopName} initialActive={props.active} />
-          )}
-          {active === "style" && (
+          </div>
+          <div hidden={active !== "style"}>
             <StyleSection shopSlug={props.shopSlug} initialBranding={props.branding} initialBrand={props.brand} />
-          )}
+          </div>
           {active === "domain" && (
             <DomainSection
               shopSlug={props.shopSlug}
@@ -125,9 +134,15 @@ export default function SettingsPanel(props: Props) {
               initialDomain={props.customDomain}
             />
           )}
-          {active === "team" && <TeamSection ownerEmail={props.accountEmail} />}
-          {active === "integrations" && <IntegrationsSection shopSlug={props.shopSlug} initial={props.integrations} />}
-          {active === "compliance" && <ComplianceSection shopSlug={props.shopSlug} initial={props.compliance} />}
+          <div hidden={active !== "team"}>
+            <TeamSection ownerEmail={props.accountEmail} />
+          </div>
+          <div hidden={active !== "integrations"}>
+            <IntegrationsSection shopSlug={props.shopSlug} initial={props.integrations} />
+          </div>
+          <div hidden={active !== "compliance"}>
+            <ComplianceSection shopSlug={props.shopSlug} initial={props.compliance} />
+          </div>
         </div>
       </div>
     </div>

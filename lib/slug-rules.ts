@@ -16,3 +16,24 @@ export const RESERVED_SLUGS = new Set([
   "onboarding", "login", "register", "dashboard", "ops", "preview",
   "preview-shop", "sso-callback",
 ]);
+
+/**
+ * Shop name (or a raw slug) → a slug that always passes SLUG_RE: Polish
+ * letters → ASCII, dash-separated, no dash at either end, 3–44 characters
+ * (44 leaves room for findFreeSlug's "-2"…"-30" suffixes within SLUG_RE's 50).
+ * Too-short names get "-sklep" so "OK" becomes "ok-sklep" instead of an
+ * invalid slug that strands the new merchant on /onboarding/save.
+ */
+export function toShopSlug(raw: string): string {
+  let s = (raw || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ł/g, "l")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 44)
+    .replace(/-+$/, "");
+  if (s.length < 3) s = s ? `${s}-sklep` : "sklep";
+  return s;
+}
