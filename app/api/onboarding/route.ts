@@ -288,12 +288,12 @@ function homeFromBootstrap(shopName: string, b?: StoreBootstrap) {
       enabled: false,
       delaySeconds: 5,
       title: "Zapisz się do newslettera",
-      description: "Otrzymaj kod rabatowy na pierwsze zamówienie.",
-      buttonLabel: "Odbierz rabat",
+      description: "Nowości i oferty tylko dla subskrybentów.",
+      buttonLabel: "Zapisz się",
       placeholder: "Twój adres e-mail",
       disclaimer: "Żadnego spamu.",
       successTitle: "Dziękujemy!",
-      successText: "Kod został wysłany na Twojego maila.",
+      successText: "Sprawdź skrzynkę i potwierdź zapis.",
     },
   };
 }

@@ -152,7 +152,10 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
     if (!confirm("Rozłączyć Furgonetkę? Dotychczasowy token przestanie działać od razu.")) return;
     setBusy(true);
     try {
-      await fetch(`/api/shops/${shopSlug}/furgonetka`, { method: "DELETE" });
+      const res = await fetch(`/api/shops/${shopSlug}/furgonetka`, { method: "DELETE" });
+      // Only show "disconnected" once the server confirms: otherwise the
+      // merchant believes the token is revoked while it still works.
+      if (!res.ok) throw new Error();
       setState({
         connected: false,
         enabled: false,

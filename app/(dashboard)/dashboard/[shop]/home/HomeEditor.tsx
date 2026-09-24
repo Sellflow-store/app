@@ -852,6 +852,20 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                   {...focusProps}
                 />
               </Field>
+              <Field label="Kod rabatowy dla nowych subskrybentów (opcjonalnie)">
+                <input
+                  value={config.popup.rewardCode ?? ""}
+                  onChange={(e) => patch("popup", { rewardCode: e.target.value.toUpperCase() })}
+                  placeholder="np. WITAJ10"
+                  style={{ ...inputStyle, width: "14rem" }}
+                  {...focusProps}
+                />
+                <p className="text-xs mt-1.5" style={{ color: "oklch(50% 0 0)" }}>
+                  Wysyłamy go mailem dopiero po potwierdzeniu zapisu. Kod musi istnieć i być
+                  aktywny w zakładce Rabaty. Jeśli w opisie obiecujesz rabat, wpisz go tutaj,
+                  inaczej klientka nic nie dostanie.
+                </p>
+              </Field>
             </>
           )}
         </div>

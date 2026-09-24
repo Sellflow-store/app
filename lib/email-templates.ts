@@ -256,3 +256,46 @@ export function contactFormEmail(params: {
   `;
   return { subject: `Wiadomość ze sklepu ${shopName} — ${name}`, html: shell(shopName, body) };
 }
+
+const escAttr = (s: string) => esc(s).replace(/"/g, "&quot;");
+
+/** Double opt-in: link potwierdzający zapis do newslettera sklepu. */
+export function newsletterConfirmEmail(params: {
+  shopName: string;
+  confirmUrl: string;
+  hasReward: boolean;
+}): { subject: string; html: string } {
+  const { shopName, confirmUrl, hasReward } = params;
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Potwierdź zapis do newslettera</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#444444;">Ktoś (mamy nadzieję, że Ty) podał ten adres, żeby dostawać wiadomości od sklepu ${esc(shopName)}. ${
+      hasReward ? "Po potwierdzeniu od razu wyślemy Ci kod rabatowy." : "Kliknij, żeby potwierdzić."
+    }</p>
+    <p style="margin:0 0 20px;"><a href="${escAttr(confirmUrl)}" style="display:inline-block;background:#16161d;color:#ffffff;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:99px;text-decoration:none;">Potwierdzam zapis</a></p>
+    <p style="margin:0;font-size:12px;color:#888888;">Link jest ważny 7 dni. Jeśli to nie Ty, zignoruj tę wiadomość: bez kliknięcia nie zapiszemy Twojego adresu.</p>`;
+  return {
+    subject: `Potwierdź zapis do newslettera — ${shopName}`,
+    html: shell(shopName, body),
+  };
+}
+
+/** Kod rabatowy obiecany w popupie, wysyłany po potwierdzeniu zapisu. */
+export function newsletterRewardEmail(params: {
+  shopName: string;
+  code: string;
+  discountPercent: number;
+  shopUrl: string;
+}): { subject: string; html: string } {
+  const { shopName, code, discountPercent, shopUrl } = params;
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Dziękujemy za zapis!</h1>
+    <p style="margin:0 0 16px;font-size:14px;color:#444444;">Oto Twój kod rabatowy na ${discountPercent}%. Wpisz go w koszyku przy składaniu zamówienia.</p>
+    <div style="background:#f8f8f7;border-radius:12px;padding:20px;margin:0 0 20px;text-align:center;">
+      <p style="margin:0;font-size:22px;font-weight:bold;color:#111111;letter-spacing:0.08em;">${esc(code)}</p>
+    </div>
+    <p style="margin:0;"><a href="${escAttr(shopUrl)}" style="display:inline-block;background:#16161d;color:#ffffff;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:99px;text-decoration:none;">Przejdź do sklepu</a></p>`;
+  return {
+    subject: `Twój kod rabatowy — ${shopName}`,
+    html: shell(shopName, body),
+  };
+}

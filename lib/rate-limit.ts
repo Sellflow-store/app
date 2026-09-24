@@ -61,3 +61,12 @@ export function checkRateLimit(
     { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
   );
 }
+
+/**
+ * Limit keyed on something other than the caller's IP (e.g. a target e-mail
+ * address), for endpoints that send mail to an address the caller chooses.
+ * True = allowed.
+ */
+export function allowKey(key: string, limit: number, windowMs: number): boolean {
+  return hit(key, limit, windowMs).ok;
+}

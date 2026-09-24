@@ -98,12 +98,12 @@ export const DEFAULT_HOME: HomeConfig = {
     enabled: false,
     delaySeconds: 5,
     title: "Zapisz się do newslettera",
-    description: "Otrzymaj kod rabatowy na pierwsze zamówienie.",
-    buttonLabel: "Odbierz rabat",
+    description: "Nowości i oferty tylko dla subskrybentów.",
+    buttonLabel: "Zapisz się",
     placeholder: "Twój adres e-mail",
     disclaimer: "Żadnego spamu.",
     successTitle: "Dziękujemy!",
-    successText: "Kod został wysłany na Twojego maila.",
+    successText: "Sprawdź skrzynkę i potwierdź zapis.",
   },
 };
 
@@ -199,6 +199,12 @@ export const DEFAULT_COMPLIANCE: ComplianceConfig = {
   omnibus: { enabled: true },
 };
 
+/** The reward code stays on the server: the popup only needs to know one exists. */
+function publicPopup(p: HomeConfig["popup"]): HomeConfig["popup"] {
+  const { rewardCode, ...rest } = p;
+  return { ...rest, hasReward: Boolean(rewardCode?.trim()) };
+}
+
 /**
  * Storefront products reach client components (ProductCard), so everything in
  * them ends up in the public RSC payload. The fulfillment blob also holds what
@@ -247,7 +253,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     guarantee: { ...DEFAULT_HOME.guarantee, ...((configMap.home as HomeConfig)?.guarantee ?? {}) },
     video: { ...DEFAULT_HOME.video, ...((configMap.home as HomeConfig)?.video ?? {}) },
     discounts: { ...DEFAULT_HOME.discounts, ...((configMap.home as HomeConfig)?.discounts ?? {}) },
-    popup: { ...DEFAULT_HOME.popup, ...((configMap.home as HomeConfig)?.popup ?? {}) },
+    popup: publicPopup({ ...DEFAULT_HOME.popup, ...((configMap.home as HomeConfig)?.popup ?? {}) }),
     // Sekcja opcjonalna — nie ma jej w DEFAULT_HOME, więc przepisujemy wprost.
     // (Ten obiekt jest składany klucz po kluczu, więc każdy NOWY klucz configu
     // trzeba tu dopisać — inaczej po cichu ginie w drodze do storefrontu.)

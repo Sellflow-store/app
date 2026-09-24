@@ -3,6 +3,19 @@
 import { useState, useSyncExternalStore } from "react";
 import Script from "next/script";
 import type { IntegrationsConfig, ComplianceConfig } from "@/types/shop";
+import { useStoreBase } from "./StoreBaseContext";
+
+/**
+ * Merchant-entered link → safe href. In-store paths ("/prywatnosc") get the
+ * store base, so they work on path-based URLs (/{slug}/prywatnosc) too, not
+ * only on subdomains; absolute links must be http(s). Anything else is dropped.
+ */
+function storeHref(url: string | undefined, base: string): string | null {
+  const u = (url ?? "").trim();
+  if (!u) return null;
+  if (u.startsWith("/") && !u.startsWith("//")) return `${base}${u}`;
+  return /^https?:\/\//i.test(u) ? u : null;
+}
 
 const CONSENT_KEY = "sellflow-consent";
 
@@ -15,7 +28,7 @@ interface Consent {
 const consentListeners = new Set<() => void>();
 let consentCache: { raw: string | null; val: Consent | null } = { raw: null, val: null };
 
-function readStoredConsent(): Consent | null {
+export function readStoredConsent(): Consent | null {
   if (typeof window === "undefined") return null;
   let raw: string | null = null;
   try {
@@ -141,6 +154,8 @@ function ConsentBanner({
   banner: ComplianceConfig["cookieBanner"];
   onDecide: (c: Consent) => void;
 }) {
+  const base = useStoreBase();
+  const policyHref = storeHref(banner.policyUrl, base);
   const [analytics, setAnalytics] = useState(true);
   const [marketing, setMarketing] = useState(true);
   const [customize, setCustomize] = useState(false);
@@ -155,8 +170,8 @@ function ConsentBanner({
       <div className="mx-auto max-w-5xl flex flex-col gap-3">
         <p className="text-sm leading-relaxed opacity-90">
           {banner.message}{" "}
-          {banner.policyUrl && (
-            <a href={banner.policyUrl} className="underline underline-offset-2">
+          {policyHref && (
+            <a href={policyHref} className="underline underline-offset-2">
               Polityka prywatności
             </a>
           )}
