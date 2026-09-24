@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (limited) return limited;
 
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
-  if (!shop || !shop.active || shop.suspended) {
+  if (!shop || !shop.active || shop.suspended || shop.deletedAt) {
     return NextResponse.json({ error: "Shop not found" }, { status: 404 });
   }
 

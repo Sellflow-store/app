@@ -199,6 +199,21 @@ export const DEFAULT_COMPLIANCE: ComplianceConfig = {
   omnibus: { enabled: true },
 };
 
+/**
+ * Storefront products reach client components (ProductCard), so everything in
+ * them ends up in the public RSC payload. The fulfillment blob also holds what
+ * the buyer pays for (download URL, access link, license keys, access
+ * instructions): only the descriptive fields may leave the server.
+ */
+function publicFulfillment(raw: unknown): StorefrontProduct["fulfillment"] {
+  const f = (raw ?? {}) as StorefrontProduct["fulfillment"];
+  return {
+    ...(f.duration ? { duration: f.duration } : {}),
+    ...(f.mode ? { mode: f.mode } : {}),
+    ...(f.details ? { details: f.details } : {}),
+  };
+}
+
 export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   const shop = await db.query.shops.findFirst({
     where: eq(shops.slug, slug),
@@ -394,7 +409,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     deliveryInfo: (p.deliveryInfo as string[]) ?? [],
     sortOrder: p.sortOrder,
     type: (p.type as StorefrontProduct["type"]) ?? "physical",
-    fulfillment: (p.fulfillment as StorefrontProduct["fulfillment"]) ?? {},
+    fulfillment: publicFulfillment(p.fulfillment),
   }));
 
   return {

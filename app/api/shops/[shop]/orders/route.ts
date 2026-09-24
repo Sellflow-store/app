@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (limited) return limited;
 
   const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
-  if (!shop || !shop.active || shop.suspended) return bad("Shop not found", 404);
+  if (!shop || !shop.active || shop.suspended || shop.deletedAt) return bad("Shop not found", 404);
 
   let body: OrderRequest;
   try {

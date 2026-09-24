@@ -12,7 +12,7 @@ import { headers } from "next/headers";
 export async function storefrontBase(slug: string): Promise<string> {
   const h = await headers();
   const host = h.get("host") ?? "";
-  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sellflow.app";
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store";
   const appSubdomain = process.env.NEXT_PUBLIC_APP_SUBDOMAIN ?? "app";
 
   const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");

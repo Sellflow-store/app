@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { clerkConfigured } from "@/lib/auth-env";
 import { resolveCustomDomainSlug, resolveVerifiedCustomDomain } from "@/lib/domain-resolve";
+import { RESERVED_SLUGS, SLUG_RE } from "@/lib/slug-rules";
 
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isAuthRoute = createRouteMatcher(["/login(.*)", "/register(.*)"]);
@@ -60,7 +61,7 @@ function rewriteStorefront(
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const url = req.nextUrl;
   const hostname = req.headers.get("host") ?? "";
-  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sellflow.app";
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store";
 
   // ── Subdomain routing ────────────────────────────────────────────────────
   // monostore.sellflow.app → rewrite to /(storefront)/[shop]/...
@@ -97,6 +98,19 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       const rewriteUrl = url.clone();
       rewriteUrl.pathname = "/ops";
       return NextResponse.rewrite(rewriteUrl);
+    }
+  } else if (isMainDomain && !isVercelPreview) {
+    // ── Storefronts never render on platform hosts ─────────────────────────
+    // app.<domain>/{slug}/... used to serve the full storefront on the same
+    // origin as the dashboard and the Clerk session (a merchant-controlled
+    // page next to admin cookies) and as a second, self-canonical copy of
+    // every shop for search engines. Send it to the shop's own subdomain,
+    // which in turn forwards to a verified custom domain. Localhost and Vercel
+    // previews stay path-based for development.
+    const [, firstSeg = "", ...rest] = url.pathname.split("/");
+    if (SLUG_RE.test(firstSeg) && !RESERVED_SLUGS.has(firstSeg)) {
+      const tail = rest.length ? `/${rest.join("/")}` : "";
+      return NextResponse.redirect(`https://${firstSeg}.${appDomain}${tail || "/"}${url.search}`, 308);
     }
   } else if (hasSubdomain) {
     const shopSlug = hostname.replace(`.${appDomain}`, "");
