@@ -22,6 +22,7 @@ function page(
   backUrl: string,
   status = 200,
   confirmAction?: string,
+  backLabel = "Wróć do sklepu",
 ) {
   const action = confirmAction
     ? `<form method="post" action="${esc(confirmAction)}" style="margin:0 0 12px;"><button type="submit" style="background:#16161d;color:#fff;font-size:14px;font-weight:bold;padding:13px 26px;border:0;border-radius:99px;cursor:pointer;">Potwierdzam zapis</button></form>`
@@ -34,7 +35,7 @@ function page(
 <p style="margin:0 0 16px;font-size:13px;font-weight:bold;color:#888;letter-spacing:0.04em;">${esc(shopName)}</p>
 <h1 style="margin:0 0 10px;font-size:22px;color:#111;">${esc(title)}</h1>
 <p style="margin:0 0 24px;font-size:14px;line-height:1.5;color:#444;">${esc(text)}</p>
-${action}<a href="${esc(backUrl)}" style="display:inline-block;${confirmAction ? "color:#444;font-size:13px;padding:8px;" : "background:#16161d;color:#fff;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:99px;"}text-decoration:none;">Wróć do sklepu</a>
+${action}<a href="${esc(backUrl)}" style="display:inline-block;${confirmAction ? "color:#444;font-size:13px;padding:8px;" : "background:#16161d;color:#fff;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:99px;"}text-decoration:none;">${esc(backLabel)}</a>
 </main></body></html>`;
   return new NextResponse(html, { status, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
@@ -96,6 +97,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   // Only the first confirmation sends the reward: reopening the link (or a
   // mail scanner prefetching it) must not mail the code again.
   let rewardSent = false;
+  let reward: { code: string; percent: number; cartUrl: string } | null = null;
   if (inserted.length > 0) {
     const homeRow = await db.query.shopConfig.findFirst({
       where: and(eq(shopConfig.shopId, shop.id), eq(shopConfig.key, "home")),
@@ -104,11 +106,19 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (rewardCode) {
       const verdict = await checkDiscountCode(shop.id, rewardCode);
       if (verdict.valid) {
+        // The link applies the code by itself (DiscountFromLink) and lands on
+        // the cart, which is still in this browser: the shopper who signed up
+        // from the cart goes straight back to it with the discount on.
+        reward = {
+          code: verdict.row.code,
+          percent: verdict.discountPercent,
+          cartUrl: `${backUrl.replace(/\/$/, "")}/koszyk?kod=${encodeURIComponent(verdict.row.code)}`,
+        };
         const mail = newsletterRewardEmail({
           shopName: shop.name,
           code: verdict.row.code,
           discountPercent: verdict.discountPercent,
-          shopUrl: backUrl,
+          shopUrl: reward.cartUrl,
         });
         rewardSent = await sendEmail({ to: data.email, ...mail });
       } else {
@@ -117,13 +127,25 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
   }
 
+  if (reward) {
+    return page(
+      "Zapis potwierdzony",
+      `Dziękujemy! Twój kod ${reward.code} (−${reward.percent}%) zastosujemy w koszyku automatycznie${
+        rewardSent ? ", wysłaliśmy go też mailem" : ""
+      }.`,
+      shop.name,
+      reward.cartUrl,
+      200,
+      undefined,
+      "Przejdź do koszyka z rabatem",
+    );
+  }
+
   return page(
     "Zapis potwierdzony",
-    rewardSent
-      ? "Dziękujemy! Kod rabatowy jest już w Twojej skrzynce."
-      : inserted.length > 0
-        ? "Dziękujemy! Od teraz będziesz dostawać nasze wiadomości."
-        : "Ten adres jest już na liście. Nic więcej nie trzeba robić.",
+    inserted.length > 0
+      ? "Dziękujemy! Od teraz będziesz dostawać nasze wiadomości."
+      : "Ten adres jest już na liście. Nic więcej nie trzeba robić.",
     shop.name,
     backUrl,
   );

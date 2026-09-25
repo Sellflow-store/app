@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { and, eq, isNull, or } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { shops } from "@/lib/db/schema";
 
@@ -45,7 +45,9 @@ async function liveShopNameForHost(host: string, appDomain: string): Promise<str
     const shop = await db.query.shops.findFirst({
       columns: { name: true },
       where: and(
-        slug ? or(eq(shops.slug, slug), eq(shops.customDomain, host)) : eq(shops.customDomain, host),
+        slug
+          ? eq(shops.slug, slug)
+          : and(eq(shops.customDomain, host), eq(shops.customDomainVerified, true)),
         eq(shops.active, true),
         eq(shops.suspended, false),
         isNull(shops.deletedAt),

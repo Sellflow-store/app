@@ -150,6 +150,13 @@ export async function getDomainStatus(domain: string): Promise<DomainStatus> {
 // Sellflow merchants use — so apex vs. subdomain DNS advice stays correct.
 const MULTI_PART_TLDS = new Set(["com.pl", "net.pl", "org.pl", "co.uk"]);
 
+/** Number of labels in the registrable domain (the DNS zone the merchant
+ *  edits at the registrar): 2 for sklep.pl, 3 for firma.com.pl. */
+export function zoneLabelCount(domain: string): number {
+  const parts = domain.split(".");
+  return MULTI_PART_TLDS.has(parts.slice(-2).join(".")) ? 3 : 2;
+}
+
 /** True when `domain` is a registrable apex (needs an A record) rather than a
  *  subdomain (needs a CNAME). */
 export function isApexDomain(domain: string): boolean {

@@ -289,11 +289,12 @@ export function newsletterRewardEmail(params: {
   const { shopName, code, discountPercent, shopUrl } = params;
   const body = `
     <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Dziękujemy za zapis!</h1>
-    <p style="margin:0 0 16px;font-size:14px;color:#444444;">Oto Twój kod rabatowy na ${discountPercent}%. Wpisz go w koszyku przy składaniu zamówienia.</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#444444;">Oto Twój kod rabatowy na ${discountPercent}%.</p>
     <div style="background:#f8f8f7;border-radius:12px;padding:20px;margin:0 0 20px;text-align:center;">
       <p style="margin:0;font-size:22px;font-weight:bold;color:#111111;letter-spacing:0.08em;">${esc(code)}</p>
     </div>
-    <p style="margin:0;"><a href="${escAttr(shopUrl)}" style="display:inline-block;background:#16161d;color:#ffffff;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:99px;text-decoration:none;">Przejdź do sklepu</a></p>`;
+    <p style="margin:0 0 8px;"><a href="${escAttr(shopUrl)}" style="display:inline-block;background:#16161d;color:#ffffff;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:99px;text-decoration:none;">Wróć do koszyka z rabatem</a></p>
+    <p style="margin:0;font-size:12px;color:#888888;">Przycisk sam doda kod do koszyka, nie trzeba go przepisywać.</p>`;
   return {
     subject: `Twój kod rabatowy — ${shopName}`,
     html: shell(shopName, body),

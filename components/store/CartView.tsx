@@ -2,16 +2,20 @@
 
 import Link from "next/link";
 import { Minus, Plus, X, ShoppingBag, ArrowRight } from "lucide-react";
-import { useCart, formatPln, lineKey } from "@/lib/cart";
+import { useCart, useCartDiscount, discountValue, formatPln, lineKey } from "@/lib/cart";
 import { useStoreBase } from "./StoreBaseContext";
+import DiscountBox from "./DiscountBox";
+import type { CartOffers } from "@/types/shop";
 
 interface Props {
   shopSlug: string;
   freeShippingFrom: string;
+  offers: CartOffers | null;
 }
 
-export default function CartView({ shopSlug, freeShippingFrom }: Props) {
+export default function CartView({ shopSlug, freeShippingFrom, offers }: Props) {
   const { items, setQty, remove, subtotal } = useCart(shopSlug);
+  const { discount } = useCartDiscount(shopSlug);
   const base = useStoreBase();
 
   if (items.length === 0) {
@@ -123,9 +127,22 @@ export default function CartView({ shopSlug, freeShippingFrom }: Props) {
             do darmowej dostawy.
           </p>
         )}
+        {discount && (
+          <div className="flex items-baseline gap-3 text-sm">
+            <span className="text-ink-2">Rabat {discount.code}:</span>
+            <span className="tabular-nums" style={{ color: "oklch(45% 0.16 158)" }}>
+              −{formatPln(discountValue(subtotal, discount.percent))}
+            </span>
+          </div>
+        )}
         <div className="flex items-baseline gap-3">
           <span className="text-sm text-ink-2">Razem:</span>
-          <span className="text-2xl font-bold text-ink tabular-nums">{formatPln(subtotal)}</span>
+          <span className="text-2xl font-bold text-ink tabular-nums">
+            {formatPln(subtotal - (discount ? discountValue(subtotal, discount.percent) : 0))}
+          </span>
+        </div>
+        <div className="w-full max-w-sm">
+          <DiscountBox shopSlug={shopSlug} offers={offers} placement="cart" />
         </div>
         <p className="text-[11px] text-ink-2/70">Koszt dostawy zostanie doliczony w następnym kroku.</p>
         <Link

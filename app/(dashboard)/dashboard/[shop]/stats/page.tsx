@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { orders, customers, visits } from "@/lib/db/schema";
-import { and, desc, eq, gte, lte, ne } from "drizzle-orm";
+import { orders, customers, visits, checkoutEvents } from "@/lib/db/schema";
+import { and, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { TrendingUp, TrendingDown, ShoppingBag } from "lucide-react";
 import RangePicker from "./RangePicker";
@@ -107,13 +107,14 @@ export default async function AnalyticsPage({
   let periodOrders: (typeof orders.$inferSelect)[] = [];
   let periodVisits: (typeof visits.$inferSelect)[] = [];
   let customerList: { email: string; totalOrders: number }[] = [];
+  let funnelRows: { event: string; detail: string | null; n: number }[] = [];
 
   try {
     const access = await getShopAccess(shopSlug);
     if (access) {
       const since = new Date(prevStart);
       const until = new Date(curEnd);
-      [periodOrders, periodVisits, customerList] = await Promise.all([
+      [periodOrders, periodVisits, customerList, funnelRows] = await Promise.all([
         db
           .select()
           .from(orders)
@@ -140,6 +141,20 @@ export default async function AnalyticsPage({
           .select({ email: customers.email, totalOrders: customers.totalOrders })
           .from(customers)
           .where(eq(customers.shopId, access.shopId)),
+        // Current window only: the funnel card has no previous-period delta.
+        db
+          .select({ event: checkoutEvents.event, detail: checkoutEvents.detail, n: sql<number>`count(*)::int` })
+          .from(checkoutEvents)
+          .where(
+            and(
+              eq(checkoutEvents.shopId, access.shopId),
+              gte(checkoutEvents.createdAt, new Date(curStart)),
+              lte(checkoutEvents.createdAt, until)
+            )
+          )
+          .groupBy(checkoutEvents.event, checkoutEvents.detail)
+          // Missing table (schema not pushed yet) must not blank the whole page.
+          .catch(() => []),
       ]);
     }
   } catch {
@@ -227,6 +242,37 @@ export default async function AnalyticsPage({
   const sourceRows = SOURCE_ORDER.map((s) => ({ source: s, count: sourceCounts.get(s) ?? 0 }))
     .filter((r) => r.count > 0)
     .sort((a, b) => b.count - a.count);
+
+  // ── Checkout funnel + discount codes (lib/checkout-events) ─────────────────
+  const ev = (event: string, detail?: string) =>
+    funnelRows
+      .filter((r) => r.event === event && (detail === undefined || r.detail === detail))
+      .reduce((sum, r) => sum + r.n, 0);
+  const checkoutViews = ev("checkout_view");
+  const ordersWithCode = curOrders.filter((o) => o.discountCode).length;
+  const funnelTiles = [
+    { label: "Wejścia na zamówienie", value: String(checkoutViews) },
+    {
+      label: "Złożone zamówienia",
+      value: checkoutViews > 0
+        ? `${curOrders.length} · ${Math.min(100, (curOrders.length / checkoutViews) * 100).toFixed(0)}%`
+        : String(curOrders.length),
+    },
+    { label: "Zamówienia z kodem", value: String(ordersWithCode) },
+    { label: "Rozwinięcia pola kodu", value: String(ev("code_expand")) },
+  ];
+  const appliedRows = [
+    { label: "Z linku", n: ev("code_applied", "link") },
+    { label: "Wpisane ręcznie", n: ev("code_applied", "manual") },
+    { label: "Promocja z paska (1 klik)", n: ev("code_applied", "offer_public") },
+    { label: "Za newsletter", n: ev("code_applied", "offer_newsletter") },
+  ];
+  const rejectedRows = [
+    { label: "Nie istnieje / wyłączony", n: ev("code_rejected", "not_found") },
+    { label: "Wygasł", n: ev("code_rejected", "expired") },
+    { label: "Limit użyć", n: ev("code_rejected", "limit") },
+    { label: "Inny powód", n: ev("code_rejected", "other") },
+  ];
 
   // ── Top products (current window) ──────────────────────────────────────────
   const productAgg = new Map<string, { name: string; qty: number; revenue: number }>();
@@ -467,6 +513,44 @@ export default async function AnalyticsPage({
               })}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Checkout funnel + discount codes */}
+      <div className="rounded-2xl overflow-hidden mt-6" style={card}>
+        <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap" style={{ borderBottom: `1px solid ${RULE}` }}>
+          <h2 className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)", color: INK }}>
+            Zamówienie i kody rabatowe
+          </h2>
+          <span className="text-[11px]" style={{ color: MUTE }}>
+            {rangeLabel} · bez danych osobowych, liczone od wdrożenia pomiaru
+          </span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ background: RULE }}>
+          {funnelTiles.map((t) => (
+            <div key={t.label} className="px-5 py-4" style={{ background: "#fff" }}>
+              <p className="text-[11px]" style={{ color: MUTE }}>{t.label}</p>
+              <p className="text-lg font-bold tabular-nums mt-1" style={{ color: INK }}>{t.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 px-5 py-4" style={{ borderTop: `1px solid ${RULE}` }}>
+          {[
+            { title: "Kody zastosowane", rows: appliedRows },
+            { title: "Kody odrzucone", rows: rejectedRows },
+          ].map((group) => (
+            <div key={group.title}>
+              <p className="text-xs font-semibold mb-2" style={{ color: INK }}>{group.title}</p>
+              <dl className="space-y-1.5">
+                {group.rows.map((r) => (
+                  <div key={r.label} className="flex items-center justify-between text-xs">
+                    <dt style={{ color: "oklch(35% 0 0)" }}>{r.label}</dt>
+                    <dd className="tabular-nums" style={{ color: r.n ? INK : MUTE }}>{r.n}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
         </div>
       </div>
     </div>

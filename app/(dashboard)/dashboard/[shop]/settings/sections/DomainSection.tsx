@@ -9,15 +9,26 @@ interface DnsRecord {
   name: string;
   value: string;
 }
+interface OwnershipRecord {
+  type: "TXT";
+  name: string;
+  fqdn: string;
+  value: string;
+}
 interface DomainStatus {
   configured: boolean;
   verified: boolean;
   misconfigured: boolean;
+  /** TXT proving this shop's claim is published (lib/domain-ownership). */
+  ownershipVerified?: boolean;
+  /** Domain serves the shop: DNS + Vercel + ownership. */
+  active?: boolean;
   verification: { type: string; domain: string; value: string; reason?: string }[];
 }
 interface DomainResponse {
   domain: string | null;
   dns?: DnsRecord;
+  ownership?: OwnershipRecord | null;
   status?: DomainStatus;
   vercelConfigured?: boolean;
 }
@@ -72,7 +83,7 @@ function StatusBadge({ status }: { status: DomainStatus | null }) {
       </span>
     );
   }
-  if (status.verified && !status.misconfigured) {
+  if (status.active ?? (status.verified && !status.misconfigured)) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
         style={{ background: "oklch(60% 0.16 145 / 0.14)", color: "oklch(52% 0.16 145)" }}>
@@ -80,10 +91,12 @@ function StatusBadge({ status }: { status: DomainStatus | null }) {
       </span>
     );
   }
+  const dnsOk = status.verified && !status.misconfigured;
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
       style={{ background: "oklch(75% 0.15 75 / 0.16)", color: "oklch(55% 0.13 66)" }}>
-      <Clock className="w-3.5 h-3.5" strokeWidth={2} /> Oczekuje na weryfikację DNS
+      <Clock className="w-3.5 h-3.5" strokeWidth={2} />{" "}
+      {dnsOk && status.ownershipVerified === false ? "Brakuje rekordu TXT" : "Oczekuje na weryfikację DNS"}
     </span>
   );
 }
@@ -95,6 +108,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
   const [domain, setDomain] = useState<string | null>(initialDomain);
   const [input, setInput] = useState("");
   const [dns, setDns] = useState<DnsRecord | null>(null);
+  const [ownership, setOwnership] = useState<OwnershipRecord | null>(null);
   const [status, setStatus] = useState<DomainStatus | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +123,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
         const data = (await res.json()) as DomainResponse;
         setDomain(data.domain);
         setDns(data.dns ?? null);
+        setOwnership(data.ownership ?? null);
         setStatus(data.status ?? null);
       }
     } finally {
@@ -128,6 +143,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
       if (cancelled) return;
       setDomain(data.domain);
       setDns(data.dns ?? null);
+      setOwnership(data.ownership ?? null);
       setStatus(data.status ?? null);
     })();
     return () => {
@@ -155,6 +171,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
       }
       setDomain(data.domain);
       setDns(data.dns ?? null);
+      setOwnership(data.ownership ?? null);
       setStatus(data.status ?? null);
       setInput("");
       setSaveState("saved");
@@ -174,6 +191,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
       if (res.ok) {
         setDomain(null);
         setDns(null);
+        setOwnership(null);
         setStatus(null);
       }
     } finally {
@@ -252,18 +270,35 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
           {dns && (
             <Card
               title="Skonfiguruj DNS"
-              desc="Dodaj ten rekord u swojego rejestratora domeny (np. OVH, home.pl, nazwa.pl). Zmiany DNS mogą propagować się do kilku godzin."
+              desc="Dodaj te rekordy u swojego rejestratora domeny (np. OVH, home.pl, nazwa.pl). Zmiany DNS mogą propagować się do kilku godzin."
             >
+              <p className="text-[11px] font-medium mb-2" style={{ color: P.faint }}>
+                1. Rekord kierujący domenę na sklep:
+              </p>
               <div className="grid grid-cols-3 gap-3">
                 <CopyField label="Typ" value={dns.type} />
                 <CopyField label="Nazwa / Host" value={dns.name} />
                 <CopyField label="Wartość" value={dns.value} />
               </div>
 
+              {ownership && (
+                <div className="mt-4">
+                  <p className="text-[11px] font-medium mb-2" style={{ color: P.faint }}>
+                    2. Rekord TXT potwierdzający, że domena należy do Ciebie. Bez niego
+                    sklep nie ruszy pod tą domeną{status?.ownershipVerified ? " (jest, dziękujemy)" : ""}:
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <CopyField label="Typ" value={ownership.type} />
+                    <CopyField label="Nazwa / Host" value={ownership.name} />
+                    <CopyField label="Wartość" value={ownership.value} />
+                  </div>
+                </div>
+              )}
+
               {status?.verification && status.verification.length > 0 && (
                 <div className="mt-4">
                   <p className="text-[11px] font-medium mb-2" style={{ color: P.faint }}>
-                    Dodatkowo — rekord TXT potwierdzający własność domeny:
+                    Dodatkowo rekord TXT, o który prosi Vercel:
                   </p>
                   {status.verification.map((v, i) => (
                     <div key={i} className="grid grid-cols-3 gap-3 mb-2">

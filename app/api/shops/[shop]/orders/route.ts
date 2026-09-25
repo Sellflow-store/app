@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { uniqueViolation } from "@/lib/db/errors";
 import { shops, shopConfig, products, orders, customers, users } from "@/lib/db/schema";
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { DEFAULT_CHECKOUT, normalizeDeliveryConfig } from "@/lib/shop";
@@ -331,8 +332,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       } catch (e) {
         // unique violation on (shopId, orderNumber): a concurrent order took
         // this number, read the new maximum and try again.
-        const isUnique = e instanceof Error && /unique|duplicate/i.test(e.message);
-        if (!isUnique) throw e;
+        if (uniqueViolation(e) !== "orders_number_idx") throw e;
         await new Promise((r) => setTimeout(r, 20 + Math.random() * 80));
       }
     }
