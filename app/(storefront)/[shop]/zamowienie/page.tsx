@@ -5,6 +5,7 @@ import TopBar from "@/components/store/TopBar";
 import Navbar from "@/components/store/Navbar";
 import Footer from "@/components/store/Footer";
 import CheckoutForm from "@/components/store/CheckoutForm";
+import { getCartOffers } from "@/lib/cart-offers";
 
 interface Props {
   params: Promise<{ shop: string }>;
@@ -16,6 +17,7 @@ export default async function CheckoutPage({ params }: Props) {
   if (!shop) notFound();
 
   const enabledMethods = shop.delivery.methods.filter((m) => m.enabled);
+  const offers = await getCartOffers(shop.id);
 
   return (
     <>
@@ -31,6 +33,7 @@ export default async function CheckoutPage({ params }: Props) {
             transferEnabled={shop.checkout.transferEnabled}
             codEnabled={shop.checkout.codEnabled}
             codFee={shop.checkout.codFee}
+            offers={offers}
           />
         </main>
         <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />

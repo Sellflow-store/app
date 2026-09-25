@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE } from "@/lib/shop";
 import type { IntegrationsConfig, ComplianceConfig, BrandingConfig } from "@/types/shop";
 import TrackVisit from "@/components/store/TrackVisit";
+import DiscountFromLink from "@/components/store/DiscountFromLink";
 import StorefrontScripts from "@/components/store/StorefrontScripts";
 import { StoreBaseProvider } from "@/components/store/StoreBaseContext";
 import { storefrontBase } from "@/lib/storefront-base";
@@ -93,6 +94,7 @@ export default async function ShopLayout({
         slug={shop}
         bannerEnabled={(data?.compliance ?? DEFAULT_COMPLIANCE).cookieBanner.enabled}
       />
+      <DiscountFromLink shopSlug={shop} />
       {data && <StorefrontScripts integrations={data.integrations} compliance={data.compliance} />}
     </StoreBaseProvider>
   );

@@ -367,6 +367,29 @@ export const visits = pgTable(
   ]
 );
 
+// ─── Checkout events ─────────────────────────────────────────────────────────
+// Lejek zamówienia i kodów rabatowych: wejście na zamówienie, rozwinięcie pola
+// kodu, kod zastosowany (z jakiego źródła) i odrzucony (z jakiego powodu).
+// Anonimowe liczniki: bez identyfikatora odwiedzającego, więc bez zgody na
+// cookies. Zamówienia liczymy z tabeli orders.
+// event: checkout_view | code_expand | code_applied | code_rejected
+// detail: źródło kodu (link | manual | offer_public | offer_newsletter) albo
+//         powód odrzucenia (not_found | expired | limit | other)
+
+export const checkoutEvents = pgTable(
+  "checkout_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    event: text("event").notNull(),
+    detail: text("detail"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("checkout_events_shop_created_idx").on(t.shopId, t.createdAt)]
+);
+
 // ─── Panel users (shop staff access) ─────────────────────────────────────────
 
 export const panelUsers = pgTable(

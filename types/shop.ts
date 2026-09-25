@@ -508,3 +508,17 @@ export interface ShopContext {
   legal: LegalDataConfig;
   products: StorefrontProduct[];
 }
+
+/** Ustawienia koszyka (klucz configu `cart`, zapisywany ze strony Rabaty). */
+export interface CartConfig {
+  /** Pokazuj w koszyku i przy zamówieniu promocje, które sklep i tak daje
+   *  (kod z paska, rabat za newsletter). Domyślnie wyłączone: kosztuje marżę. */
+  showOffers: boolean;
+}
+
+/** Promocje podpowiadane w koszyku. Tylko publiczne dane: kod z paska jest i
+ *  tak widoczny na stronie, kod za newsletter NIE (wychodzi po potwierdzeniu). */
+export interface CartOffers {
+  publicCode: { code: string; percent: number } | null;
+  newsletter: { percent: number } | null;
+}

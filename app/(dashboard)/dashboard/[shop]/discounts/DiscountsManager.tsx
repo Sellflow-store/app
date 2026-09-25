@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Tag, Trash2 } from "lucide-react";
+import { Plus, Tag, Trash2, Link2, Check } from "lucide-react";
 
 export interface DiscountRow {
   id: string;
@@ -36,9 +36,36 @@ const focusProps = {
 interface Props {
   shopSlug: string;
   initialCodes: DiscountRow[];
+  /** Public shop address, for "?kod=" links that apply a code by themselves. */
+  shopUrl: string;
+  initialShowOffers: boolean;
 }
 
-export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
+export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, initialShowOffers }: Props) {
+  const [showOffers, setShowOffers] = useState(initialShowOffers);
+  const [offersSaving, setOffersSaving] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  async function toggleOffers() {
+    const next = !showOffers;
+    setShowOffers(next);
+    setOffersSaving(true);
+    const res = await fetch(`/api/shops/${shopSlug}/config`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "cart", value: { showOffers: next } }),
+    }).catch(() => null);
+    if (!res?.ok) setShowOffers(!next);
+    setOffersSaving(false);
+  }
+
+  function copyLink(row: DiscountRow) {
+    navigator.clipboard?.writeText(`${shopUrl}/?kod=${encodeURIComponent(row.code)}`).then(() => {
+      setCopiedId(row.id);
+      setTimeout(() => setCopiedId(null), 1500);
+    });
+  }
+
   const router = useRouter();
   const [codes, setCodes] = useState(initialCodes);
   const [code, setCode] = useState("");
@@ -122,8 +149,45 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
           Kody rabatowe
         </h1>
         <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
-          Klienci wpisują kod w koszyku przy składaniu zamówienia
+          Pole na kod jest w koszyku zwinięte pod „Mam kod rabatowy”, żeby nie odsyłać klientek bez kodu
+          do szukania kuponów. Najwygodniej dawać kod w linku (przycisk przy kodzie): sam trafia do koszyka.
         </p>
+      </div>
+
+      {/* Offers in cart */}
+      <div
+        className="rounded-2xl p-5 mb-6 flex items-start justify-between gap-6"
+        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+      >
+        <div>
+          <h2
+            className="text-sm font-semibold"
+            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          >
+            Pokazuj promocje w koszyku
+          </h2>
+          <p className="text-xs mt-1 max-w-xl" style={{ color: "oklch(50% 0 0)" }}>
+            Zamiast pustego pola koszyk podpowie promocję, którą i tak dajesz: kod z paska na górze strony
+            (jednym kliknięciem) albo rabat za zapis do newslettera. Mniej porzuconych koszyków, ale rabat
+            weźmie też część osób, które kupiłyby bez niego. Przy markach premium zwykle lepiej zostawić
+            wyłączone i dawać kody w linkach.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleOffers}
+          disabled={offersSaving}
+          role="switch"
+          aria-checked={showOffers}
+          aria-label="Pokazuj promocje w koszyku"
+          className="relative w-9 h-5 rounded-full transition-all shrink-0 mt-0.5 disabled:opacity-60"
+          style={{ background: showOffers ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+        >
+          <span
+            className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+            style={{ left: showOffers ? "1.125rem" : "0.125rem" }}
+          />
+        </button>
       </div>
 
       {/* Create form */}
@@ -231,7 +295,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
             <div
               className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
               style={{
-                gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 3rem",
+                gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 6rem",
                 color: "oklch(50% 0 0)",
                 borderBottom: "1px solid oklch(92% 0 0)",
                 background: "oklch(98% 0 0)",
@@ -249,7 +313,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
                 key={row.id}
                 className="grid items-center px-5 py-3"
                 style={{
-                  gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 3rem",
+                  gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 6rem",
                   borderBottom: i < codes.length - 1 ? "1px solid oklch(94% 0 0)" : "none",
                   opacity: row.active ? 1 : 0.55,
                 }}
@@ -278,14 +342,29 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
                 >
                   {row.active ? "Aktywny" : "Wyłączony"}
                 </button>
-                <button
-                  onClick={() => handleDelete(row)}
-                  aria-label={`Usuń kod ${row.code}`}
-                  className="p-1.5 rounded-lg justify-self-end transition-colors"
-                  style={{ color: "oklch(50% 0.15 20)" }}
-                >
-                  <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-                </button>
+                <span className="flex items-center gap-1 justify-self-end">
+                  <button
+                    onClick={() => copyLink(row)}
+                    aria-label={`Kopiuj link z kodem ${row.code}`}
+                    title="Kopiuj link, który sam doda kod do koszyka"
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: "oklch(40% 0 0)" }}
+                  >
+                    {copiedId === row.id ? (
+                      <Check className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "oklch(52% 0.16 145)" }} />
+                    ) : (
+                      <Link2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(row)}
+                    aria-label={`Usuń kod ${row.code}`}
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: "oklch(50% 0.15 20)" }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  </button>
+                </span>
               </div>
             ))}
           </>
