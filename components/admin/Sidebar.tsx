@@ -52,12 +52,17 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
         <div className="flex items-center justify-between px-5 h-14 shrink-0 border-b border-[var(--panel-sidebar-border)]">
           <Link
             href={base}
-            className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-white"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="flex items-center gap-2.5 text-white"
           >
             <span aria-hidden className="w-2.5 h-2.5 rounded-[3px] bg-[var(--panel-aqua)]" />
-            Sellflow
-            <span className="font-light text-[var(--panel-sidebar-muted)]">admin</span>
+            <span className="flex flex-col leading-none">
+              <span className="text-[15px] font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
+                Sellflow
+              </span>
+              <span className="text-[10.5px] font-medium tracking-[0.08em] uppercase mt-1 text-[var(--panel-sidebar-muted)]">
+                admin
+              </span>
+            </span>
           </Link>
           <button
             onClick={onClose}
