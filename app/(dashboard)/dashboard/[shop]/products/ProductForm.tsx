@@ -343,7 +343,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved" ? "Zapisano!"
+    : saveState === "saved" ? "Zapisano"
     : saveState === "error" ? "Błąd, spróbuj ponownie"
     : isEdit ? "Zapisz zmiany" : "Dodaj produkt";
 

@@ -30,7 +30,7 @@ export default async function NewsletterPage({
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1
-          className="text-xl font-bold"
+          className="text-xl font-semibold"
           style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Newsletter

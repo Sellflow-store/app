@@ -336,8 +336,8 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved" ? "Zapisano!"
-    : saveState === "error" ? "Błąd — spróbuj ponownie"
+    : saveState === "saved" ? "Zapisano"
+    : saveState === "error" ? "Błąd, spróbuj ponownie"
     : "Zapisz zmiany";
 
   const buttonBg =
@@ -351,7 +351,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-xl font-bold"
+            className="text-xl font-semibold"
             style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Strona główna
@@ -364,7 +364,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />

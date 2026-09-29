@@ -21,7 +21,7 @@ export default function BlogTable({ shopSlug, posts }: Props) {
     <div className="p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}>
+          <h1 className="text-xl font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}>
             Blog
           </h1>
           <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
@@ -31,7 +31,7 @@ export default function BlogTable({ shopSlug, posts }: Props) {
 
         <Link
           href={`/dashboard/${shopSlug}/blog/new`}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90"
           style={{ background: "var(--panel-accent)", color: "#fff" }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--panel-accent)")}
           onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--panel-accent)")}

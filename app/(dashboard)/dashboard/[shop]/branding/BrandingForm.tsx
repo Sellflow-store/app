@@ -113,10 +113,10 @@ function Slider({
 }
 
 const inputStyle = {
-  border: "1.5px solid var(--panel-border)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
   color: "var(--panel-ink)",
   background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
@@ -191,8 +191,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved"  ? "Zapisano!"
-    : saveState === "error"  ? "Błąd — spróbuj ponownie"
+    : saveState === "saved"  ? "Zapisano"
+    : saveState === "error"  ? "Błąd, spróbuj ponownie"
     : "Zapisz zmiany";
 
   const buttonBg =
@@ -208,7 +208,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-xl font-bold"
+            className="text-xl font-semibold"
             style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Logo i kolorystyka
@@ -221,7 +221,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />
