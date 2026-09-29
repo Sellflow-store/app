@@ -101,7 +101,7 @@ export function orderConfirmationEmail(params: {
   shopName: string;
   customerName: string;
   order: OrderSummary;
-  paymentMethod: "transfer" | "cod";
+  paymentMethod: "transfer" | "cod" | "online";
   transfer: TransferDetails | null;
   fulfillmentNote?: string; // digital/service delivery note for the customer
 }): { subject: string; html: string } {
@@ -122,6 +122,10 @@ export function orderConfirmationEmail(params: {
           <p style="margin:0 0 4px;font-size:13px;color:#444444;">Tytuł: <strong>${esc(transfer.title)}</strong></p>
           <p style="margin:0;font-size:13px;color:#444444;">Kwota: <strong>${pln(order.total)}</strong></p>
           <p style="margin:12px 0 0;font-size:12px;color:#888888;">Zamówienie zrealizujemy po zaksięgowaniu wpłaty.</p>
+        </div>`
+      : paymentMethod === "online"
+      ? `<div style="background:#f8f8f7;border-radius:12px;padding:20px;margin:20px 0;">
+          <p style="margin:0;font-size:13px;color:#444444;">Płatność online (Tpay): <strong>${pln(order.total)}</strong>. Zamówienie zrealizujemy po potwierdzeniu wpłaty przez Tpay.</p>
         </div>`
       : `<div style="background:#f8f8f7;border-radius:12px;padding:20px;margin:20px 0;">
           <p style="margin:0;font-size:13px;color:#444444;">Płatność przy odbiorze: <strong>${pln(order.total)}</strong> — przygotuj gotówkę lub kartę dla kuriera.</p>
@@ -148,7 +152,7 @@ export function merchantNewOrderEmail(params: {
   order: OrderSummary;
   customerName: string;
   customerEmail: string;
-  paymentMethod: "transfer" | "cod";
+  paymentMethod: "transfer" | "cod" | "online";
   orderUrl: string;
   fulfillmentDetails?: string; // HTML block with digital access / service notes
 }): { subject: string; html: string } {
@@ -163,7 +167,7 @@ export function merchantNewOrderEmail(params: {
     <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Nowe zamówienie ${esc(order.orderNumber)} 🎉</h1>
     <p style="margin:0 0 16px;font-size:14px;color:#444444;">
       ${esc(customerName)} (${esc(customerEmail)}) złożył(a) zamówienie na
-      <strong>${pln(order.total)}</strong> — płatność: ${paymentMethod === "transfer" ? "przelew" : "za pobraniem"}.
+      <strong>${pln(order.total)}</strong> — płatność: ${paymentMethod === "transfer" ? "przelew" : paymentMethod === "online" ? "online (Tpay)" : "za pobraniem"}.
     </p>
     ${itemsTable(order)}
     ${pickupBlock(order)}

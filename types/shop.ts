@@ -506,5 +506,7 @@ export interface ShopContext {
   integrations: IntegrationsConfig;
   compliance: ComplianceConfig;
   legal: LegalDataConfig;
+  /** Sklep ma podpięte i włączone konto Tpay (płatność online w checkoucie). */
+  onlinePaymentsEnabled: boolean;
   products: StorefrontProduct[];
 }

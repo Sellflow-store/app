@@ -21,6 +21,7 @@ import type {
   LegalConfig,
   LegalDataConfig,
 } from "@/types/shop";
+import { tpayEnabled } from "@/lib/tpay";
 import LegalForm from "./LegalForm";
 
 export default async function LegalPage({
@@ -41,13 +42,16 @@ export default async function LegalPage({
   let delivery: DeliveryConfig = DEFAULT_DELIVERY;
   let terms: LegalConfig = DEFAULT_LEGAL;
   let privacy: LegalConfig = DEFAULT_LEGAL;
+  let onlinePayments = false;
 
   const access = await getShopAccess(shopSlug);
   if (access) {
-    const [shop, rows] = await Promise.all([
+    const [shop, rows, online] = await Promise.all([
       db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
       db.select().from(shopConfig).where(eq(shopConfig.shopId, access.shopId)),
+      tpayEnabled(access.shopId),
     ]);
+    onlinePayments = online;
     const cfg = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
     if (shop) {
@@ -76,6 +80,7 @@ export default async function LegalPage({
       shopSlug={shopSlug}
       shopName={shopName}
       shopUrl={shopUrl}
+      onlinePayments={onlinePayments}
       initialLegal={legal}
       account={account}
       about={about}

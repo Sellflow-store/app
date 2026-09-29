@@ -29,6 +29,7 @@ interface Props {
   shopSlug: string;
   shopName: string;
   shopUrl: string;
+  onlinePayments: boolean;
   initialLegal: LegalDataConfig;
   account: AccountConfig;
   about: AboutConfig;
@@ -51,6 +52,7 @@ export default function LegalForm({
   shopSlug,
   shopName,
   shopUrl,
+  onlinePayments,
   initialLegal,
   account,
   about,
@@ -72,8 +74,8 @@ export default function LegalForm({
   const [privacyCustom, setPrivacyCustom] = useState(initialPrivacy.content);
 
   const sources: LegalSources = useMemo(
-    () => ({ legal: data, account, about, branding, checkout, delivery, shopName, shopUrl }),
-    [data, account, about, branding, checkout, delivery, shopName, shopUrl]
+    () => ({ legal: data, account, about, branding, checkout, delivery, shopName, shopUrl, onlinePayments }),
+    [data, account, about, branding, checkout, delivery, shopName, shopUrl, onlinePayments]
   );
 
   const fields = useMemo(() => resolveLegalFields(sources), [sources]);

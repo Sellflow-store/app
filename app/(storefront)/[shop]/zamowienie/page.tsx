@@ -31,6 +31,7 @@ export default async function CheckoutPage({ params }: Props) {
             transferEnabled={shop.checkout.transferEnabled}
             codEnabled={shop.checkout.codEnabled}
             codFee={shop.checkout.codFee}
+            onlineEnabled={shop.onlinePaymentsEnabled}
           />
         </main>
         <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />

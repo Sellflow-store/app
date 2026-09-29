@@ -15,6 +15,7 @@ export const STATUS_STYLES: Record<string, { label: string; bg: string; color: s
 export const PAYMENT_LABELS: Record<string, string> = {
   transfer: "przelew",
   cod: "pobranie",
+  online: "online (Tpay)",
 };
 
 export interface OrderRow {

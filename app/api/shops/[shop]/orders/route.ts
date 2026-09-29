@@ -10,6 +10,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { fetchPointByCode } from "@/lib/inpost";
 import { buildTransferQrPayload } from "@/lib/qr-transfer";
 import QRCode from "qrcode";
+import { createTpayTransaction, getTpayCredentials, TPAY_PROVIDER, type TpayCredentials } from "@/lib/tpay";
+import { shopPublicUrl } from "@/lib/legal/data";
 import type { AccountConfig } from "@/types/shop";
 import type { DeliveryConfig, CheckoutConfig } from "@/types/shop";
 
@@ -21,7 +23,7 @@ interface OrderRequest {
   items: { productId: string; qty: number; size?: string | null }[];
   deliveryMethodId: string | null;
   pickupPointCode?: string | null;
-  paymentMethod: "transfer" | "cod";
+  paymentMethod: "transfer" | "cod" | "online";
   discountCode?: string | null;
   notes?: string;
 }
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (body.items.some((i) => !i.productId || !Number.isInteger(i.qty) || i.qty < 1 || i.qty > 99)) {
     return bad("Niepoprawne pozycje zamówienia.");
   }
-  if (body.paymentMethod !== "transfer" && body.paymentMethod !== "cod") {
+  if (body.paymentMethod !== "transfer" && body.paymentMethod !== "cod" && body.paymentMethod !== "online") {
     return bad("Niepoprawna metoda płatności.");
   }
 
@@ -184,6 +186,13 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
   if (body.paymentMethod === "cod" && !checkout.codEnabled) {
     return bad("Płatność za pobraniem jest niedostępna w tym sklepie.");
+  }
+  // Płatność online = własne konto Tpay merchanta. Klucze ładujemy przed
+  // rezerwacją towaru, żeby wyłączona integracja nie blokowała stanów.
+  let tpay: TpayCredentials | null = null;
+  if (body.paymentMethod === "online") {
+    tpay = await getTpayCredentials(shop.id);
+    if (!tpay) return bad("Płatność online jest chwilowo niedostępna. Wybierz inną metodę płatności.");
   }
 
   // ── Stock guard — block overselling for tracked products ────────────────
@@ -345,6 +354,42 @@ export async function POST(req: NextRequest, { params }: Params) {
     return bad("Nie udało się zapisać zamówienia. Spróbuj ponownie.", 500);
   }
 
+  // ── Płatność online: transakcja w Tpay ──────────────────────────────────
+  // Zamówienie musi już istnieć, bo jego id jedzie do Tpay jako
+  // hiddenDescription i wraca w powiadomieniu. Gdy Tpay odmówi, cofamy
+  // zamówienie w całości (bez maili, bez klienta w bazie), zamiast zostawiać
+  // nieopłacalne zamówienie z zarezerwowanym towarem.
+  let paymentUrl: string | null = null;
+  if (tpay) {
+    const origin = shopPublicUrl(shop);
+    const apiOrigin = process.env.NEXT_PUBLIC_APP_URL || origin;
+    const back = (status: "ok" | "blad") =>
+      `${origin}/zamowienie/platnosc?nr=${encodeURIComponent(order!.orderNumber)}&status=${status}`;
+    try {
+      const tx = await createTpayTransaction(tpay, {
+        amount: total,
+        description: `Zamówienie ${order.orderNumber} — ${shop.name}`,
+        hiddenDescription: order.id,
+        payer: { email, name, phone },
+        successUrl: back("ok"),
+        errorUrl: back("blad"),
+        notificationUrl: `${apiOrigin}/api/tpay/${shop.slug}/notify`,
+      });
+      await db
+        .update(orders)
+        .set({ paymentProvider: TPAY_PROVIDER, paymentProviderRef: tx.transactionId, updatedAt: new Date() })
+        .where(eq(orders.id, order.id));
+      paymentUrl = tx.paymentUrl;
+    } catch (e) {
+      console.error("Order: Tpay transaction failed", order.orderNumber, e);
+      await db.delete(orders).where(eq(orders.id, order.id)).catch((err) =>
+        console.error("Order: rollback after Tpay failure failed", order?.orderNumber, err),
+      );
+      await releaseReservations();
+      return bad("Nie udało się rozpocząć płatności online. Spróbuj ponownie albo wybierz inną metodę płatności.", 502);
+    }
+  }
+
   // ── Upsert customer aggregate ────────────────────────────────────────────
   // The order already exists: a failure here must not answer 500, or the
   // shopper retries and places a duplicate order.
@@ -495,6 +540,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         ? { code: String(pickupPoint.code), address: String(pickupPoint.address) }
         : null,
       transfer: transferDetails ? { ...transferDetails, qr: transferQr } : null,
+      paymentUrl,
     },
     { status: 201 }
   );
