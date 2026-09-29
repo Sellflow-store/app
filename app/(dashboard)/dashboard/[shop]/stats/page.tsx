@@ -20,8 +20,8 @@ const RULE = "var(--panel-border)";
 // osobnego pomarańczu tylko dla analityki.
 const ACCENT = "var(--panel-primary)";
 const AQUA = "var(--panel-aqua)";
-const UP = "oklch(58% 0.15 150)";
-const DOWN = "oklch(58% 0.20 25)";
+const UP = "var(--panel-success)";
+const DOWN = "var(--panel-danger)";
 const DAY = 24 * 3600 * 1000;
 
 interface OrderItem {

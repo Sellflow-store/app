@@ -176,17 +176,17 @@ export default function OnboardingForm({ firstName }: Props) {
                   className="w-full text-sm focus:outline-none transition-all disabled:opacity-50"
                   style={{
                     padding: "13px 40px 13px 14px",
-                    border: `1.5px solid ${slug && slugValid ? "oklch(52% 0.20 158)" : "oklch(88% 0 0)"}`,
+                    border: `1.5px solid ${slug && slugValid ? "var(--panel-success)" : "oklch(88% 0 0)"}`,
                     borderRadius: "12px",
                     background: "#fff",
                     color: "oklch(11% 0.10 275)",
                     fontFamily: "var(--font-body)",
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = slugValid ? "oklch(52% 0.20 158)" : "oklch(22% 0.24 270)")}
-                  onBlur={(e) =>  (e.target.style.borderColor = slug && slugValid ? "oklch(52% 0.20 158)" : "oklch(88% 0 0)")}
+                  onFocus={(e) => (e.target.style.borderColor = slugValid ? "var(--panel-success)" : "oklch(22% 0.24 270)")}
+                  onBlur={(e) =>  (e.target.style.borderColor = slug && slugValid ? "var(--panel-success)" : "oklch(88% 0 0)")}
                 />
                 {slug && slugValid && (
-                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "oklch(52% 0.20 158)" }} strokeWidth={2.5} />
+                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--panel-success)" }} strokeWidth={2.5} />
                 )}
               </div>
 
@@ -194,7 +194,7 @@ export default function OnboardingForm({ firstName }: Props) {
               {slug && (
                 <p className="text-[11px]" style={{ color: "oklch(50% 0 0)" }}>
                   Twój sklep:{" "}
-                  <span className="font-semibold" style={{ color: slugValid ? "oklch(22% 0.24 270)" : "oklch(50% 0.18 20)" }}>
+                  <span className="font-semibold" style={{ color: slugValid ? "oklch(22% 0.24 270)" : "var(--panel-danger-ink)" }}>
                     {slug}.sellflow.app
                   </span>
                 </p>
@@ -205,7 +205,7 @@ export default function OnboardingForm({ firstName }: Props) {
             {error && (
               <p
                 className="text-xs font-medium px-3 py-2.5 rounded-xl"
-                style={{ background: "oklch(97% 0.012 20)", color: "oklch(42% 0.20 20)", border: "1px solid oklch(90% 0.03 20)" }}
+                style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)", border: "1px solid var(--panel-danger-border)" }}
               >
                 {error}
               </p>

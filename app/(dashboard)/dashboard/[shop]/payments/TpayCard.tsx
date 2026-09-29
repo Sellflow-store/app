@@ -159,7 +159,7 @@ export default function TpayCard({
       </p>
 
       {!state.encryptionReady && (
-        <p className="text-xs mb-4 font-medium" style={{ color: "oklch(40% 0.18 20)" }}>
+        <p className="text-xs mb-4 font-medium" style={{ color: "var(--panel-danger-ink)" }}>
           Platforma nie ma jeszcze skonfigurowanego szyfrowania kluczy, więc zapis jest chwilowo niemożliwy.
         </p>
       )}
@@ -237,7 +237,7 @@ export default function TpayCard({
             onClick={disconnect}
             disabled={busy}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-2"
-            style={{ color: "oklch(45% 0.18 20)" }}
+            style={{ color: "var(--panel-danger-ink)" }}
           >
             <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
             Odłącz
@@ -246,7 +246,7 @@ export default function TpayCard({
       )}
 
       {message && (
-        <p className="text-xs mt-3 font-medium" style={{ color: message.error ? "oklch(40% 0.18 20)" : "oklch(40% 0.16 145)" }}>
+        <p className="text-xs mt-3 font-medium" style={{ color: message.error ? "var(--panel-danger-ink)" : "var(--panel-success-ink)" }}>
           {message.text}
         </p>
       )}

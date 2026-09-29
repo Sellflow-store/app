@@ -71,7 +71,7 @@ export default function ImageUpload({
         {isUploading ? "Wgrywanie…" : label}
       </button>
       {error && (
-        <p className="text-[11px] mt-1.5" style={{ color: "oklch(45% 0.18 20)" }}>
+        <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-danger-ink)" }}>
           {error}
         </p>
       )}

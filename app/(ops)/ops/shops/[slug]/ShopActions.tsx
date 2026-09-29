@@ -106,7 +106,7 @@ export default function ShopActions({ slug, shopName, suspended, deleted, plan }
 
       <div className="px-5 py-4 space-y-4">
         {error && (
-          <p className="text-xs font-medium" style={{ color: "oklch(45% 0.18 20)" }} role="alert">
+          <p className="text-xs font-medium" style={{ color: "var(--panel-danger-ink)" }} role="alert">
             {error}
           </p>
         )}
@@ -158,8 +158,8 @@ export default function ShopActions({ slug, shopName, suspended, deleted, plan }
             className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
             style={
               suspended
-                ? { background: "var(--brand-success, oklch(52% 0.2 158))", color: "#fff" }
-                : { color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }
+                ? { background: "var(--brand-success, var(--panel-success))", color: "#fff" }
+                : { color: "var(--panel-danger-ink)", border: "1.5px solid var(--panel-danger-border)" }
             }
           >
             <Power className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -186,7 +186,7 @@ export default function ShopActions({ slug, shopName, suspended, deleted, plan }
                 onClick={handleRestore}
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
-                style={{ background: "var(--brand-success, oklch(52% 0.2 158))", color: "#fff" }}
+                style={{ background: "var(--brand-success, var(--panel-success))", color: "#fff" }}
               >
                 <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.75} />
                 {busy ? "…" : "Przywróć sklep"}
@@ -195,7 +195,7 @@ export default function ShopActions({ slug, shopName, suspended, deleted, plan }
           ) : (
             <>
               <div>
-                <p className="text-sm font-medium" style={{ color: "oklch(45% 0.18 20)" }}>
+                <p className="text-sm font-medium" style={{ color: "var(--panel-danger-ink)" }}>
                   Usuń sklep
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
@@ -206,7 +206,7 @@ export default function ShopActions({ slug, shopName, suspended, deleted, plan }
                 onClick={handleDelete}
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50 shrink-0"
-                style={{ color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }}
+                style={{ color: "var(--panel-danger-ink)", border: "1.5px solid var(--panel-danger-border)" }}
               >
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                 Usuń sklep

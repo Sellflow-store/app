@@ -168,10 +168,10 @@ export default function LegalForm({
       ) : (
         <div
           className="rounded-2xl p-4 mb-5 flex items-center gap-3"
-          style={{ background: "oklch(96% 0.04 158)", border: "1px solid oklch(82% 0.10 158)" }}
+          style={{ background: "var(--panel-success-soft)", border: "1px solid var(--panel-success-border)" }}
         >
-          <Check className="w-4 h-4 shrink-0" style={{ color: "oklch(48% 0.15 158)" }} strokeWidth={2.2} />
-          <p className="text-sm font-semibold" style={{ color: "oklch(35% 0.10 158)" }}>
+          <Check className="w-4 h-4 shrink-0" style={{ color: "var(--panel-success-ink)" }} strokeWidth={2.2} />
+          <p className="text-sm font-semibold" style={{ color: "var(--panel-success-ink)" }}>
             Komplet danych — dokumenty są gotowe do publikacji.
           </p>
         </div>
@@ -202,7 +202,7 @@ export default function LegalForm({
         {lookupMsg && (
           <p
             className="text-[11px] -mt-2 mb-3"
-            style={{ color: lookupMsg.error ? "oklch(50% 0.20 20)" : P.muted }}
+            style={{ color: lookupMsg.error ? "var(--panel-danger)" : P.muted }}
           >
             {lookupMsg.text}
           </p>

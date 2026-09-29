@@ -70,8 +70,8 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved"  ? "var(--panel-success)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
+    saveState === "saved"  ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
     : "var(--panel-accent)";
 
   return (
@@ -158,11 +158,11 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
                 placeholder={p.placeholder}
                 style={{
                   ...inputStyle,
-                  border: bad ? "1.5px solid oklch(50% 0.20 20)" : inputStyle.border,
+                  border: bad ? "1.5px solid var(--panel-danger)" : inputStyle.border,
                 }}
               />
               {bad && (
-                <p className="text-xs mt-1" style={{ color: "oklch(50% 0.20 20)" }}>
+                <p className="text-xs mt-1" style={{ color: "var(--panel-danger)" }}>
                   Podaj pełny adres zaczynający się od https://
                 </p>
               )}

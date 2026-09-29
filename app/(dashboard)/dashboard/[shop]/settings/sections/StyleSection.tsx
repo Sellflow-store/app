@@ -101,7 +101,7 @@ export default function StyleSection({ shopSlug, initialBranding, initialBrand }
             />
           ))}
         </div>
-        <p className="text-[11px] mt-3 h-4" style={{ color: status === "error" ? "oklch(60% 0.18 20)" : P.faint }} aria-live="polite">
+        <p className="text-[11px] mt-3 h-4" style={{ color: status === "error" ? "var(--panel-danger)" : P.faint }} aria-live="polite">
           {status === "saving" && "Zapisywanie…"}
           {status === "saved" && "Zapisano — sklep używa nowego stylu."}
           {status === "error" && "Nie udało się zapisać. Spróbuj ponownie."}

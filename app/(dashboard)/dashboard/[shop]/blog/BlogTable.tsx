@@ -92,7 +92,7 @@ export default function BlogTable({ shopSlug, posts }: Props) {
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit"
                 style={
                   post.published
-                    ? { background: "oklch(95% 0.05 145)", color: "oklch(40% 0.18 145)" }
+                    ? { background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }
                     : { background: "var(--panel-surface-hover)", color: "var(--panel-ink-muted)" }
                 }
               >

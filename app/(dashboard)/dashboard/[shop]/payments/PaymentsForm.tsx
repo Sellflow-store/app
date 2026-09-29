@@ -136,8 +136,8 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "var(--panel-success)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
     : "var(--panel-accent)";
 
   return (
@@ -168,7 +168,7 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
       {validationError && (
         <div
           className="rounded-xl px-4 py-3 mb-5 text-xs font-medium"
-          style={{ background: "oklch(50% 0.20 20 / 0.08)", color: "oklch(40% 0.18 20)", border: "1px solid oklch(50% 0.20 20 / 0.25)" }}
+          style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)", border: "1px solid var(--panel-danger-border)" }}
         >
           {validationError}
         </div>

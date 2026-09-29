@@ -25,7 +25,7 @@ export default function Problem({ onNext, onBack }: Props) {
         Jaki problem rozwiązujesz?
       </h2>
       <p className="text-sm leading-relaxed" style={{ color: "var(--brand-ink-2)" }}>
-        Jednym, dwoma zdaniami. Np. „Większość świec na rynku pachnie sztucznie — a ludzie chcą,
+        Jednym, dwoma zdaniami. Np. „Większość świec na rynku pachnie sztucznie, a ludzie chcą,
         żeby ich dom pachniał spokojem.”
       </p>
 
