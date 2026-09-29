@@ -116,7 +116,7 @@ export default function NotificationsBell({ shopSlug }: { shopSlug: string }) {
           <div style={{ borderTop: "1px solid var(--panel-surface-hover)" }}>
             {!data || data.recent.length === 0 ? (
               <p className="px-4 py-5 text-xs text-center" style={{ color: "var(--panel-ink-muted)" }}>
-                Wszystko ogarnięte — brak nowych spraw 🎉
+                Wszystko ogarnięte, brak nowych spraw 🎉
               </p>
             ) : (
               data.recent.map((o) => (

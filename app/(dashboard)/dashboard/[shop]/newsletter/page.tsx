@@ -39,7 +39,7 @@ export default async function NewsletterPage({
           {subscribers.length === 1
             ? "1 subskrybent"
             : `${subscribers.length} subskrybentów`}{" "}
-          — zapisy z popupu na stronie sklepu
+          z popupu na stronie sklepu
         </p>
       </div>
 
@@ -99,7 +99,7 @@ export default async function NewsletterPage({
 
       {subscribers.length > 0 && (
         <p className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
-          Wysyłka kampanii pojawi się wkrótce — na razie możesz skopiować adresy do swojego
+          Wysyłka kampanii pojawi się wkrótce. Na razie możesz skopiować adresy do swojego
           narzędzia mailingowego.
         </p>
       )}

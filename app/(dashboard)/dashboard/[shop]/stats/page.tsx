@@ -380,7 +380,7 @@ export default async function AnalyticsPage({
               <p className="text-[12px] mt-2 leading-snug" style={{ color: "#a1a1aa" }}>
                 {aiVisits.length > 0
                   ? "Klienci trafiają do Ciebie z asystentów AI"
-                  : "Gotowy na erę AI — widoczny dla ChatGPT, Claude i Perplexity"}
+                  : "Gotowy na erę AI: widoczny dla ChatGPT, Claude i Perplexity"}
               </p>
             </div>
 

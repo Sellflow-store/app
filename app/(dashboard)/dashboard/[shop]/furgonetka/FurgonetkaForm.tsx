@@ -231,7 +231,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
             Ustawienia → Integracje → Własne
           </a>{" "}
           i wklej te dwie wartości. Włącz tam „Synchronizację zamówień” oraz „Wysyłkę
-          informacji o przesyłce” — bez tego drugiego numer nie wróci do sklepu.
+          informacji o przesyłce”. Bez tego drugiego numer nie wróci do sklepu.
         </p>
 
         <div className="space-y-3">
@@ -248,7 +248,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
                   border: "1px solid oklch(75% 0.15 85 / 0.3)",
                 }}
               >
-                Skopiuj go teraz — trzymamy tylko jego skrót i nie pokażemy go ponownie.
+                Skopiuj go teraz. Trzymamy tylko jego skrót i nie pokażemy go ponownie.
                 Jeśli go zgubisz, wygeneruj nowy i wklej w Furgonetce jeszcze raz.
               </p>
             </div>
@@ -295,7 +295,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
 
         {state.connected && (
           <p className="text-xs mt-3" style={{ color: "var(--panel-ink-muted)" }}>
-            Wymiana tokena unieważnia poprzedni — po wygenerowaniu nowego trzeba go
+            Wymiana tokena unieważnia poprzedni. Po wygenerowaniu nowego trzeba go
             wkleić w Furgonetce, inaczej synchronizacja stanie.
           </p>
         )}
@@ -397,8 +397,8 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
           </div>
 
           <p className="text-xs mt-3" style={{ color: "var(--panel-ink-muted)" }}>
-            Kod paczkomatu przekazujemy tylko wtedy, gdy wskazany przewoźnik go obsłuży —
-            punkty zbieramy z sieci InPostu.
+            Kod paczkomatu przekazujemy tylko wtedy, gdy wskazany przewoźnik go obsłuży.
+            Punkty zbieramy z sieci InPostu.
           </p>
 
           <button

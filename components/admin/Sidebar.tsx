@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { X, ChevronRight, Eye } from "lucide-react";
-import { NAV_SECTIONS } from "./nav";
+import { X, ChevronRight, ChevronDown, Eye } from "lucide-react";
+import { NAV_SECTIONS, type NavSection } from "./nav";
 
 interface SidebarProps {
   shopSlug: string;
@@ -22,6 +23,10 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const isLocal = appUrl.includes("localhost") || appUrl.includes("127.0.0.1");
   const previewUrl = isLocal ? `/${shopSlug}` : `https://${shopSlug}.${appDomain}`;
+
+  // Stan zwinięcia żyje w layoucie panelu, więc przetrwa przejścia między
+  // stronami; po przeładowaniu wraca do domyślnego (zwinięte).
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   function isActive(slug: string) {
     if (slug === "") return pathname === base; // Pulpit — only the bare base
@@ -75,41 +80,47 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
 
         {/* Nav */}
         <nav aria-label="Menu panelu" className="flex-1 overflow-y-auto py-4 px-3">
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.id} className="mb-5">
-              <p className="text-[11px] font-semibold px-2.5 mb-1.5 text-[var(--panel-sidebar-muted)]">
-                {section.title}
-              </p>
+          {NAV_SECTIONS.map((section) => {
+            const hasActive = section.items.some((i) => isActive(i.slug));
+            // Zwinięta grupa rozwija się sama, gdy otwarta strona jest w środku.
+            const open = !section.collapsible || hasActive || !!expanded[section.id];
+            return (
+              <div key={section.id} className={section.title ? "mb-4" : "mb-3"}>
+                {section.title && (
+                  section.collapsible ? (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((e) => ({ ...e, [section.id]: !open }))}
+                      aria-expanded={open}
+                      disabled={hasActive}
+                      className="w-full flex items-center gap-1.5 text-[11px] font-semibold px-2.5 mb-1.5 text-[var(--panel-sidebar-muted)] hover:text-white disabled:hover:text-[var(--panel-sidebar-muted)] transition-colors"
+                    >
+                      <span className="flex-1 text-left">{section.title}</span>
+                      {!open && <span className="font-normal tabular-nums">{section.items.length}</span>}
+                      <ChevronDown
+                        className={["w-3.5 h-3.5 transition-transform", open ? "" : "-rotate-90"].join(" ")}
+                        strokeWidth={2}
+                      />
+                    </button>
+                  ) : (
+                    <p className="text-[11px] font-semibold px-2.5 mb-1.5 text-[var(--panel-sidebar-muted)]">
+                      {section.title}
+                    </p>
+                  )
+                )}
 
-              {section.items.map(({ slug, label, icon: Icon }) => {
-                const active = isActive(slug);
-                return (
-                  <Link
-                    key={slug || "pulpit"}
-                    href={slug ? `${base}/${slug}` : base}
+                {open && section.items.map((item) => (
+                  <NavLink
+                    key={item.slug || "pulpit"}
+                    item={item}
+                    href={item.slug ? `${base}/${item.slug}` : base}
+                    active={isActive(item.slug)}
                     onClick={onClose}
-                    aria-current={active ? "page" : undefined}
-                    className={[
-                      "group w-full flex items-center gap-3 px-2.5 py-1.5 min-h-8 rounded-md text-[13.5px] leading-snug transition-colors mb-px",
-                      active
-                        ? "bg-[var(--panel-sidebar-active)] text-white font-semibold"
-                        : "text-[var(--panel-sidebar-ink)] hover:bg-[var(--panel-sidebar-hover)] hover:text-white",
-                    ].join(" ")}
-                  >
-                    <Icon
-                      className={[
-                        "w-4 h-4 shrink-0 transition-colors",
-                        active ? "text-[var(--panel-aqua)]" : "text-[var(--panel-sidebar-muted)] group-hover:text-white",
-                      ].join(" ")}
-                      strokeWidth={1.75}
-                    />
-                    <span className="flex-1">{label}</span>
-                    {active && <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-70" strokeWidth={2.25} />}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+                  />
+                ))}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Preview link */}
@@ -126,5 +137,35 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
         </div>
       </aside>
     </>
+  );
+}
+
+function NavLink({
+  item, href, active, onClick,
+}: { item: NavSection["items"][number]; href: string; active: boolean; onClick: () => void }) {
+  const { label, icon: Icon, hint } = item;
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      title={hint}
+      aria-current={active ? "page" : undefined}
+      className={[
+        "group w-full flex items-center gap-3 px-2.5 py-1.5 min-h-8 rounded-md text-[13.5px] leading-snug transition-colors mb-px",
+        active
+          ? "bg-[var(--panel-sidebar-active)] text-white font-semibold"
+          : "text-[var(--panel-sidebar-ink)] hover:bg-[var(--panel-sidebar-hover)] hover:text-white",
+      ].join(" ")}
+    >
+      <Icon
+        className={[
+          "w-4 h-4 shrink-0 transition-colors",
+          active ? "text-[var(--panel-aqua)]" : "text-[var(--panel-sidebar-muted)] group-hover:text-white",
+        ].join(" ")}
+        strokeWidth={1.75}
+      />
+      <span className="flex-1">{label}</span>
+      {active && <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-70" strokeWidth={2.25} />}
+    </Link>
   );
 }

@@ -135,7 +135,7 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
         </h2>
         <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>
           Wklej pełne adresy swoich profili. Ikona pojawi się w stopce tylko dla
-          uzupełnionych pól — puste profile nie są pokazywane.
+          uzupełnionych pól. Puste profile nie są pokazywane.
         </p>
 
         {SOCIAL_PLATFORMS.map((p) => {

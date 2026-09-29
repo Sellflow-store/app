@@ -82,7 +82,7 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
 
   async function handleSave() {
     if (!transferEnabled && !codEnabled && !onlineActive) {
-      setValidationError("Włącz przynajmniej jedną metodę płatności — inaczej klienci nie złożą zamówienia.");
+      setValidationError("Włącz przynajmniej jedną metodę płatności, inaczej klienci nie złożą zamówienia.");
       return;
     }
     if (transferEnabled) {
@@ -95,7 +95,7 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
       // błędu byłoby to, że przelewy od klientów nigdy nie przychodzą.
       if (!isValidNrb(digits)) {
         setValidationError(
-          "Ten numer konta ma błędną sumę kontrolną — sprawdź, czy nie ma literówki."
+          "Ten numer konta ma błędną sumę kontrolną. Sprawdź, czy nie ma literówki."
         );
         return;
       }

@@ -276,7 +276,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         {logoUrl && (
           <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--panel-border)" }}>
             <p className="text-xs mb-2" style={{ color: "var(--panel-ink-muted)" }}>
-              Jasna wersja logo — pokazuje się, gdy menu leży na ciemnym zdjęciu
+              Jasna wersja logo. Pokazuje się, gdy menu leży na ciemnym zdjęciu
               (układ hero „sam kadr”). Bez niej zostaje logo podstawowe.
             </p>
             <div className="flex items-center gap-3 mb-1">
@@ -315,7 +315,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--panel-border)" }}>
             <p className="text-xs mb-3" style={{ color: "var(--panel-ink-muted)" }}>
               Rozmiar w nagłówku sklepu. Logo poziome (szerokie i niskie) potrzebuje
-              zwykle większej maks. szerokości — inaczej zmniejsza się do ledwie
+              zwykle większej maks. szerokości, inaczej zmniejsza się do ledwie
               widocznego paska.
             </p>
 
@@ -411,7 +411,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           <div className="flex-1">
             <p className="text-xs mb-2" style={{ color: "var(--panel-ink-muted)" }}>
               Mała ikona na karcie przeglądarki i w zakładkach. Bez własnego pliku
-              używamy logo sklepu. Kwadratowy PNG/SVG, min. 64×64 px — logo poziome
+              używamy logo sklepu. Kwadratowy PNG/SVG, min. 64×64 px. Logo poziome
               zrobi się w tym miejscu nieczytelne, więc warto wgrać sam znak (np.
               samą chatkę bez napisu).
             </p>
@@ -558,12 +558,12 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             onChange={(e) => setHeadingWeight(e.target.value as HeadingWeight)}
             style={inputStyle}
           >
-            <option value="bold">Gruba — mocna, wyrazista</option>
-            <option value="regular">Zwykła — spokojna</option>
-            <option value="light">Lekka — elegancka, do cienkich logotypów</option>
+            <option value="bold">Gruba: mocna, wyrazista</option>
+            <option value="regular">Zwykła: spokojna</option>
+            <option value="light">Lekka: elegancka, do cienkich logotypów</option>
           </select>
           <p className="text-[11px] mt-1.5 mb-4" style={{ color: "var(--panel-ink-faint)" }}>
-            Dotyczy tytułów hero i sekcji. Nie każdy font ma wagę lekką — wtedy pokaże się zwykła.
+            Dotyczy tytułów hero i sekcji. Jeśli font nie ma wagi lekkiej, pokaże się zwykła.
           </p>
         </div>
 
@@ -577,11 +577,11 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             onChange={(e) => setCardStyle(e.target.value as CardStyle)}
             style={inputStyle}
           >
-            <option value="default">Klasyczne — zaokrąglone zdjęcie, etykieta, torebka na hoverze</option>
-            <option value="minimal">Minimalne — zdjęcie, nazwa, cena; bez zaokrągleń i przycisków</option>
+            <option value="default">Klasyczne: zaokrąglone zdjęcie, etykieta, torebka na hoverze</option>
+            <option value="minimal">Minimalne: zdjęcie, nazwa, cena; bez zaokrągleń i przycisków</option>
           </select>
           <p className="text-[11px] mt-1.5 mb-4" style={{ color: "var(--panel-ink-faint)" }}>
-            Minimalne karty pasują do marek modowych i premium — kupujący wchodzi w produkt,
+            Minimalne karty pasują do marek modowych i premium: kupujący wchodzi w produkt,
             zamiast dodawać z listy.
           </p>
         </div>
@@ -636,7 +636,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 Jednolite tło całej strony
               </span>
               <span className="block text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
-                Sekcje, pasek hero i stopka w tym samym kolorze co strona — rozdzielone tylko
+                Sekcje, pasek hero i stopka w tym samym kolorze co strona, rozdzielone tylko
                 cienkimi liniami. Bez tego dostają lekko ciemniejsze odcienie.
               </span>
             </span>
@@ -647,7 +647,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               style={{ color: "oklch(50% 0.15 70)" }}
             >
               <TriangleAlert className="w-3.5 h-3.5" strokeWidth={2} />
-              Ciemne tło może zlewać się z tekstem sklepu — sprawdź czytelność na podglądzie.
+              Ciemne tło może zlewać się z tekstem sklepu. Sprawdź czytelność na podglądzie.
             </p>
           )}
         </div>
@@ -753,7 +753,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               className="text-xs leading-relaxed"
               style={{ fontFamily: `'${bodyFont}', sans-serif`, color: "oklch(35% 0 0)" }}
             >
-              Tak wygląda treść Twojego sklepu — nagłówki w foncie „{displayFont}”,
+              Tak wygląda treść Twojego sklepu: nagłówki w foncie „{displayFont}”,
               tekst w foncie „{bodyFont}”, na wybranym tle.
             </p>
           </div>

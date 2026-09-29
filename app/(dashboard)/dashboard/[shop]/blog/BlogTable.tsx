@@ -61,7 +61,7 @@ export default function BlogTable({ shopSlug, posts }: Props) {
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <FileText className="w-10 h-10" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
             <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
-              Brak wpisów — kliknij &ldquo;Nowy wpis&rdquo;
+              Brak wpisów. Kliknij &ldquo;Nowy wpis&rdquo;
             </p>
           </div>
         ) : (
