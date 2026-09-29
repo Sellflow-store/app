@@ -35,8 +35,12 @@ export default function Header({ shopSlug, section, adminHref = null, onMenuTogg
       <nav aria-label="Ścieżka" className="hidden sm:flex items-center gap-2 text-[13.5px] min-w-0">
         {page ? (
           <>
-            <span className="text-[var(--panel-ink-muted)] whitespace-nowrap">{page.section.title}</span>
-            <span aria-hidden className="text-[var(--panel-ink-faint)]">/</span>
+            {page.section.title && (
+              <>
+                <span className="text-[var(--panel-ink-muted)] whitespace-nowrap">{page.section.title}</span>
+                <span aria-hidden className="text-[var(--panel-ink-faint)]">/</span>
+              </>
+            )}
             <span className="font-semibold text-[var(--panel-ink)] truncate">{page.item.label}</span>
           </>
         ) : (

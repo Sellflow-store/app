@@ -143,7 +143,7 @@ export default function LegalForm({
       <div className="flex items-start justify-between gap-4">
         <SectionTitle
           title="Dokumenty prawne"
-          desc="Uzupełnij dane raz — regulamin i polityka prywatności złożą się same i będą aktualne na sklepie."
+          desc="Uzupełnij dane raz. Regulamin i polityka prywatności złożą się same i będą aktualne na sklepie."
         />
         <SaveButton state={state} onClick={save} />
       </div>
@@ -157,7 +157,7 @@ export default function LegalForm({
           <div>
             <p className="text-sm font-semibold" style={{ color: "oklch(35% 0.10 70)" }}>
               Brakuje {missing.length}{" "}
-              {missing.length === 1 ? "danej" : missing.length < 5 ? "danych" : "danych"} — w dokumentach
+              {missing.length === 1 ? "danej" : missing.length < 5 ? "danych" : "danych"}, więc w dokumentach
               zostaną widoczne luki
             </p>
             <p className="text-xs mt-1" style={{ color: "oklch(45% 0.07 70)" }}>
@@ -172,13 +172,13 @@ export default function LegalForm({
         >
           <Check className="w-4 h-4 shrink-0" style={{ color: "var(--panel-success-ink)" }} strokeWidth={2.2} />
           <p className="text-sm font-semibold" style={{ color: "var(--panel-success-ink)" }}>
-            Komplet danych — dokumenty są gotowe do publikacji.
+            Komplet danych. Dokumenty są gotowe do publikacji.
           </p>
         </div>
       )}
 
       <Card title="Dane sprzedawcy" desc="Trafiają do §1 regulaminu i do sekcji „Administrator” w polityce prywatności.">
-        <InheritedField label="NIP" {...inherited("taxId")} hint="Wpisz NIP i kliknij „Pobierz dane” — resztę weźmiemy z rejestru Ministerstwa Finansów.">
+        <InheritedField label="NIP" {...inherited("taxId")} hint="Wpisz NIP i kliknij „Pobierz dane”. Resztę weźmiemy z rejestru Ministerstwa Finansów.">
           <div className="flex gap-2">
             <TextInput
               value={data.taxId}
@@ -248,7 +248,7 @@ export default function LegalForm({
           checked={data.sells.digital}
           onChange={(v) => set("sells", { ...data.sells, digital: v })}
           label="Produktów cyfrowych"
-          desc="Pliki, kursy, e-booki — dochodzi utrata prawa odstąpienia po rozpoczęciu pobierania."
+          desc="Pliki, kursy, e-booki. Dochodzi utrata prawa odstąpienia po rozpoczęciu pobierania."
         />
         <Toggle
           checked={data.sells.services}
@@ -296,7 +296,7 @@ export default function LegalForm({
             checked={data.personalizedProducts}
             onChange={(v) => set("personalizedProducts", v)}
             label="Sprzedaję produkty personalizowane"
-            desc="Napisy, grafiki, dedykacje, wykonanie na indywidualne zamówienie — wyłącza prawo odstąpienia dla tych produktów."
+            desc="Napisy, grafiki, dedykacje, wykonanie na indywidualne zamówienie. Wyłącza prawo odstąpienia dla tych produktów."
           />
         </div>
       </Card>
@@ -344,7 +344,7 @@ export default function LegalForm({
         </div>
       </Card>
 
-      <Card title="Dane pobierane z innych sekcji" desc="Nie przepisuj ich tutaj — zmień u źródła, a dokumenty się zaktualizują.">
+      <Card title="Dane pobierane z innych sekcji" desc="Nie przepisuj ich tutaj. Zmień u źródła, a dokumenty się zaktualizują.">
         <SourceRow
           label="Metody płatności"
           value={vars.payments.length ? vars.payments.join(", ") : "brak włączonych"}
@@ -393,7 +393,7 @@ export default function LegalForm({
 
       <p className="text-[11px] leading-relaxed mb-4" style={{ color: P.faint }}>
         Dokumenty powstają z wzorów przygotowanych przez prawnika i uzupełniają się Twoimi danymi. To punkt
-        startowy dopasowany do typowego sklepu — nie porada prawna. Jeśli prowadzisz sprzedaż nietypową,
+        startowy dopasowany do typowego sklepu, a nie porada prawna. Jeśli prowadzisz sprzedaż nietypową,
         skonsultuj treść z prawnikiem.
       </p>
     </div>
@@ -436,7 +436,7 @@ function InheritedField({
       )}
       {fromElsewhere && (
         <span className="block text-[11px] mt-1.5" style={{ color: P.faint }}>
-          W dokumentach użyjemy „{resolved.value}” — {SOURCE_LABEL[resolved.source]}. Wpisz tutaj tylko
+          W dokumentach użyjemy „{resolved.value}” ({SOURCE_LABEL[resolved.source]}). Wpisz tutaj tylko
           wtedy, gdy w regulaminie ma być co innego.
         </span>
       )}
@@ -592,7 +592,7 @@ function DocumentPanel({
         ) : missingCount > 0 ? (
           <>
             Uzupełnij brakujące dane, żeby dokument pojawił się na sklepie pod adresem{" "}
-            <span className="font-medium">{publicPath}</span> — do tego czasu klienci widzą tam informację,
+            <span className="font-medium">{publicPath}</span>. Do tego czasu klienci widzą tam informację,
             że dokument jest w przygotowaniu.
           </>
         ) : (

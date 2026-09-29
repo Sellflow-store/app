@@ -87,7 +87,7 @@ export default function StyleSection({ shopSlug, initialBranding, initialBrand }
       {presetFontsHref && <link rel="stylesheet" href={presetFontsHref} />}
       <SectionTitle
         title="Styl sklepu"
-        desc="Paleta kolorów, typografia i charakter Twojego sklepu. Zmiana działa od razu — bez utraty treści."
+        desc="Paleta kolorów, typografia i charakter Twojego sklepu. Zmiana działa od razu i nie usuwa treści."
       />
       <Card>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -103,9 +103,9 @@ export default function StyleSection({ shopSlug, initialBranding, initialBrand }
         </div>
         <p className="text-[11px] mt-3 h-4" style={{ color: status === "error" ? "var(--panel-danger)" : P.faint }} aria-live="polite">
           {status === "saving" && "Zapisywanie…"}
-          {status === "saved" && "Zapisano — sklep używa nowego stylu."}
+          {status === "saved" && "Zapisano. Sklep używa nowego stylu."}
           {status === "error" && "Nie udało się zapisać. Spróbuj ponownie."}
-          {status === "idle" && selected === null && "Sklep używa stylu niestandardowego z onboardingu — wybór presetu go nadpisze."}
+          {status === "idle" && selected === null && "Sklep używa stylu niestandardowego z onboardingu. Wybór presetu go nadpisze."}
         </p>
       </Card>
     </div>

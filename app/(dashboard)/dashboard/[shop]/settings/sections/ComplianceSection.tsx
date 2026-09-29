@@ -47,7 +47,7 @@ export default function ComplianceSection({
           checked={b.enabled}
           onChange={(v) => setBanner("enabled", v)}
           label="Pokazuj baner zgody na cookies"
-          desc="Wyłączenie oznacza brak zbierania zgód — nie zalecane, gdy używasz pikseli."
+          desc="Wyłączenie oznacza brak zbierania zgód. Nie zalecamy tego, gdy używasz pikseli."
         />
 
         {b.enabled && (
@@ -58,13 +58,13 @@ export default function ComplianceSection({
               checked={b.analytics}
               onChange={(v) => setBanner("analytics", v)}
               label="Analityka"
-              desc="Google Analytics, GA4 przez GTM — ładowane po zgodzie na analitykę."
+              desc="Google Analytics, GA4 przez GTM, ładowane po zgodzie na analitykę."
             />
             <Toggle
               checked={b.marketing}
               onChange={(v) => setBanner("marketing", v)}
               label="Marketing"
-              desc="Piksel Meta, Piksel TikTok — ładowane po zgodzie na marketing."
+              desc="Piksel Meta, Piksel TikTok, ładowane po zgodzie na marketing."
             />
             <div className="my-3" style={{ borderTop: `1px solid ${P.border}` }} />
             <Field label="Treść banera">
@@ -86,7 +86,7 @@ export default function ComplianceSection({
           checked={data.omnibus.enabled}
           onChange={(v) => setData((d) => ({ ...d, omnibus: { enabled: v } }))}
           label="Pokazuj „najniższą cenę z 30 dni” przy promocjach"
-          desc="Przy produktach z ceną promocyjną sklep wyświetla najniższą cenę z ostatnich 30 dni — wymóg prawny przy komunikowaniu obniżek."
+          desc="Przy produktach z ceną promocyjną sklep wyświetla najniższą cenę z ostatnich 30 dni. To wymóg prawny przy komunikowaniu obniżek."
         />
         <p className="text-[11px] mt-3 leading-relaxed" style={{ color: P.faint }}>
           Sklep automatycznie zapisuje historię cen każdego produktu i wylicza najniższą cenę z 30 dni.

@@ -10,8 +10,15 @@ interface OrderHit { id: string; orderNumber: string; customerName: string | nul
 
 // Static panel pages — searched client-side, no round-trip. Same list as the
 // sidebar, so every page it shows is findable here too.
-const PAGES: { label: string; slug: string }[] = NAV_SECTIONS.flatMap((s) =>
-  s.items.filter((i) => i.slug !== "").map((i) => ({ label: i.label, slug: i.slug })),
+// Szukamy też po słowach kluczowych („regulamin”, „blik”, „domena”), bo klient
+// zna swój problem, a nie naszą nazwę strony.
+const PAGES: { label: string; slug: string; hint?: string; haystack: string }[] = NAV_SECTIONS.flatMap((s) =>
+  s.items.filter((i) => i.slug !== "").map((i) => ({
+    label: i.label,
+    slug: i.slug,
+    hint: i.hint,
+    haystack: [i.label, ...(i.keywords ?? [])].join(" ").toLowerCase(),
+  })),
 );
 
 const pln = (v: string) => `${(parseFloat(v) || 0).toFixed(2).replace(".", ",")} zł`;
@@ -26,7 +33,7 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
 
   const base = `/dashboard/${shopSlug}`;
   const q = query.trim().toLowerCase();
-  const pageHits = q.length >= 1 ? PAGES.filter((p) => p.label.toLowerCase().includes(q)).slice(0, 5) : [];
+  const pageHits = q.length >= 1 ? PAGES.filter((p) => p.haystack.includes(q)).slice(0, 5) : [];
 
   // Debounced product/order lookup
   useEffect(() => {
@@ -105,7 +112,10 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
             <Group label="Strony">
               {pageHits.map((p) => (
                 <Row key={p.slug} icon={FileText} onClick={() => go(`${base}/${p.slug}`)}>
-                  {p.label}
+                  <span className="flex flex-col min-w-0">
+                    <span className="truncate">{p.label}</span>
+                    {p.hint && <span className="text-[11.5px] truncate text-[var(--panel-ink-faint)]">{p.hint}</span>}
+                  </span>
                 </Row>
               ))}
             </Group>

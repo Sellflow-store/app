@@ -32,7 +32,7 @@ const KIND_OPTIONS: { value: DeliveryMethodKind; label: string }[] = [
 const KIND_HINT: Record<DeliveryMethodKind, string> = {
   courier: "Klient podaje adres dostawy.",
   parcel_locker: "Klient wskaże konkretny punkt przy składaniu zamówienia.",
-  pickup: "Klient odbiera u Ciebie — bez wysyłki.",
+  pickup: "Klient odbiera u Ciebie, bez wysyłki.",
 };
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -182,7 +182,7 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
           Metody dostawy
         </h2>
         <p className="text-xs mb-4 -mt-3" style={{ color: "var(--panel-ink-muted)" }}>
-          Rodzaj decyduje, o co poprosimy klienta w koszyku — przy paczkomacie
+          Rodzaj decyduje, o co poprosimy klienta w koszyku: przy paczkomacie
           o wskazanie punktu, przy kurierze o adres.
         </p>
 

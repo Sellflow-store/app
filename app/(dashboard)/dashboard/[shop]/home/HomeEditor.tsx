@@ -400,13 +400,13 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               onChange={(e) => patch("hero", { layout: e.target.value as HomeConfig["hero"]["layout"] })}
               style={inputStyle}
             >
-              <option value="split">Dwie kolumny — tekst po lewej, zdjęcie po prawej</option>
+              <option value="split">Dwie kolumny: tekst po lewej, zdjęcie po prawej</option>
               <option value="fullbleed">Zdjęcie na całą szerokość, tekst na dole</option>
-              <option value="editorial">Typograficzny — duży tytuł na osi, zdjęcie jako pas</option>
-              <option value="cover">Sam kadr — zdjęcie na pełny ekran, menu na zdjęciu, bez tekstu</option>
+              <option value="editorial">Typograficzny: duży tytuł na osi, zdjęcie jako pas</option>
+              <option value="cover">Sam kadr: zdjęcie na pełny ekran, menu na zdjęciu, bez tekstu</option>
             </select>
             <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
-              Układ ze zdjęciem na całą szerokość wymaga zdjęcia — bez niego pokaże się układ
+              Układ ze zdjęciem na całą szerokość wymaga zdjęcia. Bez niego pokaże się układ
               typograficzny. Najlepiej działa z fotografią na modelce lub z sesji.
             </p>
           </Field>
@@ -420,8 +420,8 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                   }
                   style={inputStyle}
                 >
-                  <option value="dark">Ciemny — do jasnych, studyjnych kadrów</option>
-                  <option value="light">Jasny — do ciemnych zdjęć</option>
+                  <option value="dark">Ciemny: do jasnych, studyjnych kadrów</option>
+                  <option value="light">Jasny: do ciemnych zdjęć</option>
                 </select>
                 <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
                   Przy jasnym menu podmienia się też logo, jeśli wgrasz jego jasną wersję
@@ -438,7 +438,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                 >
                   <option value="full">Pełny ekran</option>
                   <option value="tall">Wysoki, ale widać, że strona idzie dalej</option>
-                  <option value="medium">Niższy — do zdjęć poziomych</option>
+                  <option value="medium">Niższy: do zdjęć poziomych</option>
                 </select>
               </Field>
             </>
@@ -454,7 +454,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                 }
                 style={inputStyle}
               >
-                <option value="top">Góra — gdy ważna jest głowa / góra kadru</option>
+                <option value="top">Góra: gdy ważna jest głowa / góra kadru</option>
                 <option value="center">Środek</option>
                 <option value="bottom">Dół</option>
               </select>
@@ -509,7 +509,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Nagłówek — linia 1">
+            <Field label="Nagłówek: linia 1">
               <input
                 value={config.hero.headline}
                 onChange={(e) => patch("hero", { headline: e.target.value })}
@@ -517,7 +517,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                 {...focusProps}
               />
             </Field>
-            <Field label="Nagłówek — linia 2 (wyróżniona)">
+            <Field label="Nagłówek: linia 2 (wyróżniona)">
               <input
                 value={config.hero.headlineSub}
                 onChange={(e) => patch("hero", { headlineSub: e.target.value })}
@@ -574,7 +574,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             label="Pokaż nagłówek nad produktami"
           />
           <p className="text-[11px] mt-2" style={{ color: "var(--panel-ink-faint)" }}>
-            Bez nagłówka zostaje sama siatka produktów — spokojniej, gdy nad nią jest lookbook.
+            Bez nagłówka zostaje sama siatka produktów. To spokojniejsze, gdy nad nią jest lookbook.
           </p>
         </div>
         <div className="space-y-0">
@@ -629,7 +629,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
           />
           <p className="text-[11px] mt-2" style={{ color: "var(--panel-ink-faint)" }}>
             Ikony dobierają się po kolejności, nie po treści. Po wyłączeniu punkt składa się
-            z tytułu, cienkiej kreski i opisu — spokojniej przy autorskich tekstach.
+            z tytułu, cienkiej kreski i opisu. To spokojniejsze przy autorskich tekstach.
           </p>
         </div>
         <div className="space-y-3">
@@ -709,7 +709,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               <option value="strip">Wąski pasek z małymi ikonami nad stopką</option>
             </select>
             <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
-              Pasek nie pokazuje nagłówka — same punkty, jedna linia każdy, zlewa się ze stopką.
+              Pasek nie pokazuje nagłówka: same punkty, jedna linia każdy, zlewa się ze stopką.
             </p>
           </Field>
           <ItemListEditor
@@ -775,11 +775,11 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             Kadry pionowe z sesji wyglądają najlepiej. Dwa pierwsze układy idą pełną
             szerokością okna i chcą parzystej liczby kadrów. Układ z przesunięciem ma
             marginesy i przyjmuje dowolną liczbę kadrów. Siatka po cztery mieści ich
-            dużo i nic w niej nie rusza się samo — to najspokojniejszy układ, gdy kadry
+            dużo i nic w niej nie rusza się samo. To najspokojniejszy układ, gdy kadry
             są filmowe. Pas płynący w lewo zajmuje najmniej strony i zatrzymuje się,
             gdy ktoś na niego najedzie. Film leci w pętli, bez dźwięku, a zdjęcie kadru
             zostaje plakatem na czas wczytywania. Krótkie klipy z sesji w oryginalnym
-            tempie migają — dlatego domyślnie zwalniamy je o połowę. Za mocne
+            tempie migają, dlatego domyślnie zwalniamy je o połowę. Za mocne
             spowolnienie potrafi je z kolei zaciąć, bo przeglądarka nie dokłada
             klatek, tylko trzyma każdą dłużej.
           </p>
@@ -796,7 +796,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
           />
           <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
             Sekcja i tak nie pokaże się, dopóki nie ma ani jednej opinii ani logotypu
-            prasowego — pusty sklep nie wyświetla gwiazdek na podstawie zera opinii.
+            prasowego. Pusty sklep nie wyświetla gwiazdek na podstawie zera opinii.
             Wyłącznik przydaje się, gdy opinie już są, a mimo to nie chcesz ich pokazywać.
           </p>
         </div>

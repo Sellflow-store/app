@@ -223,7 +223,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Tag className="w-10 h-10" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
             <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
-              Brak kodów — dodaj pierwszy powyżej
+              Brak kodów. Dodaj pierwszy powyżej
             </p>
           </div>
         ) : (

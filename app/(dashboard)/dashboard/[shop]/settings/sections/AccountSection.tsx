@@ -132,7 +132,7 @@ export default function AccountSection({ shopSlug, accountEmail, userId, initial
             </Field>
             <Field
               label="NIP"
-              hint={'Wpisz NIP i kliknij „Pobierz dane” — nazwę i adres weźmiemy z rejestru Ministerstwa Finansów.'}
+              hint={'Wpisz NIP i kliknij „Pobierz dane”. Nazwę i adres weźmiemy z rejestru Ministerstwa Finansów.'}
             >
               <div className="flex gap-2">
                 <TextInput

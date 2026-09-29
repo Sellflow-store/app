@@ -96,29 +96,61 @@ export default async function DashboardHome({
     ).length === 0;
 
   // ── Setup checklist ──────────────────────────────────────────────────────
+  // Kolejność = kolejność, w jakiej sklep zaczyna zarabiać: bez produktu,
+  // płatności i dostawy nie ma zamówienia; bez dokumentów nie wolno sprzedawać;
+  // logo i „O nas” podnoszą zaufanie, ale nie blokują pierwszej sprzedaży.
   const steps = [
-    { label: "Dodaj pierwszy produkt", href: `${base}/products/new`, done: productCount > 0 },
-    { label: "Wgraj logo sklepu", href: `${base}/branding`, done: !!branding?.logoUrl },
-    { label: "Ustaw metody dostawy", href: `${base}/delivery`, done: !!configMap.delivery },
     {
-      label: "Skonfiguruj płatności",
+      label: "Dodaj pierwszy produkt",
+      desc: "Nazwa, cena i zdjęcie wystarczą. Resztę uzupełnisz później.",
+      cta: "Dodaj produkt",
+      href: `${base}/products/new`,
+      done: productCount > 0,
+    },
+    {
+      label: "Ustaw płatności",
+      desc: "Podłącz Tpay (BLIK, karty) albo włącz przelew lub pobranie.",
+      cta: "Ustaw płatności",
       href: `${base}/payments`,
       done:
         onlinePayments ||
         (!!checkout && ((checkout.transferEnabled ? !!checkout.bankAccount : false) || !!checkout.codEnabled)),
     },
     {
+      label: "Ustaw dostawę",
+      desc: "Wybierz, jak wysyłasz, i ile to kosztuje klienta.",
+      cta: "Ustaw dostawę",
+      href: `${base}/delivery`,
+      done: !!configMap.delivery,
+    },
+    {
       label: "Uzupełnij dane do dokumentów",
+      desc: "Regulamin i polityka prywatności złożą się same z danych Twojej firmy.",
+      cta: "Uzupełnij dane",
       href: `${base}/legal`,
       // Dokumenty składają się same, więc „gotowe" nie znaczy „ktoś wkleił
       // tekst", tylko „nie zostały w nich luki po brakujących danych".
       done: terms?.mode === "custom" ? !!terms.content?.trim() : legalComplete,
     },
-    { label: "Dodaj dane „O nas” i kontakt", href: `${base}/about`, done: !!(about?.content?.trim() || about?.email?.trim()) },
+    {
+      label: "Wgraj logo",
+      desc: "Pojawi się w menu sklepu, w mailach i na karcie przeglądarki.",
+      cta: "Wgraj logo",
+      href: `${base}/branding`,
+      done: !!branding?.logoUrl,
+    },
+    {
+      label: "Napisz kilka zdań o marce",
+      desc: "Strona „O nas” i kontakt. Klienci sprawdzają ją przed pierwszym zakupem.",
+      cta: "Uzupełnij „O nas”",
+      href: `${base}/about`,
+      done: !!(about?.content?.trim() || about?.email?.trim()),
+    },
   ];
   const doneCount = steps.filter((s) => s.done).length;
   const allDone = doneCount === steps.length;
   const pct = Math.round((doneCount / steps.length) * 100);
+  const nextStep = steps.find((s) => !s.done);
 
   const gmv30 = parseFloat(agg30[0]?.gmv ?? "0") || 0;
   const orders30 = agg30[0]?.total ?? 0;
@@ -140,7 +172,11 @@ export default async function DashboardHome({
           <h1 className="text-2xl font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
             Cześć, {shopName}
           </h1>
-          <p className="text-[13.5px] mt-1 text-[var(--panel-ink-muted)]">Oto co dzieje się dziś w Twoim sklepie.</p>
+          <p className="text-[13.5px] mt-1 text-[var(--panel-ink-muted)]">
+            {allDone
+              ? "Oto co dzieje się dziś w Twoim sklepie."
+              : `Do uruchomienia sklepu ${stepsLeftLabel(steps.length - doneCount)}.`}
+          </p>
         </div>
         <Link
           href={`/${shopSlug}`}
@@ -152,6 +188,73 @@ export default async function DashboardHome({
           Zobacz sklep
         </Link>
       </div>
+
+      {/* Uruchomienie sklepu: dopóki coś zostało, to jest pierwsza rzecz na
+          pulpicie, z jednym wyraźnym następnym krokiem zamiast listy do wyboru. */}
+      {!allDone && nextStep && (
+        <section className="rounded-xl mb-6 border border-[var(--panel-border)] bg-[var(--panel-surface)] overflow-hidden">
+          <div className="px-5 pt-5 pb-4">
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <h2 className="text-[15px] font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
+                Uruchom sklep
+              </h2>
+              <span className="text-[12.5px] font-medium tabular-nums text-[var(--panel-ink-muted)]">
+                {doneCount} z {steps.length} gotowe
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden bg-[var(--panel-surface-2)]">
+              <div className="h-full rounded-full transition-all bg-[var(--panel-primary)]" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+
+          <div className="mx-5 mb-4 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3 bg-[var(--panel-primary-soft)]">
+            <div className="flex-1 min-w-0">
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--panel-ink-muted)]">
+                Następny krok
+              </p>
+              <p className="text-[15px] font-semibold mt-0.5 text-[var(--panel-ink)]">{nextStep.label}</p>
+              <p className="text-[13px] mt-0.5 text-[var(--panel-ink-muted)]">{nextStep.desc}</p>
+            </div>
+            <Link
+              href={nextStep.href}
+              className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-lg text-[13px] font-semibold bg-[var(--panel-accent)] text-white hover:opacity-90 transition-opacity shrink-0"
+            >
+              {nextStep.cta}
+              <ArrowRight className="w-4 h-4" strokeWidth={2} />
+            </Link>
+          </div>
+
+          <ol className="border-t border-[var(--panel-border)] divide-y divide-[var(--panel-border)]">
+            {steps.map((s, i) => (
+              <li key={s.label}>
+                <Link
+                  href={s.href}
+                  className="group flex items-center gap-3 px-5 min-h-11 py-2 transition-colors hover:bg-[var(--panel-surface-hover)]"
+                >
+                  <span
+                    className={[
+                      "w-[20px] h-[20px] rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold tabular-nums",
+                      s.done
+                        ? "bg-[var(--panel-success-strong)] text-white"
+                        : s === nextStep
+                          ? "border-[1.5px] border-[var(--panel-primary)] text-[var(--panel-primary)]"
+                          : "border-[1.5px] border-[var(--panel-border-strong)] text-[var(--panel-ink-faint)]",
+                    ].join(" ")}
+                  >
+                    {s.done ? <Check className="w-3 h-3" strokeWidth={3} /> : i + 1}
+                  </span>
+                  <span className={["text-[13.5px] flex-1", s.done ? "text-[var(--panel-ink-muted)]" : "text-[var(--panel-ink)] font-medium"].join(" ")}>
+                    {s.label}
+                  </span>
+                  <span className="text-[12.5px] text-[var(--panel-ink-faint)] group-hover:text-[var(--panel-ink)] transition-colors">
+                    {s.done ? "Zmień" : "Przejdź"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {/* Stat tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -180,53 +283,6 @@ export default async function DashboardHome({
           </Link>
         ))}
       </div>
-
-      {/* Setup checklist */}
-      {!allDone && (
-        <div className="rounded-xl p-5 mb-6 border border-[var(--panel-border)] bg-[var(--panel-surface)]">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-[15px] font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
-              Skonfiguruj swój sklep
-            </h2>
-            <span className="text-[12.5px] font-medium tabular-nums text-[var(--panel-ink-muted)]">
-              {doneCount} z {steps.length}
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full mb-4 overflow-hidden bg-[var(--panel-surface-2)]">
-            <div className="h-full rounded-full transition-all bg-[var(--panel-primary)]" style={{ width: `${pct}%` }} />
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-1.5">
-            {steps.map((s) => (
-              <Link
-                key={s.label}
-                href={s.href}
-                className="group flex items-center gap-3 px-3 h-10 rounded-lg transition-colors hover:bg-[var(--panel-surface-hover)]"
-              >
-                <span
-                  className={[
-                    "w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0",
-                    s.done ? "bg-[var(--panel-success)] text-white" : "border-[1.5px] border-[var(--panel-border-strong)]",
-                  ].join(" ")}
-                >
-                  {s.done && <Check className="w-3 h-3" strokeWidth={3} />}
-                </span>
-                <span
-                  className={[
-                    "text-[13.5px] flex-1",
-                    s.done ? "text-[var(--panel-ink-faint)] line-through" : "text-[var(--panel-ink)] font-medium",
-                  ].join(" ")}
-                >
-                  {s.label}
-                </span>
-                {!s.done && (
-                  <ArrowRight className="w-4 h-4 shrink-0 text-[var(--panel-ink-faint)] group-hover:text-[var(--panel-ink)] transition-colors" strokeWidth={1.75} />
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-6 items-start">
         {/* Recent orders */}
@@ -280,7 +336,7 @@ export default async function DashboardHome({
             Szybkie akcje
           </h2>
           <div className="flex flex-col gap-2">
-            <QuickAction href={`${base}/products/new`} icon={Plus} label="Dodaj produkt" primary />
+            <QuickAction href={`${base}/products/new`} icon={Plus} label="Dodaj produkt" primary={allDone} />
             <QuickAction href={`${base}/orders`} icon={ClipboardList} label="Zarządzaj zamówieniami" />
             <QuickAction href={`${base}/home`} icon={HomeIcon} label="Edytuj stronę główną" />
             <QuickAction href={`${base}/branding`} icon={Palette} label="Logo i kolorystyka" />
@@ -289,6 +345,12 @@ export default async function DashboardHome({
       </div>
     </div>
   );
+}
+
+function stepsLeftLabel(n: number): string {
+  if (n === 1) return "został 1 krok";
+  const few = n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14);
+  return few ? `zostały ${n} kroki` : `zostało ${n} kroków`;
 }
 
 function QuickAction({

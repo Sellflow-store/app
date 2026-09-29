@@ -68,7 +68,7 @@ function StatusBadge({ status }: { status: DomainStatus | null }) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
         style={{ background: P.surface2, color: P.muted }}>
-        <Clock className="w-3.5 h-3.5" strokeWidth={2} /> Zapisano — skonfiguruj DNS
+        <Clock className="w-3.5 h-3.5" strokeWidth={2} /> Zapisano. Skonfiguruj DNS
       </span>
     );
   }
@@ -263,7 +263,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
               {status?.verification && status.verification.length > 0 && (
                 <div className="mt-4">
                   <p className="text-[11px] font-medium mb-2" style={{ color: P.faint }}>
-                    Dodatkowo — rekord TXT potwierdzający własność domeny:
+                    Dodatkowo rekord TXT potwierdzający własność domeny:
                   </p>
                   {status.verification.map((v, i) => (
                     <div key={i} className="grid grid-cols-3 gap-3 mb-2">

@@ -200,7 +200,7 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
       </button>
 
       <p className="text-[11px] mt-4" style={{ color: "var(--panel-ink-faint)" }}>
-        Koszyk jest zawsze widoczny jako ikona — nie musisz dodawać go do menu.
+        Koszyk jest zawsze widoczny jako ikona, nie musisz dodawać go do menu.
       </p>
     </div>
   );

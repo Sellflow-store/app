@@ -83,7 +83,7 @@ const EMPTY: ProductFormData = {
 
 const TYPE_OPTIONS: { value: ProductType; label: string; hint: string; icon: typeof Package }[] = [
   { value: "physical", label: "Fizyczny", hint: "Wysyłka i stan magazynowy", icon: Package },
-  { value: "digital", label: "Cyfrowy", hint: "Plik, link lub klucz — e-mailem", icon: Download },
+  { value: "digital", label: "Cyfrowy", hint: "Plik, link lub klucz wysyłany e-mailem", icon: Download },
   { value: "service", label: "Usługa", hint: "Realizacja bez wysyłki", icon: Briefcase },
 ];
 
@@ -472,7 +472,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           />
           <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
             {isEdit
-              ? "Zmieniaj tylko świadomie — stary adres przestanie być tym właściwym, a linki i pozycja w Google prowadzą pod niego. Zmiana nazwy produktu adresu nie rusza."
+              ? "Zmieniaj tylko świadomie. Stary adres przestanie być tym właściwym, a linki i pozycja w Google prowadzą pod niego. Zmiana nazwy produktu adresu nie rusza."
               : "Zostaw puste, a adres powstanie z nazwy produktu."}
           </p>
         </Field>
@@ -487,7 +487,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             {...focusProps}
           />
           <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
-            Zostaw puste, jeśli produkt nie ma rozmiarów. Gdy są — klient musi wybrać
+            Zostaw puste, jeśli produkt nie ma rozmiarów. Gdy są, klient musi wybrać
             rozmiar, zanim doda produkt do koszyka.
           </p>
         </Field>
@@ -646,7 +646,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             />
           </Field>
           <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
-            Produkt cyfrowy nie wymaga wysyłki ani adresu — klient otrzyma dostęp e-mailem.
+            Produkt cyfrowy nie wymaga wysyłki ani adresu, klient otrzyma dostęp e-mailem.
           </p>
         </SectionCard>
       )}
@@ -690,7 +690,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             />
           </Field>
           <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
-            Usługa nie wymaga wysyłki ani adresu — po zamówieniu skontaktujesz się z klientem
+            Usługa nie wymaga wysyłki ani adresu, po zamówieniu skontaktujesz się z klientem
             w sprawie realizacji.
           </p>
         </SectionCard>
@@ -730,7 +730,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         )}
         {form.specs.length === 0 && (
           <p className="text-[11px] mb-3" style={{ color: "var(--panel-ink-faint)" }}>
-            Dodaj dowolne parametry (np. Materiał, Waga, Pojemność) — pokażą się jako
+            Dodaj dowolne parametry (np. Materiał, Waga, Pojemność), pokażą się jako
             tabela „Specyfikacja" na stronie produktu.
           </p>
         )}
@@ -784,7 +784,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           >
             <ImageIcon className="w-8 h-8" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
             <p className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
-              Brak zdjęć — pierwsze dodane będzie zdjęciem głównym
+              Brak zdjęć. Pierwsze dodane będzie zdjęciem głównym
             </p>
           </div>
         )}
@@ -840,7 +840,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           />
         </Field>
         <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
-          Zostaw puste, jeśli nie chcesz śledzić stanu — produkt będzie zawsze dostępny.
+          Zostaw puste, jeśli nie chcesz śledzić stanu, produkt będzie zawsze dostępny.
           Przy <strong>0</strong> klient zobaczy „Wyprzedane" i nie doda produktu do koszyka.
           Stan zmniejsza się automatycznie po każdym zamówieniu.
         </p>
@@ -898,7 +898,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         </div>
         <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
           Potrzebne, żeby policzyć koszt wysyłki i wygenerować etykietę kurierską.
-          Możesz zostawić puste i uzupełnić później — bez tego trzeba będzie nadawać paczki ręcznie.
+          Możesz zostawić puste i uzupełnić później, bez tego trzeba będzie nadawać paczki ręcznie.
         </p>
       </SectionCard>
       )}

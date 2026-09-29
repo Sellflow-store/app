@@ -98,7 +98,7 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
         >
           <HelpCircle className="w-8 h-8" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
           <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
-            Brak pytań — dodaj pierwsze poniżej
+            Brak pytań. Dodaj pierwsze poniżej
           </p>
         </div>
       )}
