@@ -4,12 +4,13 @@ import { ShoppingBag, Sparkles } from "lucide-react";
 import { SectionTitle, LockedCard, P } from "../ui";
 import { PLANS } from "@/lib/plans";
 
-// Opis planu dla merchanta. Pro to dziś program beta: pierwsze sklepy dostają
-// pełny zakres bez opłat, dopóki nie ruszą płatne plany.
+// Opis planu dla merchanta. Pro to dziś program beta dla pierwszych sklepów:
+// pełny zakres funkcji w cenie ustalanej indywidualnie (rozliczanej poza
+// panelem), więc kwoty tu nie pokazujemy.
 const PLAN_COPY: Record<keyof typeof PLANS, string> = {
   free: "Bezpłatny plan na start: do 10 produktów w sklepie.",
   starter: "Do 100 produktów w sklepie.",
-  pro: "Pełny zakres funkcji bez limitu produktów. Korzystasz z niego bez opłat jako jeden z pierwszych sklepów na Sellflow.",
+  pro: "Pełny zakres funkcji bez limitu produktów, w cenie dla pierwszych sklepów na Sellflow.",
 };
 
 export default function PlanSection({ currentPlan }: { currentPlan: string }) {
@@ -52,9 +53,10 @@ export default function PlanSection({ currentPlan }: { currentPlan: string }) {
           icon={<Sparkles className="w-5 h-5" strokeWidth={1.75} />}
           title="Program beta dla pierwszych sklepów"
         >
-          Twój sklep testuje Sellflow razem z nami. Zanim uruchomimy płatne plany, uprzedzimy Cię
-          mailem z co najmniej 30-dniowym wyprzedzeniem, a sklepy z programu beta dostaną na start
-          specjalne warunki. Uwagi i pomysły wysyłaj śmiało, bo to one ustawiają kolejność prac.
+          Jesteś jednym z pierwszych sklepów na Sellflow i rozwijasz platformę razem z nami. Nowe
+          funkcje trafiają do Ciebie od razu, często zanim zobaczą je inni. Twoja cena obowiązuje
+          przez cały okres beta, a o każdej zmianie cennika uprzedzimy Cię mailem z co najmniej
+          30-dniowym wyprzedzeniem. Uwagi i pomysły wysyłaj śmiało, bo to one ustawiają kolejność prac.
         </LockedCard>
       ) : (
         <LockedCard
