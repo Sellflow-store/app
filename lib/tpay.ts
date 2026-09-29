@@ -24,7 +24,9 @@ import { TPAY_PROVIDER } from "./tpay-status";
 
 export { TPAY_PROVIDER, tpayEnabled } from "./tpay-status";
 
-const PROD_API = "https://openapi.tpay.com";
+// Produkcja to api.tpay.com; „openapi." jest tylko w sandboxie. Pod
+// openapi.tpay.com Cloudflare odbija POST-y stroną blokady (403).
+const PROD_API = "https://api.tpay.com";
 const SANDBOX_API = "https://openapi.sandbox.tpay.com";
 const TIMEOUT_MS = 10_000;
 
@@ -99,9 +101,16 @@ function tpayErrorText(body: TokenBody, raw: string): string {
 }
 
 async function fetchToken(c: TpayCredentials): Promise<{ token: string; expiresIn: number }> {
-  // Przykłady w dokumentacji Tpay wysyłają dane jako multipart/form-data;
-  // JSON zostaje jako druga próba, gdyby endpoint go wymagał.
+  // Tpay przyjmuje zwykły formularz (tak robią działające SDK); multipart i
+  // JSON zostają jako kolejne próby, gdyby endpoint zmienił wymagania.
   const attempts: { label: string; init: RequestInit }[] = [
+    {
+      label: "urlencoded",
+      init: {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ client_id: c.clientId, client_secret: c.clientSecret }),
+      },
+    },
     {
       label: "form-data",
       init: {
