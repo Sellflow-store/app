@@ -234,8 +234,19 @@
   --panel-toggle-off:    oklch(80% 0.01 250);
   --panel-knob:          #ffffff;
   --panel-knob-border:   oklch(78% 0.01 250);
-  --panel-sidebar:       oklch(14% 0.03 275);
-  --panel-sidebar-ink:   oklch(88% 0.01 250);
+  /* Menu boczne w granacie Sellflow (kierunek A redesignu panelu).
+     Kontrasty na --panel-sidebar: ink ≈ 11:1, muted ≈ 6:1 (WCAG AA ≥ 4,5:1). */
+  --panel-sidebar:        oklch(17% 0.09 272);
+  --panel-sidebar-ink:    oklch(88% 0.02 265);
+  --panel-sidebar-muted:  oklch(68% 0.04 265);
+  --panel-sidebar-hover:  oklch(23% 0.09 272);
+  --panel-sidebar-active: oklch(29% 0.11 272);
+  --panel-sidebar-border: oklch(25% 0.08 272);
+  --panel-primary:        oklch(22% 0.24 270);
+  --panel-primary-soft:   oklch(96% 0.015 270);
+  --panel-aqua:           oklch(80% 0.16 195);
+  --panel-success:        oklch(55% 0.13 160);
+  --panel-warning:        oklch(72% 0.15 75);
 }
 
 .dark {
@@ -253,8 +264,17 @@
   --panel-toggle-off:    oklch(42% 0.02 275);
   --panel-knob:          oklch(96% 0.01 275);
   --panel-knob-border:   oklch(48% 0.02 275);
-  --panel-sidebar:       oklch(12% 0.02 275);
-  --panel-sidebar-ink:   oklch(85% 0.012 275);
+  --panel-sidebar:        oklch(13% 0.05 272);
+  --panel-sidebar-ink:    oklch(86% 0.02 265);
+  --panel-sidebar-muted:  oklch(66% 0.035 265);
+  --panel-sidebar-hover:  oklch(19% 0.06 272);
+  --panel-sidebar-active: oklch(25% 0.08 272);
+  --panel-sidebar-border: oklch(22% 0.05 272);
+  --panel-primary:        oklch(78% 0.10 270);
+  --panel-primary-soft:   oklch(26% 0.06 270);
+  --panel-aqua:           oklch(80% 0.16 195);
+  --panel-success:        oklch(70% 0.13 160);
+  --panel-warning:        oklch(80% 0.14 75);
 }
 
 @theme inline {
@@ -266,6 +286,14 @@
   --color-panel-ink-faint:     var(--panel-ink-faint);
   --color-panel-border:        var(--panel-border);
   --color-panel-accent:        var(--panel-accent);
+  --color-panel-primary:       var(--panel-primary);
+  --color-panel-sidebar:       var(--panel-sidebar);
+  --color-panel-sidebar-ink:   var(--panel-sidebar-ink);
+  --color-panel-sidebar-muted: var(--panel-sidebar-muted);
+  --color-panel-sidebar-hover: var(--panel-sidebar-hover);
+  --color-panel-sidebar-active: var(--panel-sidebar-active);
+  --color-panel-sidebar-border: var(--panel-sidebar-border);
+  --color-panel-aqua:          var(--panel-aqua);
 }
 
 @layer base {

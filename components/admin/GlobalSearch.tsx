@@ -3,29 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Package, ClipboardList, FileText } from "lucide-react";
+import { NAV_SECTIONS } from "./nav";
 
 interface ProductHit { id: string; name: string; category: string | null }
 interface OrderHit { id: string; orderNumber: string; customerName: string | null; total: string }
 
-// Static panel pages — searched client-side, no round-trip.
-const PAGES: { label: string; slug: string }[] = [
-  { label: "Zamówienia", slug: "orders" },
-  { label: "Klienci", slug: "customers" },
-  { label: "Analityka", slug: "stats" },
-  { label: "Produkty", slug: "products" },
-  { label: "Kategorie", slug: "categories" },
-  { label: "Płatności (Tpay, przelew, pobranie)", slug: "payments" },
-  { label: "Dostawa", slug: "delivery" },
-  { label: "Kody rabatowe", slug: "discounts" },
-  { label: "Newsletter", slug: "newsletter" },
-  { label: "Logo i kolorystyka", slug: "branding" },
-  { label: "Strona główna", slug: "home" },
-  { label: "O nas", slug: "about" },
-  { label: "FAQ", slug: "faq" },
-  { label: "Menu nawigacji", slug: "menu" },
-  { label: "Dokumenty prawne", slug: "legal" },
-  { label: "Ustawienia panelu", slug: "settings" },
-];
+// Static panel pages — searched client-side, no round-trip. Same list as the
+// sidebar, so every page it shows is findable here too.
+const PAGES: { label: string; slug: string }[] = NAV_SECTIONS.flatMap((s) =>
+  s.items.filter((i) => i.slug !== "").map((i) => ({ label: i.label, slug: i.slug })),
+);
 
 const pln = (v: string) => `${(parseFloat(v) || 0).toFixed(2).replace(".", ",")} zł`;
 
@@ -96,17 +83,11 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
       <input
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={(e) => { setOpen(true); (e.target.style.borderColor = "oklch(55% 0 0)"); }}
-        onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+        onFocus={() => setOpen(true)}
         onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
         placeholder="Szukaj stron, produktów, zamówień…"
-        className="w-full pl-9 pr-4 py-2 rounded-lg text-xs focus:outline-none transition-colors"
-        style={{
-          border: "1px solid oklch(88% 0 0)",
-          background: "oklch(97% 0 0)",
-          color: "oklch(10% 0 0)",
-          fontFamily: "var(--font-body)",
-        }}
+        className="w-full pl-9 pr-4 h-9 rounded-lg text-[13px] focus:outline-none transition-colors border border-[var(--panel-border)] focus:border-[var(--panel-primary)] bg-[var(--panel-surface-2)] text-[var(--panel-ink)] placeholder:text-[var(--panel-ink-faint)]"
+        style={{ fontFamily: "var(--font-body)" }}
       />
 
       {showDropdown && (
