@@ -90,7 +90,7 @@ export default function RangePicker({
             <button
               key={o.value}
               onClick={() => applyPreset(o.value)}
-              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[oklch(97%_0_0)]"
+              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[var(--panel-surface-hover)]"
               style={{ color: "var(--panel-ink)" }}
             >
               {o.label}
@@ -103,7 +103,7 @@ export default function RangePicker({
           <div style={{ borderTop: "1px solid var(--panel-border)" }}>
             <button
               onClick={() => setCustomOpen((c) => !c)}
-              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[oklch(97%_0_0)]"
+              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[var(--panel-surface-hover)]"
               style={{ color: "var(--panel-ink)" }}
             >
               Własny zakres
