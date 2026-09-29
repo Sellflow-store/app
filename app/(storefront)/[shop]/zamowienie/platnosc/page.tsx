@@ -59,8 +59,8 @@ export default async function PaymentReturnPage({ params, searchParams }: Props)
             </p>
           ) : (
             <p className="text-sm text-ink-2 font-light leading-relaxed mb-10">
-              Zamówienie zostało zapisane, ale płatność nie doszła do skutku. Napisz do nas, a
-              pomożemy ją dokończyć
+              Zamówienie zostało zapisane, ale płatność nie doszła do skutku. Bez płatności
+              anulujemy je automatycznie po 48 godzinach. Napisz do nas, a pomożemy ją dokończyć
               {contactEmail ? (
                 <>
                   {" "}na <a className="underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>
