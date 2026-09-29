@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Pencil, Eye, EyeOff, Package } from "lucide-react";
+import { Plus, Pencil, Eye, EyeOff, Package, Search } from "lucide-react";
+import { formatPln } from "@/lib/money";
 
 export interface Product {
   id: string;
@@ -17,48 +18,43 @@ export interface Product {
   type?: "physical" | "digital" | "service";
 }
 
+const CHIP = "text-[11.5px] font-medium px-1.5 py-px rounded-md border shrink-0";
+
 function TypeBadge({ type }: { type?: string }) {
   if (!type || type === "physical") return null;
-  const label = type === "digital" ? "Cyfrowy" : "Usługa";
   return (
-    <span
-      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-      style={{ background: "oklch(93% 0.03 250)", color: "oklch(45% 0.12 260)" }}
-    >
-      {label}
+    <span className={`${CHIP} border-[var(--panel-border)] text-[var(--panel-ink-muted)]`}>
+      {type === "digital" ? "Cyfrowy" : "Usługa"}
     </span>
   );
 }
 
-function formatPrice(price: string): string {
-  const n = parseFloat(price);
-  if (isNaN(n)) return price;
-  return `${n.toFixed(2).replace(".", ",")} zł`;
-}
-
-function StockBadge({ stock }: { stock?: number | null }) {
-  if (stock == null) return null; // nie śledzony — bez badge
-  if (stock === 0) {
-    return (
-      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "oklch(95% 0.05 20)", color: "oklch(45% 0.18 20)" }}>
-        Wyprzedane
-      </span>
-    );
-  }
-  const low = stock <= 5;
+/** Stan magazynu: kropka + tekst. null = nie śledzony (produkt na zamówienie, cyfrowy). */
+function Stock({ stock }: { stock?: number | null }) {
+  if (stock == null) return <span className="text-[var(--panel-ink-faint)]">nie śledzony</span>;
+  const color = stock === 0 ? "oklch(58% 0.19 25)" : stock <= 5 ? "var(--panel-warning)" : "var(--panel-success)";
   return (
-    <span
-      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-      style={
-        low
-          ? { background: "oklch(95% 0.09 85)", color: "oklch(40% 0.14 75)" }
-          : { background: "oklch(95% 0 0)", color: "oklch(45% 0 0)" }
-      }
-    >
-      {low ? `Mało: ${stock}` : `Stan: ${stock}`}
+    <span className="flex items-center gap-2 text-[var(--panel-ink)]">
+      <span aria-hidden className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+      {stock === 0 ? "Wyprzedane" : stock <= 5 ? `Mało: ${stock} szt.` : `${stock} szt.`}
     </span>
   );
 }
+
+function Thumb({ image }: { image?: string }) {
+  return (
+    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 bg-[var(--panel-surface-2)] border border-[var(--panel-border)]">
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <Package className="w-4 h-4 text-[var(--panel-ink-faint)]" strokeWidth={1.5} />
+      )}
+    </div>
+  );
+}
+
+const COLS = "grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)_120px_140px_120px_44px]";
 
 interface Props {
   shopSlug: string;
@@ -67,6 +63,11 @@ interface Props {
 
 export default function ProductsTable({ shopSlug, products: initial }: Props) {
   const [products, setProducts] = useState(initial);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const visible = q
+    ? products.filter((p) => p.name.toLowerCase().includes(q) || (p.category ?? "").toLowerCase().includes(q))
+    : products;
 
   async function toggleVisibility(id: string, currentVisible: boolean) {
     // Optimistic update
@@ -93,160 +94,145 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
     }
   }
 
+  const editHref = (id: string) => `/dashboard/${shopSlug}/products/${id}`;
+  const price = (p: Product) => (p.priceOnRequest ? "Na zamówienie" : formatPln(p.price));
+
+  function VisibilityButton({ product }: { product: Product }) {
+    return (
+      <button
+        type="button"
+        onClick={() => toggleVisibility(product.id, product.visible)}
+        aria-pressed={product.visible}
+        className={[
+          "flex items-center gap-1.5 h-7 px-2 rounded-md text-[12.5px] font-medium transition-colors w-fit border",
+          product.visible
+            ? "border-transparent text-[var(--panel-success)] hover:border-[var(--panel-border)]"
+            : "border-[var(--panel-border)] text-[var(--panel-ink-muted)] hover:text-[var(--panel-ink)]",
+        ].join(" ")}
+      >
+        {product.visible ? <Eye className="w-3.5 h-3.5" strokeWidth={1.75} /> : <EyeOff className="w-3.5 h-3.5" strokeWidth={1.75} />}
+        {product.visible ? "Widoczny" : "Ukryty"}
+      </button>
+    );
+  }
+
   return (
-    <div className="p-6 lg:p-8 max-w-5xl mx-auto">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-6xl mx-auto">
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
         <div>
-          <h1
-            className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
-          >
+          <h1 className="text-xl font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
             Produkty
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
-            {products.length} produktów w sklepie
-          </p>
+          <p className="text-[13px] mt-0.5 text-[var(--panel-ink-muted)]">{products.length} produktów w sklepie</p>
         </div>
 
         <Link
           href={`/dashboard/${shopSlug}/products/new`}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all"
-          style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "oklch(46% 0.25 333)")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "oklch(56% 0.30 335)")}
+          className="flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold bg-[var(--panel-accent)] text-white hover:opacity-90 transition-opacity"
         >
           <Plus className="w-4 h-4" strokeWidth={2} />
           Dodaj produkt
         </Link>
       </div>
 
-      {/* Table card */}
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ border: "1px solid oklch(90% 0 0)", background: "#fff" }}
-      >
-        {/* Header row */}
-        <div
-          className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
-          style={{
-            gridTemplateColumns: "2.5rem 2fr 1fr 1fr 1fr 5rem",
-            color: "oklch(50% 0 0)",
-            borderBottom: "1px solid oklch(92% 0 0)",
-            background: "oklch(98% 0 0)",
-          }}
-        >
-          <span />
-          <span>Produkt</span>
-          <span>Kategoria</span>
-          <span>Cena</span>
-          <span>Widoczność</span>
-          <span />
-        </div>
+      {products.length > 0 && (
+        <label className="flex items-center gap-2 h-9 w-full sm:w-80 px-3 mb-4 rounded-lg border border-[var(--panel-border)] bg-[var(--panel-surface)] focus-within:border-[var(--panel-primary)] transition-colors">
+          <Search className="w-4 h-4 text-[var(--panel-ink-faint)]" strokeWidth={1.75} />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Szukaj po nazwie lub kategorii"
+            aria-label="Szukaj produktów"
+            className="flex-1 bg-transparent outline-none text-[13.5px] text-[var(--panel-ink)] placeholder:text-[var(--panel-ink-faint)]"
+          />
+        </label>
+      )}
 
+      <div className="rounded-xl overflow-hidden border border-[var(--panel-border)] bg-[var(--panel-surface)]">
         {products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Package className="w-10 h-10" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-sm" style={{ color: "oklch(55% 0 0)" }}>
-              Brak produktów — kliknij &ldquo;Dodaj produkt&rdquo;
-            </p>
+            <Package className="w-10 h-10 text-[var(--panel-ink-faint)]" strokeWidth={1} />
+            <p className="text-sm text-[var(--panel-ink-muted)]">Brak produktów. Kliknij „Dodaj produkt”.</p>
           </div>
+        ) : visible.length === 0 ? (
+          <p className="py-12 text-center text-sm text-[var(--panel-ink-muted)]">Nic nie pasuje do „{query.trim()}”.</p>
         ) : (
-          products.map((product, i) => (
-            <div
-              key={product.id}
-              className="grid items-center px-5 py-3 transition-colors"
-              style={{
-                gridTemplateColumns: "2.5rem 2fr 1fr 1fr 1fr 5rem",
-                borderBottom: i < products.length - 1 ? "1px solid oklch(94% 0 0)" : "none",
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "oklch(98.5% 0.003 250)")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "")}
-            >
-              {/* Thumbnail */}
+          <>
+            {/* Telefon: karty */}
+            <ul className="md:hidden divide-y divide-[var(--panel-border)]">
+              {visible.map((product) => (
+                <li key={product.id} className="flex items-center gap-3 px-4 py-3">
+                  <Thumb image={product.image} />
+                  <Link href={editHref(product.id)} className="flex-1 min-w-0">
+                    <p className="text-[14px] font-medium truncate text-[var(--panel-ink)]">{product.name}</p>
+                    <p className="text-[12.5px] mt-0.5 text-[var(--panel-ink-muted)] truncate">
+                      {price(product)}
+                      {product.category ? ` · ${product.category}` : ""}
+                    </p>
+                  </Link>
+                  <VisibilityButton product={product} />
+                </li>
+              ))}
+            </ul>
+
+            <div role="table" aria-label="Produkty" className="hidden md:block">
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "oklch(95% 0.008 250)" }}
+                role="row"
+                className={`grid ${COLS} gap-4 items-center px-5 h-9 text-[12px] font-medium text-[var(--panel-ink-muted)] border-b border-[var(--panel-border)] bg-[var(--panel-surface-2)]`}
               >
-                {product.image ? (
-                  <img src={product.image} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                ) : (
-                  <Package className="w-4 h-4" style={{ color: "oklch(65% 0 0)" }} strokeWidth={1.5} />
-                )}
+                <span role="columnheader">Produkt</span>
+                <span role="columnheader">Kategoria</span>
+                <span role="columnheader" className="text-right">Cena</span>
+                <span role="columnheader">Stan</span>
+                <span role="columnheader">Sklep</span>
+                <span role="columnheader" className="sr-only">Edytuj</span>
               </div>
 
-              {/* Name + badge */}
-              <div className="min-w-0 pl-2">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs font-semibold truncate" style={{ color: "oklch(11% 0.10 275)" }}>
-                    {product.name}
-                  </p>
-                  {product.badge && (
-                    <span
-                      className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
-                      style={{ background: "oklch(56% 0.30 335 / 0.12)", color: "oklch(46% 0.25 333)" }}
-                    >
-                      {product.badge}
-                    </span>
-                  )}
-                  <TypeBadge type={product.type} />
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
-                    ID: {product.id.slice(0, 8)}…
-                  </p>
-                  <StockBadge stock={product.stock} />
-                </div>
-              </div>
-
-              {/* Category */}
-              <span
-                className="text-xs px-2 py-0.5 rounded-full"
-                style={{ background: "oklch(95% 0 0)", color: "oklch(45% 0 0)" }}
-              >
-                {product.category || "—"}
-              </span>
-
-              {/* Price */}
-              <span className="text-xs font-semibold" style={{ color: "oklch(11% 0.10 275)" }}>
-                {product.priceOnRequest ? "Na zamówienie" : formatPrice(product.price)}
-              </span>
-
-              {/* Visibility toggle */}
-              <button
-                onClick={() => toggleVisibility(product.id, product.visible)}
-                className="flex items-center gap-1.5 text-xs font-medium transition-colors w-fit"
-                style={{ color: product.visible ? "oklch(40% 0.18 145)" : "oklch(55% 0 0)" }}
-              >
-                {product.visible ? (
-                  <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
-                ) : (
-                  <EyeOff className="w-3.5 h-3.5" strokeWidth={1.5} />
-                )}
-                {product.visible ? "Widoczny" : "Ukryty"}
-              </button>
-
-              {/* Actions */}
-              <div className="flex justify-end">
-                <Link
-                  href={`/dashboard/${shopSlug}/products/${product.id}`}
-                  aria-label={`Edytuj ${product.name}`}
-                  className="p-1.5 rounded-lg transition-colors"
-                  style={{ color: "oklch(55% 0 0)" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "oklch(94% 0 0)";
-                    (e.currentTarget as HTMLElement).style.color = "oklch(20% 0 0)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "";
-                    (e.currentTarget as HTMLElement).style.color = "oklch(55% 0 0)";
-                  }}
+              {visible.map((product) => (
+                <div
+                  key={product.id}
+                  role="row"
+                  className={`group grid ${COLS} gap-4 items-center px-5 py-2.5 text-[13.5px] border-b last:border-b-0 border-[var(--panel-border)] transition-colors hover:bg-[var(--panel-surface-hover)]`}
                 >
-                  <Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />
-                </Link>
-              </div>
+                  <Link href={editHref(product.id)} className="flex items-center gap-3 min-w-0">
+                    <Thumb image={product.image} />
+                    <span className="min-w-0 flex flex-col gap-1">
+                      <span className="font-medium truncate text-[var(--panel-ink)] group-hover:underline underline-offset-2">
+                        {product.name}
+                      </span>
+                      {(product.badge || (product.type && product.type !== "physical")) && (
+                        <span className="flex items-center gap-1.5">
+                          {product.badge && (
+                            <span className={`${CHIP} border-[color-mix(in_oklch,var(--panel-accent)_35%,transparent)] text-[var(--panel-accent)]`}>
+                              {product.badge}
+                            </span>
+                          )}
+                          <TypeBadge type={product.type} />
+                        </span>
+                      )}
+                    </span>
+                  </Link>
+
+                  <span className="truncate text-[var(--panel-ink-muted)]">{product.category || "—"}</span>
+
+                  <span className="text-right font-semibold tabular-nums text-[var(--panel-ink)]">{price(product)}</span>
+
+                  <span className="text-[13px]"><Stock stock={product.stock} /></span>
+
+                  <VisibilityButton product={product} />
+
+                  <Link
+                    href={editHref(product.id)}
+                    aria-label={`Edytuj ${product.name}`}
+                    className="flex items-center justify-center w-8 h-8 rounded-md transition-colors text-[var(--panel-ink-faint)] hover:bg-[var(--panel-surface-2)] hover:text-[var(--panel-ink)]"
+                  >
+                    <Pencil className="w-4 h-4" strokeWidth={1.75} />
+                  </Link>
+                </div>
+              ))}
             </div>
-          ))
+          </>
         )}
       </div>
     </div>
