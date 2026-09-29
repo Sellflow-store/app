@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Banknote, ExternalLink } from "lucide-react";
 import { CARRIERS, trackingUrl } from "@/lib/tracking";
-import { STATUS_STYLES, PAYMENT_LABELS } from "../OrdersTable";
+import { STATUS_STYLES, PAYMENT_LABELS } from "@/lib/order-status";
 
 interface OrderData {
   id: string;
