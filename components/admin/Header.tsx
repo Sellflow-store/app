@@ -12,7 +12,7 @@ const PAGE_LABELS: Record<string, string> = {
   stats:      "Analityka",
   products:   "Produkty",
   categories: "Kategorie",
-  payments:   "Płatności i VAT",
+  payments:   "Płatności (Tpay, przelew, pobranie)",
   delivery:   "Dostawa",
   discounts:  "Kody rabatowe",
   newsletter: "Newsletter",
