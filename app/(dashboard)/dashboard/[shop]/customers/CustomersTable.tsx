@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Users, Search } from "lucide-react";
+import { formatPln } from "@/lib/money";
 
 export interface CustomerRow {
   id: string;
@@ -13,7 +14,14 @@ export interface CustomerRow {
   createdAt: string;
 }
 
-const pln = (v: string) => `${(parseFloat(v) || 0).toFixed(2).replace(".", ",")} zł`;
+const pln = (v: string) => formatPln(parseFloat(v) || 0);
+
+const COLS = "grid-cols-[minmax(0,1.8fr)_150px_110px_140px_130px]";
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+}
 
 interface Props {
   customers: CustomerRow[];
@@ -30,106 +38,93 @@ export default function CustomersTable({ customers }: Props) {
     : customers;
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl mx-auto">
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-6xl mx-auto">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
         <div>
-          <h1
-            className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
-          >
+          <h1 className="text-xl font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
             Klienci
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
-            {customers.length === 1 ? "1 klient" : `${customers.length} klientów`} — dodają się
-            automatycznie przy zamówieniach
+          <p className="text-[13px] mt-0.5 text-[var(--panel-ink-muted)]">
+            {customers.length === 1 ? "1 klient" : `${customers.length} klientów`}. Dodają się automatycznie przy zamówieniach.
           </p>
         </div>
 
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
-            style={{ color: "var(--panel-ink-faint)" }}
-            strokeWidth={1.5}
-          />
+        <label className="flex items-center gap-2 h-9 w-full sm:w-72 px-3 rounded-lg border border-[var(--panel-border)] bg-[var(--panel-surface)] focus-within:border-[var(--panel-primary)] transition-colors">
+          <Search className="w-4 h-4 text-[var(--panel-ink-faint)]" strokeWidth={1.75} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Szukaj po imieniu lub e-mailu"
-            className="text-xs rounded-full py-2 pl-8 pr-4 outline-none transition-colors"
-            style={{
-              border: "1.5px solid var(--panel-border)",
-              background: "var(--panel-surface)",
-              color: "var(--panel-ink)",
-              width: "16rem",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--panel-border)")}
+            aria-label="Szukaj klientów"
+            className="flex-1 bg-transparent outline-none text-[13.5px] text-[var(--panel-ink)] placeholder:text-[var(--panel-ink-faint)]"
           />
-        </div>
+        </label>
       </div>
 
-      {/* Table card */}
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ border: "1px solid var(--panel-border)", background: "var(--panel-surface)" }}
-      >
+      <div className="rounded-xl overflow-hidden border border-[var(--panel-border)] bg-[var(--panel-surface)]">
         {visible.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Users className="w-10 h-10" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
-            <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
-              {q ? "Brak klientów pasujących do wyszukiwania" : "Jeszcze brak klientów — pojawią się po pierwszym zamówieniu"}
+            <Users className="w-10 h-10 text-[var(--panel-ink-faint)]" strokeWidth={1} />
+            <p className="text-sm text-[var(--panel-ink-muted)]">
+              {q ? "Brak klientów pasujących do wyszukiwania." : "Jeszcze brak klientów. Pojawią się po pierwszym zamówieniu."}
             </p>
           </div>
         ) : (
           <>
-            <div
-              className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
-              style={{
-                gridTemplateColumns: "1.8fr 1fr 0.8fr 1fr 1fr",
-                color: "var(--panel-ink-muted)",
-                borderBottom: "1px solid var(--panel-border)",
-                background: "var(--panel-surface-2)",
-              }}
-            >
-              <span>Klient</span>
-              <span>Telefon</span>
-              <span>Zamówienia</span>
-              <span>Wydane łącznie</span>
-              <span>Pierwszy zakup</span>
-            </div>
+            <ul className="md:hidden divide-y divide-[var(--panel-border)]">
+              {visible.map((c) => (
+                <li key={c.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[12px] font-semibold bg-[var(--panel-primary-soft)] text-[var(--panel-primary)]">
+                    {initials(c.name)}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[14px] font-medium truncate text-[var(--panel-ink)]">{c.name}</span>
+                    <span className="block text-[12.5px] truncate text-[var(--panel-ink-muted)]">
+                      {c.totalOrders} zam. · {pln(c.totalSpent)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
 
-            {visible.map((c, i) => (
+            <div role="table" aria-label="Klienci" className="hidden md:block">
               <div
-                key={c.id}
-                className="grid items-center px-5 py-3.5"
-                style={{
-                  gridTemplateColumns: "1.8fr 1fr 0.8fr 1fr 1fr",
-                  borderBottom: i < visible.length - 1 ? "1px solid var(--panel-surface-hover)" : "none",
-                }}
+                role="row"
+                className={`grid ${COLS} gap-4 items-center px-5 h-9 text-[12px] font-medium text-[var(--panel-ink-muted)] border-b border-[var(--panel-border)] bg-[var(--panel-surface-2)]`}
               >
-                <div className="min-w-0">
-                  <p className="text-xs font-medium truncate" style={{ color: "var(--panel-ink)" }}>
-                    {c.name}
-                  </p>
-                  <p className="text-[11px] truncate" style={{ color: "var(--panel-ink-muted)" }}>
-                    {c.email}
-                  </p>
-                </div>
-                <span className="text-xs" style={{ color: "var(--panel-ink)" }}>
-                  {c.phone ?? "—"}
-                </span>
-                <span className="text-xs tabular-nums" style={{ color: "var(--panel-ink)" }}>
-                  {c.totalOrders}
-                </span>
-                <span className="text-xs font-semibold tabular-nums" style={{ color: "var(--panel-ink)" }}>
-                  {pln(c.totalSpent)}
-                </span>
-                <span className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
-                  {c.createdAt}
-                </span>
+                <span role="columnheader">Klient</span>
+                <span role="columnheader">Telefon</span>
+                <span role="columnheader" className="text-right">Zamówienia</span>
+                <span role="columnheader" className="text-right">Wydane łącznie</span>
+                <span role="columnheader" className="text-right">Pierwszy zakup</span>
               </div>
-            ))}
+
+              {visible.map((c) => (
+                <div
+                  key={c.id}
+                  role="row"
+                  className={`grid ${COLS} gap-4 items-center px-5 h-[56px] text-[13.5px] border-b last:border-b-0 border-[var(--panel-border)] transition-colors hover:bg-[var(--panel-surface-hover)]`}
+                >
+                  <span className="flex items-center gap-3 min-w-0">
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[11.5px] font-semibold bg-[var(--panel-primary-soft)] text-[var(--panel-primary)]">
+                      {initials(c.name)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-medium truncate text-[var(--panel-ink)]">{c.name}</span>
+                      <a href={`mailto:${c.email}`} className="block text-[12.5px] truncate text-[var(--panel-ink-muted)] hover:text-[var(--panel-primary)] hover:underline">
+                        {c.email}
+                      </a>
+                    </span>
+                  </span>
+                  <span className="text-[var(--panel-ink)] tabular-nums">
+                    {c.phone ? <a href={`tel:${c.phone}`} className="hover:underline">{c.phone}</a> : <span className="text-[var(--panel-ink-faint)]">—</span>}
+                  </span>
+                  <span className="text-right tabular-nums text-[var(--panel-ink)]">{c.totalOrders}</span>
+                  <span className="text-right font-semibold tabular-nums text-[var(--panel-ink)]">{pln(c.totalSpent)}</span>
+                  <span className="text-right text-[12.5px] text-[var(--panel-ink-muted)]">{c.createdAt}</span>
+                </div>
+              ))}
+            </div>
           </>
         )}
       </div>
