@@ -12,9 +12,9 @@ import {
 } from "@/lib/traffic";
 
 const pln = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
-const INK = "oklch(11% 0.10 275)";
-const MUTE = "oklch(50% 0 0)";
-const RULE = "oklch(90% 0 0)";
+const INK = "var(--panel-ink)";
+const MUTE = "var(--panel-ink-muted)";
+const RULE = "var(--panel-border)";
 const ACCENT = "#e8590c"; // analytics accent (orange, per design)
 const UP = "oklch(58% 0.15 150)";
 const DOWN = "oklch(58% 0.20 25)";
@@ -38,7 +38,7 @@ const AI_DOTS: Record<AiSource, string> = {
 };
 const SOURCE_ORDER: TrafficSource[] = ["direct", "ai", "search", "social", "referral"];
 const SOURCE_COLOR: Record<TrafficSource, string> = {
-  direct: "oklch(60% 0 0)",
+  direct: "var(--panel-ink-faint)",
   ai: ACCENT,
   search: "#4285f4",
   social: "#c13584",
@@ -52,7 +52,7 @@ function pctDelta(cur: number, prev: number): number | null {
 
 function DeltaBadge({ delta, unit = "%" }: { delta: number | null; unit?: string }) {
   if (delta === null || !isFinite(delta)) {
-    return <span className="text-[13px]" style={{ color: "oklch(70% 0 0)" }}>—</span>;
+    return <span className="text-[13px]" style={{ color: "var(--panel-ink-faint)" }}>—</span>;
   }
   const up = delta >= 0;
   const Icon = up ? TrendingUp : TrendingDown;
@@ -240,7 +240,7 @@ export default async function AnalyticsPage({
   }
   const topProducts = [...productAgg.values()].sort((a, b) => b.qty - a.qty).slice(0, 5);
 
-  const card = { background: "#fff", border: `1px solid ${RULE}` };
+  const card = { background: "var(--panel-surface)", border: `1px solid ${RULE}` };
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto">
@@ -301,7 +301,7 @@ export default async function AnalyticsPage({
             <polyline
               points={prevLine.join(" ")}
               fill="none"
-              stroke="oklch(72% 0 0)"
+              stroke="var(--panel-ink-faint)"
               strokeWidth="1.5"
               strokeDasharray="5 4"
               vectorEffect="non-scaling-stroke"
@@ -320,7 +320,7 @@ export default async function AnalyticsPage({
 
           <div className="flex items-center justify-between mt-2">
             {axisLabels.map((d, i) => (
-              <span key={i} className="text-[10px] tabular-nums" style={{ color: "oklch(60% 0 0)" }}>
+              <span key={i} className="text-[10px] tabular-nums" style={{ color: "var(--panel-ink-faint)" }}>
                 {d ? fmtDay(d) : ""}
               </span>
             ))}
@@ -331,7 +331,7 @@ export default async function AnalyticsPage({
               Wybrany okres
             </span>
             <span className="inline-flex items-center gap-1.5 text-[11px]" style={{ color: MUTE }}>
-              <span className="w-4 h-0 border-t-[1.5px] border-dashed" style={{ borderColor: "oklch(72% 0 0)" }} />
+              <span className="w-4 h-0 border-t-[1.5px] border-dashed" style={{ borderColor: "var(--panel-ink-faint)" }} />
               Poprzedni okres
             </span>
           </div>
@@ -413,10 +413,10 @@ export default async function AnalyticsPage({
             </p>
           ) : (
             topProducts.map((p, i) => (
-              <div key={p.name + i} className="flex items-center justify-between gap-3 px-5 py-3" style={{ borderTop: i > 0 ? `1px solid oklch(94% 0 0)` : "none" }}>
+              <div key={p.name + i} className="flex items-center justify-between gap-3 px-5 py-3" style={{ borderTop: i > 0 ? `1px solid var(--panel-surface-hover)` : "none" }}>
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-[11px] w-4 shrink-0" style={{ color: MUTE }}>{i + 1}.</span>
-                  <span className="text-xs font-medium truncate" style={{ color: "oklch(15% 0 0)" }}>{p.name}</span>
+                  <span className="text-xs font-medium truncate" style={{ color: "var(--panel-ink)" }}>{p.name}</span>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-semibold tabular-nums" style={{ color: INK }}>{p.qty} szt.</p>
@@ -441,7 +441,7 @@ export default async function AnalyticsPage({
           </div>
           {sourceRows.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-5 py-10 gap-2">
-              <ShoppingBag className="w-7 h-7" style={{ color: "oklch(82% 0 0)" }} strokeWidth={1} />
+              <ShoppingBag className="w-7 h-7" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
               <p className="text-sm text-center" style={{ color: MUTE }}>Brak danych w wybranym okresie.</p>
             </div>
           ) : (
@@ -451,7 +451,7 @@ export default async function AnalyticsPage({
                 return (
                   <div key={r.source}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="inline-flex items-center gap-2 text-xs font-medium" style={{ color: "oklch(20% 0 0)" }}>
+                      <span className="inline-flex items-center gap-2 text-xs font-medium" style={{ color: "var(--panel-ink)" }}>
                         <span className="w-2 h-2 rounded-full" style={{ background: SOURCE_COLOR[r.source] }} />
                         {SOURCE_LABELS[r.source]}
                       </span>
@@ -459,7 +459,7 @@ export default async function AnalyticsPage({
                         {r.count} · {pct.toFixed(0)}%
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "oklch(94% 0 0)" }}>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--panel-surface-hover)" }}>
                       <div className="h-full rounded-full" style={{ width: `${pct}%`, background: SOURCE_COLOR[r.source] }} />
                     </div>
                   </div>

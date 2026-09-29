@@ -15,6 +15,7 @@ export const P = {
   borderStrong: "var(--panel-border-strong)",
   accent: "var(--panel-accent)",
   accentSoft: "var(--panel-accent-soft)",
+  primary: "var(--panel-primary)",
 };
 
 export function SectionTitle({ title, desc }: { title: string; desc?: string }) {
@@ -107,7 +108,7 @@ export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
         ...props.style,
       }}
       onFocus={(e) => {
-        e.target.style.borderColor = P.accent;
+        e.target.style.borderColor = P.primary;
         props.onFocus?.(e);
       }}
       onBlur={(e) => {
@@ -168,9 +169,9 @@ export function Toggle({
           {
             width: 44,
             height: 24,
-            background: checked ? P.accent : "var(--panel-toggle-off)",
-            border: checked ? `1px solid ${P.accent}` : "1px solid var(--panel-knob-border)",
-            "--tw-ring-color": P.accent,
+            background: checked ? P.primary : "var(--panel-toggle-off)",
+            border: checked ? `1px solid ${P.primary}` : "1px solid var(--panel-knob-border)",
+            "--tw-ring-color": P.primary,
             "--tw-ring-offset-color": P.surface,
           } as React.CSSProperties
         }

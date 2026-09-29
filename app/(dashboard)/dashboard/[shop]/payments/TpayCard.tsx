@@ -15,12 +15,12 @@ export interface TpayState {
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
+  border: "1.5px solid var(--panel-border)",
   borderRadius: "10px",
   padding: "10px 12px",
   fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-mono, monospace)",
   width: "100%",
   outline: "none",
@@ -36,7 +36,7 @@ function Toggle({ checked, onChange, label, disabled }: {
     <label className={`flex items-center gap-2.5 w-fit ${disabled ? "opacity-50" : "cursor-pointer"}`}>
       <div
         className="relative w-9 h-5 rounded-full transition-all"
-        style={{ background: checked ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+        style={{ background: checked ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
         onClick={() => !disabled && onChange(!checked)}
       >
         <div
@@ -44,7 +44,7 @@ function Toggle({ checked, onChange, label, disabled }: {
           style={{ left: checked ? "1.125rem" : "0.125rem" }}
         />
       </div>
-      <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>{label}</span>
+      <span className="text-xs font-medium" style={{ color: "var(--panel-ink)" }}>{label}</span>
     </label>
   );
 }
@@ -134,11 +134,11 @@ export default function TpayCard({
   }
 
   return (
-    <div className="rounded-2xl p-5 mb-5" style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}>
+    <div className="rounded-2xl p-5 mb-5" style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <CreditCard className="w-4 h-4" style={{ color: "oklch(40% 0 0)" }} strokeWidth={1.5} />
-          <h2 className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+          <CreditCard className="w-4 h-4" style={{ color: "var(--panel-ink)" }} strokeWidth={1.5} />
+          <h2 className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}>
             Płatność online (Tpay)
           </h2>
         </div>
@@ -152,7 +152,7 @@ export default function TpayCard({
         )}
       </div>
 
-      <p className="text-xs mb-4" style={{ color: "oklch(50% 0 0)" }}>
+      <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>
         BLIK, karty i szybkie przelewy na Twoim koncie Tpay. Klucze znajdziesz w panelu Tpay:
         Integracje → API → Klucze API (Client ID i Secret). Wpłaty potwierdzają się same, bez
         ręcznego oznaczania zamówień.
@@ -165,7 +165,7 @@ export default function TpayCard({
       )}
 
       {state.connected && !editing && (
-        <dl className="grid grid-cols-[8rem_1fr] gap-y-1.5 text-xs mb-4" style={{ color: "oklch(35% 0 0)" }}>
+        <dl className="grid grid-cols-[8rem_1fr] gap-y-1.5 text-xs mb-4" style={{ color: "var(--panel-ink)" }}>
           <dt>Client ID</dt>
           <dd className="font-mono break-all">{state.clientId}</dd>
           <dt>Secret</dt>
@@ -182,13 +182,13 @@ export default function TpayCard({
       {editing ? (
         <>
           <div className="mb-3">
-            <label htmlFor="tpay-client-id" className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+            <label htmlFor="tpay-client-id" className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
               Client ID
             </label>
             <input id="tpay-client-id" value={clientId} onChange={(e) => setClientId(e.target.value)} style={inputStyle} autoComplete="off" />
           </div>
           <div className="mb-3">
-            <label htmlFor="tpay-secret" className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+            <label htmlFor="tpay-secret" className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
               Secret
             </label>
             <input
@@ -208,7 +208,7 @@ export default function TpayCard({
               onClick={save}
               disabled={busy || !clientId.trim() || !clientSecret.trim() || !state.encryptionReady}
               className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full disabled:opacity-50"
-              style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+              style={{ background: "var(--panel-accent)", color: "#fff" }}
             >
               <KeyRound className="w-3.5 h-3.5" strokeWidth={2} />
               {busy ? "Sprawdzam w Tpay…" : "Zapisz i połącz"}
@@ -217,7 +217,7 @@ export default function TpayCard({
               <button
                 onClick={() => setEditing(false)}
                 className="text-xs font-medium px-3 py-2"
-                style={{ color: "oklch(45% 0 0)" }}
+                style={{ color: "var(--panel-ink-muted)" }}
               >
                 Anuluj
               </button>
@@ -229,7 +229,7 @@ export default function TpayCard({
           <button
             onClick={() => setEditing(true)}
             className="text-xs font-semibold px-4 py-2 rounded-full"
-            style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(25% 0 0)" }}
+            style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)" }}
           >
             Zmień klucze
           </button>

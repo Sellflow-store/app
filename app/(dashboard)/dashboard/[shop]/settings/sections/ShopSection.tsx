@@ -87,7 +87,7 @@ export default function ShopSection({ shopSlug, initialName, initialActive }: Pr
             style={
               active
                 ? { color: "oklch(60% 0.18 20)", border: "1.5px solid oklch(60% 0.20 20 / 0.35)" }
-                : { background: "oklch(52% 0.20 158)", color: "#fff" }
+                : { background: "var(--panel-success)", color: "#fff" }
             }
           >
             <Power className="w-3.5 h-3.5" strokeWidth={1.5} />

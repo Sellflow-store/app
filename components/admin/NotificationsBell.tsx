@@ -73,14 +73,14 @@ export default function NotificationsBell({ shopSlug }: { shopSlug: string }) {
       <button
         onClick={() => setOpen((v) => !v)}
         className="relative p-1"
-        style={{ color: "oklch(55% 0 0)" }}
+        style={{ color: "var(--panel-ink-muted)" }}
         aria-label="Powiadomienia"
       >
         <Bell className="w-4 h-4" strokeWidth={1.5} />
         {count > 0 && (
           <span
             className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-1 rounded-full flex items-center justify-center text-[9px] font-bold"
-            style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+            style={{ background: "var(--panel-accent)", color: "#fff" }}
           >
             {count > 9 ? "9+" : count}
           </span>
@@ -90,32 +90,32 @@ export default function NotificationsBell({ shopSlug }: { shopSlug: string }) {
       {open && (
         <div
           className="absolute right-0 top-full mt-2 w-80 rounded-xl py-2 z-50"
-          style={{ background: "#fff", border: "1px solid oklch(90% 0 0)", boxShadow: "0 8px 28px oklch(0% 0 0 / 0.10)" }}
+          style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)", boxShadow: "0 8px 28px oklch(0% 0 0 / 0.10)" }}
         >
-          <div className="px-4 py-2 flex items-center justify-between" style={{ borderBottom: "1px solid oklch(94% 0 0)" }}>
-            <span className="text-xs font-semibold" style={{ color: "oklch(15% 0 0)" }}>Powiadomienia</span>
+          <div className="px-4 py-2 flex items-center justify-between" style={{ borderBottom: "1px solid var(--panel-surface-hover)" }}>
+            <span className="text-xs font-semibold" style={{ color: "var(--panel-ink)" }}>Powiadomienia</span>
           </div>
 
           {/* Summary */}
           <div className="px-4 py-2.5 flex gap-4">
             <Link href={`${base}/orders`} onClick={() => setOpen(false)} className="flex items-center gap-1.5 text-xs">
               <ClipboardList className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: "oklch(40% 0.20 260)" }} />
-              <span style={{ color: "oklch(30% 0 0)" }}>
+              <span style={{ color: "var(--panel-ink)" }}>
                 <strong>{data?.toShip ?? 0}</strong> do obsługi
               </span>
             </Link>
             <Link href={`${base}/orders`} onClick={() => setOpen(false)} className="flex items-center gap-1.5 text-xs">
               <Banknote className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: "oklch(45% 0.15 70)" }} />
-              <span style={{ color: "oklch(30% 0 0)" }}>
+              <span style={{ color: "var(--panel-ink)" }}>
                 <strong>{data?.unpaid ?? 0}</strong> nieopłaconych
               </span>
             </Link>
           </div>
 
           {/* Recent actionable orders */}
-          <div style={{ borderTop: "1px solid oklch(94% 0 0)" }}>
+          <div style={{ borderTop: "1px solid var(--panel-surface-hover)" }}>
             {!data || data.recent.length === 0 ? (
-              <p className="px-4 py-5 text-xs text-center" style={{ color: "oklch(55% 0 0)" }}>
+              <p className="px-4 py-5 text-xs text-center" style={{ color: "var(--panel-ink-muted)" }}>
                 Wszystko ogarnięte — brak nowych spraw 🎉
               </p>
             ) : (
@@ -125,18 +125,18 @@ export default function NotificationsBell({ shopSlug }: { shopSlug: string }) {
                   href={`${base}/orders/${o.id}`}
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "oklch(97% 0 0)")}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--panel-surface-2)")}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
                 >
                   <span
                     className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ background: o.status === "pending" ? "oklch(56% 0.30 335)" : "oklch(80% 0 0)" }}
+                    style={{ background: o.status === "pending" ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium truncate" style={{ color: "oklch(15% 0 0)" }}>
+                    <p className="text-xs font-medium truncate" style={{ color: "var(--panel-ink)" }}>
                       {o.orderNumber} · {o.customerName ?? "—"}
                     </p>
-                    <p className="text-[10px]" style={{ color: "oklch(55% 0 0)" }}>
+                    <p className="text-[10px]" style={{ color: "var(--panel-ink-muted)" }}>
                       {pln(o.total)} · {timeAgo(o.createdAt)}
                       {o.paymentStatus === "unpaid" ? " · nieopłacone" : ""}
                     </p>
@@ -146,12 +146,12 @@ export default function NotificationsBell({ shopSlug }: { shopSlug: string }) {
             )}
           </div>
 
-          <div className="px-4 pt-2" style={{ borderTop: "1px solid oklch(94% 0 0)" }}>
+          <div className="px-4 pt-2" style={{ borderTop: "1px solid var(--panel-surface-hover)" }}>
             <Link
               href={`${base}/orders`}
               onClick={() => setOpen(false)}
               className="block text-center text-xs font-semibold py-1.5"
-              style={{ color: "oklch(22% 0.24 270)" }}
+              style={{ color: "var(--panel-primary)" }}
             >
               Wszystkie zamówienia →
             </Link>

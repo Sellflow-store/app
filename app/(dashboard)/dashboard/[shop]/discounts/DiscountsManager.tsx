@@ -15,12 +15,12 @@ export interface DiscountRow {
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
+  border: "1.5px solid var(--panel-border)",
   borderRadius: "10px",
   padding: "10px 12px",
   fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -28,9 +28,9 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 interface Props {
@@ -117,11 +117,11 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
       <div className="mb-6">
         <h1
           className="text-xl font-bold"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Kody rabatowe
         </h1>
-        <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
           Klienci wpisują kod w koszyku przy składaniu zamówienia
         </p>
       </div>
@@ -130,17 +130,17 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
       <form
         onSubmit={handleCreate}
         className="rounded-2xl p-5 mb-6"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <h2
           className="text-sm font-semibold mb-4"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Nowy kod
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-[2fr_1fr_1.2fr_1fr_auto] gap-3 items-end">
           <div>
-            <label htmlFor="dc-code" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-code" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Kod
             </label>
             <input
@@ -154,7 +154,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
             />
           </div>
           <div>
-            <label htmlFor="dc-pct" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-pct" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Rabat (%)
             </label>
             <input
@@ -170,7 +170,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
             />
           </div>
           <div>
-            <label htmlFor="dc-exp" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-exp" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Wygasa (opcjonalnie)
             </label>
             <input
@@ -183,7 +183,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
             />
           </div>
           <div>
-            <label htmlFor="dc-max" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-max" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Limit użyć
             </label>
             <input
@@ -201,7 +201,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
             type="submit"
             disabled={busy}
             className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60 h-fit"
-            style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+            style={{ background: "var(--panel-accent)", color: "#fff" }}
           >
             <Plus className="w-4 h-4" strokeWidth={2} />
             Dodaj
@@ -217,12 +217,12 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
       {/* List */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ border: "1px solid oklch(90% 0 0)", background: "#fff" }}
+        style={{ border: "1px solid var(--panel-border)", background: "var(--panel-surface)" }}
       >
         {codes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Tag className="w-10 h-10" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-sm" style={{ color: "oklch(55% 0 0)" }}>
+            <Tag className="w-10 h-10" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
+            <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
               Brak kodów — dodaj pierwszy powyżej
             </p>
           </div>
@@ -232,9 +232,9 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
               className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
               style={{
                 gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 3rem",
-                color: "oklch(50% 0 0)",
-                borderBottom: "1px solid oklch(92% 0 0)",
-                background: "oklch(98% 0 0)",
+                color: "var(--panel-ink-muted)",
+                borderBottom: "1px solid var(--panel-border)",
+                background: "var(--panel-surface-2)",
               }}
             >
               <span>Kod</span>
@@ -250,21 +250,21 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
                 className="grid items-center px-5 py-3"
                 style={{
                   gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 3rem",
-                  borderBottom: i < codes.length - 1 ? "1px solid oklch(94% 0 0)" : "none",
+                  borderBottom: i < codes.length - 1 ? "1px solid var(--panel-surface-hover)" : "none",
                   opacity: row.active ? 1 : 0.55,
                 }}
               >
-                <span className="text-xs font-bold tracking-wide" style={{ color: "oklch(11% 0.10 275)", fontFamily: "var(--font-mono, monospace)" }}>
+                <span className="text-xs font-bold tracking-wide" style={{ color: "var(--panel-ink)", fontFamily: "var(--font-mono, monospace)" }}>
                   {row.code}
                 </span>
-                <span className="text-xs font-semibold tabular-nums" style={{ color: "oklch(25% 0 0)" }}>
+                <span className="text-xs font-semibold tabular-nums" style={{ color: "var(--panel-ink)" }}>
                   −{row.discountPercent}%
                 </span>
-                <span className="text-xs tabular-nums" style={{ color: "oklch(40% 0 0)" }}>
+                <span className="text-xs tabular-nums" style={{ color: "var(--panel-ink)" }}>
                   {row.usesCount}
                   {row.maxUses ? ` / ${row.maxUses}` : ""}
                 </span>
-                <span className="text-xs" style={{ color: "oklch(50% 0 0)" }}>
+                <span className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
                   {row.expiresAt ?? "—"}
                 </span>
                 <button
@@ -273,7 +273,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
                   style={
                     row.active
                       ? { background: "oklch(93% 0.08 145)", color: "oklch(30% 0.16 145)" }
-                      : { background: "oklch(95% 0 0)", color: "oklch(45% 0 0)" }
+                      : { background: "var(--panel-surface-hover)", color: "var(--panel-ink-muted)" }
                   }
                 >
                   {row.active ? "Aktywny" : "Wyłączony"}

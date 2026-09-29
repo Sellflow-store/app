@@ -36,11 +36,11 @@ export default function CustomersTable({ customers }: Props) {
         <div>
           <h1
             className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Klienci
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             {customers.length === 1 ? "1 klient" : `${customers.length} klientów`} — dodają się
             automatycznie przy zamówieniach
           </p>
@@ -49,7 +49,7 @@ export default function CustomersTable({ customers }: Props) {
         <div className="relative">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
-            style={{ color: "oklch(60% 0 0)" }}
+            style={{ color: "var(--panel-ink-faint)" }}
             strokeWidth={1.5}
           />
           <input
@@ -58,13 +58,13 @@ export default function CustomersTable({ customers }: Props) {
             placeholder="Szukaj po imieniu lub e-mailu"
             className="text-xs rounded-full py-2 pl-8 pr-4 outline-none transition-colors"
             style={{
-              border: "1.5px solid oklch(88% 0 0)",
-              background: "#fff",
-              color: "oklch(15% 0 0)",
+              border: "1.5px solid var(--panel-border)",
+              background: "var(--panel-surface)",
+              color: "var(--panel-ink)",
               width: "16rem",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-            onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+            onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--panel-border)")}
           />
         </div>
       </div>
@@ -72,12 +72,12 @@ export default function CustomersTable({ customers }: Props) {
       {/* Table card */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ border: "1px solid oklch(90% 0 0)", background: "#fff" }}
+        style={{ border: "1px solid var(--panel-border)", background: "var(--panel-surface)" }}
       >
         {visible.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Users className="w-10 h-10" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-sm" style={{ color: "oklch(55% 0 0)" }}>
+            <Users className="w-10 h-10" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
+            <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
               {q ? "Brak klientów pasujących do wyszukiwania" : "Jeszcze brak klientów — pojawią się po pierwszym zamówieniu"}
             </p>
           </div>
@@ -87,9 +87,9 @@ export default function CustomersTable({ customers }: Props) {
               className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
               style={{
                 gridTemplateColumns: "1.8fr 1fr 0.8fr 1fr 1fr",
-                color: "oklch(50% 0 0)",
-                borderBottom: "1px solid oklch(92% 0 0)",
-                background: "oklch(98% 0 0)",
+                color: "var(--panel-ink-muted)",
+                borderBottom: "1px solid var(--panel-border)",
+                background: "var(--panel-surface-2)",
               }}
             >
               <span>Klient</span>
@@ -105,27 +105,27 @@ export default function CustomersTable({ customers }: Props) {
                 className="grid items-center px-5 py-3.5"
                 style={{
                   gridTemplateColumns: "1.8fr 1fr 0.8fr 1fr 1fr",
-                  borderBottom: i < visible.length - 1 ? "1px solid oklch(94% 0 0)" : "none",
+                  borderBottom: i < visible.length - 1 ? "1px solid var(--panel-surface-hover)" : "none",
                 }}
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-medium truncate" style={{ color: "oklch(15% 0 0)" }}>
+                  <p className="text-xs font-medium truncate" style={{ color: "var(--panel-ink)" }}>
                     {c.name}
                   </p>
-                  <p className="text-[11px] truncate" style={{ color: "oklch(55% 0 0)" }}>
+                  <p className="text-[11px] truncate" style={{ color: "var(--panel-ink-muted)" }}>
                     {c.email}
                   </p>
                 </div>
-                <span className="text-xs" style={{ color: "oklch(40% 0 0)" }}>
+                <span className="text-xs" style={{ color: "var(--panel-ink)" }}>
                   {c.phone ?? "—"}
                 </span>
-                <span className="text-xs tabular-nums" style={{ color: "oklch(25% 0 0)" }}>
+                <span className="text-xs tabular-nums" style={{ color: "var(--panel-ink)" }}>
                   {c.totalOrders}
                 </span>
-                <span className="text-xs font-semibold tabular-nums" style={{ color: "oklch(11% 0.10 275)" }}>
+                <span className="text-xs font-semibold tabular-nums" style={{ color: "var(--panel-ink)" }}>
                   {pln(c.totalSpent)}
                 </span>
-                <span className="text-xs" style={{ color: "oklch(55% 0 0)" }}>
+                <span className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
                   {c.createdAt}
                 </span>
               </div>

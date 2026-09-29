@@ -12,12 +12,12 @@ export interface CategoryRow {
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(22% 0.24 270)",
+  border: "1.5px solid var(--panel-primary)",
   borderRadius: "8px",
   padding: "6px 10px",
   fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   outline: "none",
 };
@@ -99,11 +99,11 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
       <div className="mb-6">
         <h1
           className="text-xl font-bold"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Kategorie
         </h1>
-        <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
           Zmień nazwę, ukryj lub usuń kategorię — zmiany obejmą wszystkie produkty w środku
         </p>
       </div>
@@ -123,18 +123,18 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
 
       <div
         className="rounded-2xl overflow-hidden mb-5"
-        style={{ border: "1px solid oklch(90% 0 0)", background: "#fff" }}
+        style={{ border: "1px solid var(--panel-border)", background: "var(--panel-surface)" }}
       >
         {categories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Layers className="w-10 h-10" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-sm" style={{ color: "oklch(55% 0 0)" }}>
+            <Layers className="w-10 h-10" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
+            <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
               Brak kategorii — nadaj produktom kategorie w ich formularzach
             </p>
             <Link
               href={`/dashboard/${shopSlug}/products`}
               className="text-xs font-semibold px-4 py-2 rounded-full"
-              style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+              style={{ background: "var(--panel-accent)", color: "#fff" }}
             >
               Przejdź do produktów
             </Link>
@@ -145,9 +145,9 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
               className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
               style={{
                 gridTemplateColumns: "2fr 0.8fr 1fr auto",
-                color: "oklch(50% 0 0)",
-                borderBottom: "1px solid oklch(92% 0 0)",
-                background: "oklch(98% 0 0)",
+                color: "var(--panel-ink-muted)",
+                borderBottom: "1px solid var(--panel-border)",
+                background: "var(--panel-surface-2)",
               }}
             >
               <span>Kategoria</span>
@@ -163,7 +163,7 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
                   className="grid items-center px-5 py-3"
                   style={{
                     gridTemplateColumns: "2fr 0.8fr 1fr auto",
-                    borderBottom: i < categories.length - 1 ? "1px solid oklch(94% 0 0)" : "none",
+                    borderBottom: i < categories.length - 1 ? "1px solid var(--panel-surface-hover)" : "none",
                     opacity: rowBusy ? 0.5 : 1,
                   }}
                 >
@@ -193,24 +193,24 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
                         onClick={() => setEditing(null)}
                         aria-label="Anuluj"
                         className="p-1.5 rounded-lg"
-                        style={{ color: "oklch(55% 0 0)" }}
+                        style={{ color: "var(--panel-ink-muted)" }}
                       >
                         <X className="w-3.5 h-3.5" strokeWidth={2} />
                       </button>
                     </div>
                   ) : (
-                    <span className="text-xs font-medium" style={{ color: "oklch(15% 0 0)" }}>
+                    <span className="text-xs font-medium" style={{ color: "var(--panel-ink)" }}>
                       {row.name}
                     </span>
                   )}
 
-                  <span className="text-xs tabular-nums" style={{ color: "oklch(25% 0 0)" }}>
+                  <span className="text-xs tabular-nums" style={{ color: "var(--panel-ink)" }}>
                     {row.total}
                   </span>
 
                   <span
                     className="flex items-center gap-1.5 text-xs tabular-nums"
-                    style={{ color: row.visible > 0 ? "oklch(40% 0.16 145)" : "oklch(55% 0 0)" }}
+                    style={{ color: row.visible > 0 ? "oklch(40% 0.16 145)" : "var(--panel-ink-muted)" }}
                   >
                     {row.visible > 0 ? (
                       <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -228,7 +228,7 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
                       aria-label={row.visible > 0 ? "Ukryj kategorię" : "Pokaż kategorię"}
                       title={row.visible > 0 ? "Ukryj wszystkie produkty" : "Pokaż wszystkie produkty"}
                       className="p-1.5 rounded-lg transition-colors disabled:opacity-50"
-                      style={{ color: "oklch(45% 0 0)" }}
+                      style={{ color: "var(--panel-ink-muted)" }}
                     >
                       {row.visible > 0 ? (
                         <EyeOff className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -241,7 +241,7 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
                       disabled={rowBusy || editing === row.name}
                       aria-label={`Zmień nazwę kategorii ${row.name}`}
                       className="p-1.5 rounded-lg transition-colors disabled:opacity-50"
-                      style={{ color: "oklch(45% 0 0)" }}
+                      style={{ color: "var(--panel-ink-muted)" }}
                     >
                       <Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />
                     </button>
@@ -263,13 +263,13 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
       </div>
 
       {uncategorized > 0 && (
-        <p className="text-xs" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
           {uncategorized}{" "}
           {uncategorized === 1 ? "produkt nie ma" : "produkty(ów) nie ma"} przypisanej kategorii —{" "}
           <Link
             href={`/dashboard/${shopSlug}/products`}
             className="underline underline-offset-2 font-medium"
-            style={{ color: "oklch(22% 0.24 270)" }}
+            style={{ color: "var(--panel-primary)" }}
           >
             uzupełnij w produktach
           </Link>

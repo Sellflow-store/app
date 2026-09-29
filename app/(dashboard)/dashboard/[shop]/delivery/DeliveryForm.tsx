@@ -5,12 +5,12 @@ import { Save, Plus, Trash2 } from "lucide-react";
 import type { DeliveryConfig, DeliveryMethod, DeliveryMethodKind } from "@/types/shop";
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
+  border: "1.5px solid var(--panel-border)",
   borderRadius: "10px",
   padding: "10px 12px",
   fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -18,9 +18,9 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 const KIND_OPTIONS: { value: DeliveryMethodKind; label: string }[] = [
@@ -39,7 +39,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   return (
     <div
       className="relative w-9 h-5 rounded-full transition-all cursor-pointer shrink-0"
-      style={{ background: checked ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+      style={{ background: checked ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
       onClick={() => onChange(!checked)}
     >
       <div
@@ -132,9 +132,9 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
+    saveState === "saved" ? "var(--panel-success)"
     : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
@@ -142,11 +142,11 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
         <div>
           <h1
             className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Dostawa
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Metody i ceny dostawy widoczne w koszyku Twoich klientów
           </p>
         </div>
@@ -173,15 +173,15 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
       {/* Methods */}
       <div
         className="rounded-2xl p-5 mb-5"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <h2
           className="text-sm font-semibold mb-4"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Metody dostawy
         </h2>
-        <p className="text-xs mb-4 -mt-3" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mb-4 -mt-3" style={{ color: "var(--panel-ink-muted)" }}>
           Rodzaj decyduje, o co poprosimy klienta w koszyku — przy paczkomacie
           o wskazanie punktu, przy kurierze o adres.
         </p>
@@ -192,8 +192,8 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
               key={m.id}
               className="p-3 rounded-xl"
               style={{
-                background: m.enabled ? "oklch(97% 0 0)" : "oklch(97% 0 0 / 0.5)",
-                border: "1px solid oklch(92% 0 0)",
+                background: m.enabled ? "var(--panel-surface-2)" : "transparent",
+                border: "1px solid var(--panel-border)",
                 opacity: m.enabled ? 1 : 0.6,
               }}
             >
@@ -219,7 +219,7 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
                   />
                   <span
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
-                    style={{ color: "oklch(55% 0 0)" }}
+                    style={{ color: "var(--panel-ink-muted)" }}
                   >
                     zł
                   </span>
@@ -237,7 +237,7 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
               <div className="grid grid-cols-[auto_1fr] gap-3 items-center mt-2 pl-[3rem]">
                 <label
                   className="text-xs font-medium shrink-0"
-                  style={{ color: "oklch(45% 0 0)" }}
+                  style={{ color: "var(--panel-ink-muted)" }}
                   htmlFor={`kind-${m.id}`}
                 >
                   Rodzaj
@@ -257,7 +257,7 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
                       </option>
                     ))}
                   </select>
-                  <p className="text-[11px] mt-1" style={{ color: "oklch(55% 0 0)" }}>
+                  <p className="text-[11px] mt-1" style={{ color: "var(--panel-ink-muted)" }}>
                     {KIND_HINT[m.kind]}
                   </p>
                 </div>
@@ -280,7 +280,7 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
             ])
           }
           className="mt-3 flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-          style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+          style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
         >
           <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
           Dodaj metodę
@@ -290,15 +290,15 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
       {/* Free shipping threshold */}
       <div
         className="rounded-2xl p-5"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <h2
           className="text-sm font-semibold mb-1"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Darmowa dostawa
         </h2>
-        <p className="text-xs mb-4" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>
           Zostaw puste, jeśli nie oferujesz darmowej dostawy.
         </p>
         <div className="relative max-w-[12rem]">
@@ -313,7 +313,7 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
           />
           <span
             className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
-            style={{ color: "oklch(55% 0 0)" }}
+            style={{ color: "var(--panel-ink-muted)" }}
           >
             zł i więcej
           </span>
@@ -323,18 +323,18 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
       {/* Abroad */}
       <div
         className="rounded-2xl p-5 mt-5"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <div className="flex items-start gap-3">
           <Toggle checked={abroad} onChange={setAbroad} />
           <div>
             <h2
               className="text-sm font-semibold mb-1"
-              style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+              style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
             >
               Wysyłka za granicę na zapytanie
             </h2>
-            <p className="text-xs" style={{ color: "oklch(50% 0 0)" }}>
+            <p className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
               Metody powyżej obowiązują w Polsce. Po włączeniu strona Dostawa poprosi klientów
               spoza Polski o kontakt przez formularz, zanim złożą zamówienie.
             </p>
