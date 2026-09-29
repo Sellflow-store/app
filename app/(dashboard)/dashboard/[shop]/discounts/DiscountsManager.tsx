@@ -15,10 +15,10 @@ export interface DiscountRow {
 }
 
 const inputStyle = {
-  border: "1.5px solid var(--panel-border)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
   color: "var(--panel-ink)",
   background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
@@ -116,7 +116,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1
-          className="text-xl font-bold"
+          className="text-xl font-semibold"
           style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Kody rabatowe
@@ -200,7 +200,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
           <button
             type="submit"
             disabled={busy}
-            className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60 h-fit"
+            className="flex items-center gap-1.5 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 h-fit"
             style={{ background: "var(--panel-accent)", color: "#fff" }}
           >
             <Plus className="w-4 h-4" strokeWidth={2} />

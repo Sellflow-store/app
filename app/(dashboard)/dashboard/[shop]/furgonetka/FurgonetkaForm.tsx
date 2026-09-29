@@ -11,10 +11,10 @@ const CARD = {
 } as const;
 
 const inputStyle = {
-  border: "1.5px solid var(--panel-border)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
   color: "var(--panel-ink)",
   background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
@@ -184,7 +184,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="mb-6">
         <h1
-          className="text-xl font-bold"
+          className="text-xl font-semibold"
           style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Furgonetka
@@ -273,7 +273,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
           <button
             onClick={generateToken}
             disabled={busy}
-            className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
             style={{ background: "var(--panel-accent)", color: "#fff" }}
           >
             {state.connected ? <RefreshCw className="w-3.5 h-3.5" /> : <KeyRound className="w-3.5 h-3.5" />}
@@ -284,7 +284,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
             <button
               onClick={disconnect}
               disabled={busy}
-              className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
               style={{ background: "var(--panel-surface-hover)", color: "oklch(40% 0.18 20)", border: "1px solid var(--panel-border)" }}
             >
               <Unplug className="w-3.5 h-3.5" />
@@ -403,10 +403,10 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
 
           <button
             onClick={saveMapping}
-            className="mt-4 text-sm font-semibold px-4 py-2.5 rounded-full transition-all"
+            className="mt-4 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90"
             style={{ background: mapSaved ? "var(--panel-success)" : "var(--panel-accent)", color: "#fff" }}
           >
-            {mapSaved ? "Zapisano!" : "Zapisz mapowanie"}
+            {mapSaved ? "Zapisano" : "Zapisz mapowanie"}
           </button>
         </div>
       )}

@@ -15,10 +15,10 @@ export interface TpayState {
 }
 
 const inputStyle = {
-  border: "1.5px solid var(--panel-border)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
   color: "var(--panel-ink)",
   background: "var(--panel-surface)",
   fontFamily: "var(--font-mono, monospace)",
@@ -207,7 +207,7 @@ export default function TpayCard({
             <button
               onClick={save}
               disabled={busy || !clientId.trim() || !clientSecret.trim() || !state.encryptionReady}
-              className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full disabled:opacity-50"
+              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg disabled:opacity-50"
               style={{ background: "var(--panel-accent)", color: "#fff" }}
             >
               <KeyRound className="w-3.5 h-3.5" strokeWidth={2} />
@@ -228,7 +228,7 @@ export default function TpayCard({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setEditing(true)}
-            className="text-xs font-semibold px-4 py-2 rounded-full"
+            className="h-9 px-3.5 text-[13px] font-semibold rounded-lg"
             style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)" }}
           >
             Zmień klucze
