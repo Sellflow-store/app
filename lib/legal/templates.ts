@@ -141,7 +141,7 @@ export function buildTerms(v: LegalVars): string {
   ];
   if (v.onlinePayments) {
     paymentItems.push(
-      "Rozliczenia transakcji płatnościami online (kartą płatniczą, BLIK, szybkim przelewem) przeprowadzane są za pośrednictwem serwisu Tpay.com, prowadzonego przez Krajowy Integrator Płatności S.A. z siedzibą w Poznaniu. Zamówienie opłacone online jest realizowane po otrzymaniu przez Sprzedawcę potwierdzenia płatności od operatora."
+      "Rozliczenia transakcji płatnościami online (kartą płatniczą, BLIK, szybkim przelewem) przeprowadzane są za pośrednictwem serwisu Tpay.com, prowadzonego przez Krajowy Integrator Płatności S.A. z siedzibą w Poznaniu. Zamówienie opłacone online jest realizowane po otrzymaniu przez Sprzedawcę potwierdzenia płatności od operatora. Zamówienie z wybraną płatnością online, które nie zostanie opłacone w ciągu 48 godzin od jego złożenia, zostaje automatycznie anulowane, o czym Klient jest informowany wiadomością e-mail."
     );
   }
   if (v.clauses.includes("subskrypcje")) {

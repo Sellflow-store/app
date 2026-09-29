@@ -14,7 +14,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { orders, shopIntegrations, shops } from "@/lib/db/schema";
+import { orders, shopIntegrations, shops, users } from "@/lib/db/schema";
+import { sendEmail } from "@/lib/email";
+import { merchantPaidAfterCancelEmail } from "@/lib/email-templates";
 import { TPAY_PROVIDER, getTpayCredentials, getTpayTransaction, isTpayPaid } from "@/lib/tpay";
 
 type Params = { params: Promise<{ shop: string }> };
@@ -82,13 +84,37 @@ export async function POST(req: NextRequest, { params }: Params) {
     return ack();
   }
 
-  await db
+  const [marked] = await db
     .update(orders)
     .set({ paymentStatus: "paid", updatedAt: new Date() })
-    .where(and(eq(orders.id, order.id), eq(orders.paymentStatus, "unpaid")));
+    .where(and(eq(orders.id, order.id), eq(orders.paymentStatus, "unpaid")))
+    .returning({ status: orders.status });
 
-  if (order.status === "cancelled") {
-    console.warn("Tpay notify: wpłata za anulowane zamówienie — do zwrotu", order.orderNumber);
+  // Tylko przebieg, który faktycznie przestawił status — powtórzone
+  // powiadomienie nie wyśle merchantowi drugiego maila.
+  if (marked?.status === "cancelled") {
+    // Najczęściej: automat anulował po 48 h, a klient zapłacił później.
+    // Towar już wrócił do sprzedaży, więc decyzja (zwrot czy realizacja)
+    // należy do merchanta — dostaje maila.
+    console.warn("Tpay notify: wpłata za anulowane zamówienie", order.orderNumber);
+    try {
+      const owner = await db.query.users.findFirst({ where: eq(users.id, shop.ownerId) });
+      if (owner?.email) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+        await sendEmail({
+          to: owner.email,
+          ...merchantPaidAfterCancelEmail({
+            shopName: shop.name,
+            orderNumber: order.orderNumber,
+            total: order.total,
+            customerEmail: order.customerEmail,
+            orderUrl: `${appUrl}/dashboard/${shop.slug}/orders/${order.id}`,
+          }),
+        });
+      }
+    } catch (e) {
+      console.error("Tpay notify: mail do merchanta nie wyszedł", order.orderNumber, e);
+    }
   }
 
   return ack();
