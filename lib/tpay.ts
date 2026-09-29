@@ -63,19 +63,79 @@ function cacheKey(c: TpayCredentials): string {
   return `${c.sandbox ? "sb" : "prod"}:${c.clientId}`;
 }
 
+type TokenBody = {
+  access_token?: string;
+  expires_in?: number;
+  error?: string;
+  error_description?: string;
+  errors?: { errorMessage?: string; errorCode?: string }[];
+};
+
+/** Komunikat Tpay z odpowiedzi odmownej — bez sekretów, bezpieczny do panelu. */
+function tpayErrorText(body: TokenBody, raw: string): string {
+  return (
+    body.error_description ||
+    body.errors?.map((e) => e.errorMessage || e.errorCode).filter(Boolean).join("; ") ||
+    body.error ||
+    raw.slice(0, 200)
+  );
+}
+
 async function fetchToken(c: TpayCredentials): Promise<{ token: string; expiresIn: number }> {
-  const res = await fetch(`${apiBase(c.sandbox)}/oauth/auth`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-    body: new URLSearchParams({ client_id: c.clientId, client_secret: c.clientSecret }),
-    cache: "no-store",
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  const body = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number };
-  if (!res.ok || !body.access_token) {
-    throw new TpayError("Tpay odrzucił dane logowania do API.", res.status);
+  // Przykłady w dokumentacji Tpay wysyłają dane jako multipart/form-data;
+  // JSON zostaje jako druga próba, gdyby endpoint go wymagał.
+  const attempts: { label: string; init: RequestInit }[] = [
+    {
+      label: "form-data",
+      init: {
+        body: (() => {
+          const f = new FormData();
+          f.set("client_id", c.clientId);
+          f.set("client_secret", c.clientSecret);
+          return f;
+        })(),
+      },
+    },
+    {
+      label: "json",
+      init: {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: c.clientId, client_secret: c.clientSecret }),
+      },
+    },
+  ];
+
+  let lastStatus: number | undefined;
+  let lastMessage = "";
+  for (const { label, init } of attempts) {
+    const res = await fetch(`${apiBase(c.sandbox)}/oauth/auth`, {
+      method: "POST",
+      ...init,
+      headers: { Accept: "application/json", ...(init.headers ?? {}) },
+      cache: "no-store",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    const raw = await res.text().catch(() => "");
+    let body: TokenBody = {};
+    try {
+      body = JSON.parse(raw) as TokenBody;
+    } catch {
+      /* nie-JSON — zostaje surowy tekst */
+    }
+    if (res.ok && body.access_token) {
+      return { token: body.access_token, expiresIn: body.expires_in ?? 3600 };
+    }
+    lastStatus = res.status;
+    lastMessage = tpayErrorText(body, raw);
+    console.error("Tpay oauth odmowa", {
+      attempt: label,
+      sandbox: c.sandbox,
+      clientIdTail: c.clientId.slice(-6),
+      status: res.status,
+      message: lastMessage,
+    });
   }
-  return { token: body.access_token, expiresIn: body.expires_in ?? 3600 };
+  throw new TpayError(lastMessage || "Tpay odrzucił dane logowania do API.", lastStatus);
 }
 
 async function accessToken(c: TpayCredentials): Promise<string> {
@@ -89,12 +149,16 @@ async function accessToken(c: TpayCredentials): Promise<string> {
 }
 
 /** Sprawdza klucze przed zapisem w panelu — bez cache, zawsze pyta Tpay. */
-export async function verifyTpayCredentials(c: TpayCredentials): Promise<boolean> {
+export async function verifyTpayCredentials(
+  c: TpayCredentials,
+): Promise<{ ok: true } | { ok: false; status?: number; message: string }> {
   try {
     await fetchToken(c);
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof TpayError) return { ok: false, status: e.status, message: e.message };
+    console.error("Tpay oauth: błąd połączenia", e);
+    return { ok: false, message: "Brak połączenia z Tpay." };
   }
 }
 

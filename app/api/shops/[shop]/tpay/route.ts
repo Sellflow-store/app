@@ -72,13 +72,15 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!clientId || clientId.length > 200) return bad("Podaj Client ID z panelu Tpay.");
   if (!clientSecret || clientSecret.length > 200) return bad("Podaj Secret z panelu Tpay.");
 
-  const ok = await verifyTpayCredentials({ clientId, clientSecret, sandbox });
-  if (!ok) {
-    return bad(
-      sandbox
-        ? "Tpay (sandbox) nie przyjął tych kluczy. Sprawdź, czy to klucze z panelu testowego."
-        : "Tpay nie przyjął tych kluczy. Sprawdź Client ID i Secret w panelu Tpay → Integracje → API.",
-    );
+  const check = await verifyTpayCredentials({ clientId, clientSecret, sandbox });
+  if (!check.ok) {
+    // Odpowiedź Tpay doklejamy dosłownie: „invalid_client" i „brak uprawnień"
+    // to zupełnie inne naprawy, a sam ogólnik nic merchantowi nie mówi.
+    const hint = sandbox
+      ? "Tpay (sandbox) nie przyjął tych kluczy. Sprawdź, czy to klucze z panelu testowego."
+      : "Tpay nie przyjął tych kluczy. Sprawdź Client ID i Secret w panelu Tpay → Integracje → API.";
+    const detail = check.message ? ` Odpowiedź Tpay${check.status ? ` (${check.status})` : ""}: ${check.message}` : "";
+    return bad(hint + detail);
   }
 
   const now = new Date();
