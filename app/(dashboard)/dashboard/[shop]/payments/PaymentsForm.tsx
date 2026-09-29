@@ -7,12 +7,12 @@ import { isValidNrb, formatNrb, normalizeNrb } from "@/lib/nrb";
 import TpayCard, { type TpayState } from "./TpayCard";
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
+  border: "1.5px solid var(--panel-border)",
   borderRadius: "10px",
   padding: "10px 12px",
   fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -20,9 +20,9 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
@@ -30,7 +30,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
     <label className="flex items-center gap-2.5 cursor-pointer w-fit">
       <div
         className="relative w-9 h-5 rounded-full transition-all"
-        style={{ background: checked ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+        style={{ background: checked ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
         onClick={() => onChange(!checked)}
       >
         <div
@@ -38,7 +38,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
           style={{ left: checked ? "1.125rem" : "0.125rem" }}
         />
       </div>
-      <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>{label}</span>
+      <span className="text-xs font-medium" style={{ color: "var(--panel-ink)" }}>{label}</span>
     </label>
   );
 }
@@ -46,7 +46,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
         {label}
       </label>
       {children}
@@ -136,9 +136,9 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
+    saveState === "saved" ? "var(--panel-success)"
     : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
@@ -146,11 +146,11 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
         <div>
           <h1
             className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Płatności
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Jak klienci płacą za zamówienia w Twoim sklepie
           </p>
         </div>
@@ -180,14 +180,14 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
       {/* Bank transfer */}
       <div
         className="rounded-2xl p-5 mb-5"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <Landmark className="w-4 h-4" style={{ color: "oklch(40% 0 0)" }} strokeWidth={1.5} />
+            <Landmark className="w-4 h-4" style={{ color: "var(--panel-ink)" }} strokeWidth={1.5} />
             <h2
               className="text-sm font-semibold"
-              style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+              style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
             >
               Przelew tradycyjny
             </h2>
@@ -197,7 +197,7 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
 
         {transferEnabled && (
           <>
-            <p className="text-xs mb-4" style={{ color: "oklch(50% 0 0)" }}>
+            <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>
               Klient zobaczy te dane po złożeniu zamówienia i w mailu z potwierdzeniem.
             </p>
             <Field label="Numer konta (26 cyfr)" id="bank-account">
@@ -225,7 +225,7 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
                 {...focusProps}
               />
             </Field>
-            <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+            <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
               Tytuł przelewu zostanie wygenerowany automatycznie z numerem zamówienia.
             </p>
           </>
@@ -235,14 +235,14 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
       {/* Cash on delivery */}
       <div
         className="rounded-2xl p-5"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <HandCoins className="w-4 h-4" style={{ color: "oklch(40% 0 0)" }} strokeWidth={1.5} />
+            <HandCoins className="w-4 h-4" style={{ color: "var(--panel-ink)" }} strokeWidth={1.5} />
             <h2
               className="text-sm font-semibold"
-              style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+              style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
             >
               Płatność za pobraniem
             </h2>
@@ -264,7 +264,7 @@ export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: P
               />
               <span
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
-                style={{ color: "oklch(55% 0 0)" }}
+                style={{ color: "var(--panel-ink-muted)" }}
               >
                 zł
               </span>

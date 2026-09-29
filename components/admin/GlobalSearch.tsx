@@ -78,7 +78,7 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
       <Search
         className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
         strokeWidth={1.5}
-        style={{ color: "oklch(55% 0 0)" }}
+        style={{ color: "var(--panel-ink-muted)" }}
       />
       <input
         value={query}
@@ -93,10 +93,10 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
       {showDropdown && (
         <div
           className="absolute left-0 right-0 top-full mt-1.5 rounded-xl py-2 z-50 max-h-[70vh] overflow-y-auto"
-          style={{ background: "#fff", border: "1px solid oklch(90% 0 0)", boxShadow: "0 8px 28px oklch(0% 0 0 / 0.10)" }}
+          style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)", boxShadow: "0 8px 28px oklch(0% 0 0 / 0.10)" }}
         >
           {!hasResults && (
-            <p className="px-4 py-3 text-xs" style={{ color: "oklch(55% 0 0)" }}>
+            <p className="px-4 py-3 text-xs" style={{ color: "var(--panel-ink-muted)" }}>
               Brak wyników dla „{query.trim()}".
             </p>
           )}
@@ -117,7 +117,7 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
                 <Row key={p.id} icon={Package} onClick={() => go(`${base}/products/${p.id}`)}>
                   <span className="truncate">{p.name}</span>
                   {p.category && (
-                    <span className="ml-auto text-[10px] shrink-0" style={{ color: "oklch(60% 0 0)" }}>
+                    <span className="ml-auto text-[10px] shrink-0" style={{ color: "var(--panel-ink-faint)" }}>
                       {p.category}
                     </span>
                   )}
@@ -131,10 +131,10 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
               {orders.map((o) => (
                 <Row key={o.id} icon={ClipboardList} onClick={() => go(`${base}/orders/${o.id}`)}>
                   <span className="font-medium">{o.orderNumber}</span>
-                  <span className="truncate" style={{ color: "oklch(55% 0 0)" }}>
+                  <span className="truncate" style={{ color: "var(--panel-ink-muted)" }}>
                     {o.customerName ?? ""}
                   </span>
-                  <span className="ml-auto text-[10px] shrink-0" style={{ color: "oklch(45% 0 0)" }}>
+                  <span className="ml-auto text-[10px] shrink-0" style={{ color: "var(--panel-ink-muted)" }}>
                     {pln(o.total)}
                   </span>
                 </Row>
@@ -150,7 +150,7 @@ export default function GlobalSearch({ shopSlug }: { shopSlug: string }) {
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-1 last:mb-0">
-      <p className="px-4 pt-1.5 pb-1 text-[9px] font-semibold uppercase tracking-[0.16em]" style={{ color: "oklch(55% 0 0)" }}>
+      <p className="px-4 pt-1.5 pb-1 text-[9px] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--panel-ink-muted)" }}>
         {label}
       </p>
       {children}
@@ -165,11 +165,11 @@ function Row({
     <button
       onClick={onClick}
       className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-left transition-colors"
-      style={{ color: "oklch(20% 0 0)" }}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "oklch(97% 0 0)")}
+      style={{ color: "var(--panel-ink)" }}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--panel-surface-2)")}
       onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} style={{ color: "oklch(55% 0 0)" }} />
+      <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} style={{ color: "var(--panel-ink-muted)" }} />
       {children}
     </button>
   );

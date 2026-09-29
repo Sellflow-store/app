@@ -21,22 +21,22 @@ function Accordion({
   return (
     <div
       className="rounded-2xl mb-4 overflow-hidden"
-      style={{ border: "1px solid oklch(90% 0 0)", background: "#fff" }}
+      style={{ border: "1px solid var(--panel-border)", background: "var(--panel-surface)" }}
     >
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-5 py-4 text-left"
-        style={{ color: "oklch(11% 0.10 275)" }}
+        style={{ color: "var(--panel-ink)" }}
       >
         <span className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)" }}>
           {title}
         </span>
         {open
-          ? <ChevronUp className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: "oklch(55% 0 0)" }} />
-          : <ChevronDown className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: "oklch(55% 0 0)" }} />}
+          ? <ChevronUp className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: "var(--panel-ink-muted)" }} />
+          : <ChevronDown className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: "var(--panel-ink-muted)" }} />}
       </button>
       {open && (
-        <div className="px-5 pb-5" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
+        <div className="px-5 pb-5" style={{ borderTop: "1px solid var(--panel-border)" }}>
           <div className="pt-4">{children}</div>
         </div>
       )}
@@ -49,7 +49,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
     <label className="flex items-center gap-2.5 cursor-pointer w-fit">
       <div
         className="relative w-9 h-5 rounded-full transition-all"
-        style={{ background: checked ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+        style={{ background: checked ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
         onClick={() => onChange(!checked)}
       >
         <div
@@ -57,18 +57,18 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
           style={{ left: checked ? "1.125rem" : "0.125rem" }}
         />
       </div>
-      <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>{label}</span>
+      <span className="text-xs font-medium" style={{ color: "var(--panel-ink)" }}>{label}</span>
     </label>
   );
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
+  border: "1.5px solid var(--panel-border)",
   borderRadius: "10px",
   padding: "9px 12px",
   fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -76,15 +76,15 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <label className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+      <label className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
         {label}
       </label>
       {children}
@@ -130,7 +130,7 @@ function ItemListEditor({
         <div
           key={i}
           className="p-3 rounded-xl"
-          style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
+          style={{ background: "var(--panel-surface-2)", border: "1px solid var(--panel-border)" }}
         >
           <div
             className={`grid gap-2 items-end ${
@@ -183,7 +183,7 @@ function ItemListEditor({
       <button
         onClick={() => onChange([...items, { title: "", description: "" }])}
         className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-        style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+        style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
       >
         <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
         {addLabel}
@@ -213,11 +213,11 @@ function LookbookEditor({
         <div
           key={i}
           className="p-3 rounded-xl flex gap-3"
-          style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
+          style={{ background: "var(--panel-surface-2)", border: "1px solid var(--panel-border)" }}
         >
           <div
             className="w-16 h-20 rounded-lg overflow-hidden shrink-0 relative"
-            style={{ background: "oklch(93% 0 0)" }}
+            style={{ background: "var(--panel-border)" }}
           >
             {item.image && (
               <img src={item.image} alt="" className="w-full h-full object-cover" />
@@ -261,7 +261,7 @@ function LookbookEditor({
                   type="button"
                   onClick={() => update(i, { video: undefined })}
                   className="text-[11px] underline underline-offset-2"
-                  style={{ color: "oklch(50% 0 0)" }}
+                  style={{ color: "var(--panel-ink-muted)" }}
                 >
                   Usuń film, zostaw zdjęcie
                 </button>
@@ -341,9 +341,9 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
+    saveState === "saved" ? "var(--panel-success)"
     : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
@@ -352,11 +352,11 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
         <div>
           <h1
             className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Strona główna
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Edytuj treści widoczne na stronie Twojego sklepu
           </p>
         </div>
@@ -405,7 +405,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               <option value="editorial">Typograficzny — duży tytuł na osi, zdjęcie jako pas</option>
               <option value="cover">Sam kadr — zdjęcie na pełny ekran, menu na zdjęciu, bez tekstu</option>
             </select>
-            <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+            <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
               Układ ze zdjęciem na całą szerokość wymaga zdjęcia — bez niego pokaże się układ
               typograficzny. Najlepiej działa z fotografią na modelce lub z sesji.
             </p>
@@ -423,7 +423,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                   <option value="dark">Ciemny — do jasnych, studyjnych kadrów</option>
                   <option value="light">Jasny — do ciemnych zdjęć</option>
                 </select>
-                <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+                <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
                   Przy jasnym menu podmienia się też logo, jeśli wgrasz jego jasną wersję
                   w „Logo i kolorystyka”.
                 </p>
@@ -464,19 +464,19 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             <div className="flex items-start gap-3">
               <div
                 className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden shrink-0"
-                style={{ background: "oklch(95% 0.008 260)", border: "1.5px dashed oklch(80% 0 0)" }}
+                style={{ background: "var(--panel-surface-hover)", border: "1.5px dashed var(--panel-border-strong)" }}
               >
                 {config.hero.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={config.hero.image} alt="hero" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-[10px] text-center px-1" style={{ color: "oklch(55% 0 0)" }}>
+                  <span className="text-[10px] text-center px-1" style={{ color: "var(--panel-ink-muted)" }}>
                     Brak
                   </span>
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-[11px] mb-2" style={{ color: "oklch(45% 0 0)" }}>
+                <p className="text-[11px] mb-2" style={{ color: "var(--panel-ink-muted)" }}>
                   Dwie kolumny: 800×800 px. Na całą szerokość / pas: zdjęcie poziome lub z
                   sesji, min. 2000 px szerokości. Pamiętaj o „Zapisz zmiany”.
                 </p>
@@ -573,7 +573,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             onChange={(v) => patch("products", { showHeading: v })}
             label="Pokaż nagłówek nad produktami"
           />
-          <p className="text-[11px] mt-2" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px] mt-2" style={{ color: "var(--panel-ink-faint)" }}>
             Bez nagłówka zostaje sama siatka produktów — spokojniej, gdy nad nią jest lookbook.
           </p>
         </div>
@@ -627,7 +627,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             onChange={(v) => patch("benefits", { showIcons: v })}
             label="Pokaż ikony przy korzyściach"
           />
-          <p className="text-[11px] mt-2" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px] mt-2" style={{ color: "var(--panel-ink-faint)" }}>
             Ikony dobierają się po kolejności, nie po treści. Po wyłączeniu punkt składa się
             z tytułu, cienkiej kreski i opisu — spokojniej przy autorskich tekstach.
           </p>
@@ -708,7 +708,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
               <option value="section">Osobna sekcja z nagłówkiem</option>
               <option value="strip">Wąski pasek z małymi ikonami nad stopką</option>
             </select>
-            <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+            <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
               Pasek nie pokazuje nagłówka — same punkty, jedna linia każdy, zlewa się ze stopką.
             </p>
           </Field>
@@ -771,7 +771,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             items={config.lookbook?.items ?? []}
             onChange={(items) => patch2("lookbook", { items })}
           />
-          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
             Kadry pionowe z sesji wyglądają najlepiej. Dwa pierwsze układy idą pełną
             szerokością okna i chcą parzystej liczby kadrów. Układ z przesunięciem ma
             marginesy i przyjmuje dowolną liczbę kadrów. Siatka po cztery mieści ich
@@ -794,7 +794,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
             onChange={(v) => patch("reviews", { visible: v })}
             label="Pokaż sekcję z opiniami klientów"
           />
-          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
             Sekcja i tak nie pokaże się, dopóki nie ma ani jednej opinii ani logotypu
             prasowego — pusty sklep nie wyświetla gwiazdek na podstawie zera opinii.
             Wyłącznik przydaje się, gdy opinie już są, a mimo to nie chcesz ich pokazywać.
@@ -860,7 +860,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                   style={{ ...inputStyle, width: "14rem" }}
                   {...focusProps}
                 />
-                <p className="text-xs mt-1.5" style={{ color: "oklch(50% 0 0)" }}>
+                <p className="text-xs mt-1.5" style={{ color: "var(--panel-ink-muted)" }}>
                   Wysyłamy go mailem dopiero po potwierdzeniu zapisu. Kod musi istnieć i być
                   aktywny w zakładce Rabaty. Jeśli w opisie obiecujesz rabat, wpisz go tutaj,
                   inaczej klientka nic nie dostanie.

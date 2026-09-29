@@ -65,7 +65,7 @@ export default function ImageUpload({
         onClick={() => inputRef.current?.click()}
         disabled={isUploading}
         className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg transition-all disabled:opacity-60"
-        style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+        style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
       >
         <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
         {isUploading ? "Wgrywanie…" : label}
