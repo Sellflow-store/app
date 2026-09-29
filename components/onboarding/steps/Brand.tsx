@@ -97,7 +97,7 @@ export default function Brand({ onNext, onBack }: Props) {
             Styl sklepu
           </h2>
           <p className="text-sm mb-5" style={{ color: "var(--brand-ink-2)" }}>
-            Wybierz jeden z czterech stylów — paletę, typografię i układ.
+            Wybierz jeden z czterech stylów. Każdy to gotowa paleta, typografia i układ.
             Później możesz go zmienić w panelu.
           </p>
           <div className="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Styl sklepu">

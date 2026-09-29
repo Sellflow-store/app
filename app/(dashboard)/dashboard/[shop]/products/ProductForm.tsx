@@ -348,8 +348,8 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
     : isEdit ? "Zapisz zmiany" : "Dodaj produkt";
 
   const buttonBg =
-    saveState === "saved" ? "var(--panel-success)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
     : "var(--panel-accent)";
 
   return (
@@ -387,7 +387,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       {validationError && (
         <div
           className="rounded-xl px-4 py-3 mb-5 text-xs font-medium"
-          style={{ background: "oklch(50% 0.20 20 / 0.08)", color: "oklch(40% 0.18 20)", border: "1px solid oklch(50% 0.20 20 / 0.25)" }}
+          style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)", border: "1px solid var(--panel-danger-border)" }}
         >
           {validationError}
         </div>
@@ -929,7 +929,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             onClick={handleDelete}
             disabled={deleting}
             className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg transition-all disabled:opacity-60"
-            style={{ color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.3)" }}
+            style={{ color: "var(--panel-danger-ink)", border: "1.5px solid var(--panel-danger-border)" }}
           >
             <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
             {deleting ? "Usuwanie…" : "Usuń produkt"}

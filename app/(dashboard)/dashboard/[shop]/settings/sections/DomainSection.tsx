@@ -52,7 +52,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
           {value}
         </code>
         {copied ? (
-          <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "oklch(60% 0.16 145)" }} strokeWidth={2} />
+          <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--panel-success)" }} strokeWidth={2} />
         ) : (
           <Copy className="w-3.5 h-3.5 shrink-0" style={{ color: P.muted }} strokeWidth={1.5} />
         )}
@@ -75,7 +75,7 @@ function StatusBadge({ status }: { status: DomainStatus | null }) {
   if (status.verified && !status.misconfigured) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-        style={{ background: "oklch(60% 0.16 145 / 0.14)", color: "oklch(52% 0.16 145)" }}>
+        style={{ background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }}>
         <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Domena aktywna
       </span>
     );
@@ -230,7 +230,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
               />
             </Field>
             {error && (
-              <div className="flex items-start gap-2 mt-1 text-xs" style={{ color: "oklch(55% 0.18 20)" }}>
+              <div className="flex items-start gap-2 mt-1 text-xs" style={{ color: "var(--panel-danger-ink)" }}>
                 <CircleAlert className="w-4 h-4 shrink-0 mt-px" strokeWidth={1.75} />
                 <span>{error}</span>
               </div>
@@ -289,7 +289,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
                   onClick={remove}
                   disabled={removing}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all disabled:opacity-50"
-                  style={{ color: "oklch(58% 0.18 20)", border: "1.5px solid oklch(58% 0.20 20 / 0.35)" }}
+                  style={{ color: "var(--panel-danger)", border: "1.5px solid var(--panel-danger-border)" }}
                 >
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                   {removing ? "Odłączam…" : "Odłącz domenę"}

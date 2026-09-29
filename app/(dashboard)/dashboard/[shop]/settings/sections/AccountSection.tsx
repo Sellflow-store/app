@@ -156,7 +156,7 @@ export default function AccountSection({ shopSlug, accountEmail, userId, initial
               </div>
             </Field>
             {lookupError && (
-              <p className="text-[11px] -mt-2 mb-3" style={{ color: "oklch(50% 0.20 20)" }}>
+              <p className="text-[11px] -mt-2 mb-3" style={{ color: "var(--panel-danger)" }}>
                 {lookupError}
               </p>
             )}

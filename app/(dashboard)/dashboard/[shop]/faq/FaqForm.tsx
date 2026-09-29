@@ -62,8 +62,8 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "var(--panel-success)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
     : "var(--panel-accent)";
 
   return (
@@ -134,7 +134,7 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
                 onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}
                 aria-label={`Usuń pytanie ${i + 1}`}
                 className="p-1.5 rounded-lg transition-colors shrink-0 mt-1"
-                style={{ color: "oklch(50% 0.15 20)" }}
+                style={{ color: "var(--panel-danger-ink)" }}
               >
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>

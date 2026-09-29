@@ -91,7 +91,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
           className="flex items-center gap-1.5 text-xs font-semibold px-3 rounded-[10px] shrink-0 transition-all"
           style={{
             background: copied ? "var(--panel-success)" : "var(--panel-surface-hover)",
-            color: copied ? "#fff" : "var(--panel-ink)",
+            color: copied ? "var(--panel-surface)" : "var(--panel-ink)",
             border: "1.5px solid var(--panel-border)",
           }}
         >
@@ -199,9 +199,9 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
         <div
           className="rounded-xl px-4 py-3 mb-5 text-xs font-medium"
           style={{
-            background: "oklch(50% 0.20 20 / 0.08)",
-            color: "oklch(40% 0.18 20)",
-            border: "1px solid oklch(50% 0.20 20 / 0.25)",
+            background: "var(--panel-danger-soft)",
+            color: "var(--panel-danger-ink)",
+            border: "1px solid var(--panel-danger-border)",
           }}
         >
           {error}
@@ -285,7 +285,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
               onClick={disconnect}
               disabled={busy}
               className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: "var(--panel-surface-hover)", color: "oklch(40% 0.18 20)", border: "1px solid var(--panel-border)" }}
+              style={{ background: "var(--panel-surface-hover)", color: "var(--panel-danger-ink)", border: "1px solid var(--panel-border)" }}
             >
               <Unplug className="w-3.5 h-3.5" />
               Rozłącz
@@ -404,7 +404,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
           <button
             onClick={saveMapping}
             className="mt-4 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90"
-            style={{ background: mapSaved ? "var(--panel-success)" : "var(--panel-accent)", color: "#fff" }}
+            style={{ background: mapSaved ? "var(--panel-success)" : "var(--panel-accent)", color: "var(--panel-surface)" }}
           >
             {mapSaved ? "Zapisano" : "Zapisz mapowanie"}
           </button>

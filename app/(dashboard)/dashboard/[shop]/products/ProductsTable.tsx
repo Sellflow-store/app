@@ -32,7 +32,7 @@ function TypeBadge({ type }: { type?: string }) {
 /** Stan magazynu: kropka + tekst. null = nie śledzony (produkt na zamówienie, cyfrowy). */
 function Stock({ stock }: { stock?: number | null }) {
   if (stock == null) return <span className="text-[var(--panel-ink-faint)]">nie śledzony</span>;
-  const color = stock === 0 ? "oklch(58% 0.19 25)" : stock <= 5 ? "var(--panel-warning)" : "var(--panel-success)";
+  const color = stock === 0 ? "var(--panel-danger)" : stock <= 5 ? "var(--panel-warning)" : "var(--panel-success)";
   return (
     <span className="flex items-center gap-2 text-[var(--panel-ink)]">
       <span aria-hidden className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />

@@ -141,7 +141,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
 
       <div className="px-5 py-4 space-y-4">
         {error && (
-          <p className="text-xs font-medium" style={{ color: "oklch(45% 0.18 20)" }} role="alert">
+          <p className="text-xs font-medium" style={{ color: "var(--panel-danger-ink)" }} role="alert">
             {error}
           </p>
         )}
@@ -218,7 +218,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
                 onClick={remove}
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-all disabled:opacity-50"
-                style={{ color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.35)" }}
+                style={{ color: "var(--panel-danger-ink)", border: "1.5px solid var(--panel-danger-border)" }}
               >
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                 {busy ? "…" : "Odłącz"}
@@ -243,14 +243,14 @@ function StatusBadge({ status }: { status: DomainStatus }) {
   if (status.verified && !status.misconfigured) {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
-        style={{ background: "oklch(60% 0.16 145 / 0.14)", color: "oklch(45% 0.16 145)" }}>
+        style={{ background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }}>
         <Check className="w-3 h-3" strokeWidth={2.5} /> Aktywna
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
-      style={{ background: "oklch(75% 0.15 75 / 0.16)", color: "oklch(48% 0.13 66)" }}>
+      style={{ background: "oklch(75% 0.15 75 / 0.16)", color: "var(--panel-ink)" }}>
       <Clock className="w-3 h-3" strokeWidth={2} /> Oczekuje na DNS
     </span>
   );

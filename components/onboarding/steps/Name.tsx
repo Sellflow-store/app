@@ -124,11 +124,11 @@ export default function Name({ onNext, onBack }: Props) {
                 <Check
                   className="w-3.5 h-3.5 mt-px shrink-0"
                   strokeWidth={2.5}
-                  style={{ color: "oklch(52% 0.2 158)" }}
+                  style={{ color: "var(--panel-success)" }}
                 />
                 <span style={{ color: "var(--brand-ink)" }}>
                   {slugCheck.slug}.sell-flow.store{" "}
-                  <span style={{ color: "oklch(45% 0.16 158)" }}>jest wolny</span>
+                  <span style={{ color: "var(--panel-success-ink)" }}>jest wolny</span>
                 </span>
               </>
             )}
@@ -143,7 +143,7 @@ export default function Name({ onNext, onBack }: Props) {
                   {slugCheck.slug}.sell-flow.store jest zajęty
                   {slugCheck.suggestion && (
                     <>
-                      {" — "}Twój sklep dostanie adres{" "}
+                      {". "}Twój sklep dostanie adres{" "}
                       <strong>{slugCheck.suggestion}.sell-flow.store</strong>.
                     </>
                   )}{" "}
@@ -162,7 +162,7 @@ export default function Name({ onNext, onBack }: Props) {
           className="text-sm font-medium underline-offset-4 hover:underline"
           style={{ color: "var(--brand-navy)" }}
         >
-          Nie mam nazwy — podpowiedz 10
+          Nie mam nazwy, podpowiedz 10
         </button>
       </div>
 

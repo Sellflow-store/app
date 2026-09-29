@@ -173,7 +173,7 @@ function ItemListEditor({
               onClick={() => onChange(items.filter((_, j) => j !== i))}
               aria-label="Usuń pozycję"
               className="p-2 mb-3 rounded-lg transition-colors"
-              style={{ color: "oklch(50% 0.15 20)" }}
+              style={{ color: "var(--panel-danger-ink)" }}
             >
               <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
@@ -272,7 +272,7 @@ function LookbookEditor({
             onClick={() => onChange(items.filter((_, j) => j !== i))}
             aria-label="Usuń kadr"
             className="p-2 h-8 rounded-lg transition-colors"
-            style={{ color: "oklch(50% 0.15 20)" }}
+            style={{ color: "var(--panel-danger-ink)" }}
           >
             <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
@@ -341,8 +341,8 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "var(--panel-success)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
     : "var(--panel-accent)";
 
   return (
@@ -490,7 +490,7 @@ export default function HomeEditor({ shopSlug, initialConfig }: Props) {
                       type="button"
                       onClick={() => patch("hero", { image: "" })}
                       className="text-[11px] font-medium underline-offset-2 hover:underline"
-                      style={{ color: "oklch(45% 0.18 20)" }}
+                      style={{ color: "var(--panel-danger-ink)" }}
                     >
                       Usuń
                     </button>

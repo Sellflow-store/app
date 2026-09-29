@@ -196,8 +196,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved"  ? "var(--panel-success)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
+    saveState === "saved"  ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
     : "var(--panel-accent)";
 
   return (
@@ -302,7 +302,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                   type="button"
                   onClick={() => setLogoUrlLight("")}
                   className="text-[11px] font-medium underline-offset-2 hover:underline"
-                  style={{ color: "oklch(45% 0.18 20)" }}
+                  style={{ color: "var(--panel-danger-ink)" }}
                 >
                   Usuń
                 </button>
@@ -667,7 +667,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 className="text-left rounded-xl px-3 py-2.5 transition-all"
                 style={{
                   border: `1.5px solid ${displayFont === f.id ? "var(--panel-primary)" : "var(--panel-border)"}`,
-                  background: displayFont === f.id ? "var(--panel-surface-hover)" : "#fff",
+                  background: displayFont === f.id ? "var(--panel-surface-hover)" : "var(--panel-surface)",
                 }}
               >
                 <span
@@ -696,7 +696,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 className="text-left rounded-xl px-3 py-2.5 transition-all"
                 style={{
                   border: `1.5px solid ${bodyFont === f.id ? "var(--panel-primary)" : "var(--panel-border)"}`,
-                  background: bodyFont === f.id ? "var(--panel-surface-hover)" : "#fff",
+                  background: bodyFont === f.id ? "var(--panel-surface-hover)" : "var(--panel-surface)",
                 }}
               >
                 <span

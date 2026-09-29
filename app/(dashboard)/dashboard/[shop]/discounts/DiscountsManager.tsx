@@ -208,7 +208,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
           </button>
         </div>
         {error && (
-          <p className="text-xs font-medium mt-3" style={{ color: "oklch(45% 0.18 20)" }} role="alert">
+          <p className="text-xs font-medium mt-3" style={{ color: "var(--panel-danger-ink)" }} role="alert">
             {error}
           </p>
         )}
@@ -272,7 +272,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
                   className="text-xs font-medium w-fit px-2 py-0.5 rounded-full transition-all"
                   style={
                     row.active
-                      ? { background: "oklch(93% 0.08 145)", color: "oklch(30% 0.16 145)" }
+                      ? { background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }
                       : { background: "var(--panel-surface-hover)", color: "var(--panel-ink-muted)" }
                   }
                 >
@@ -282,7 +282,7 @@ export default function DiscountsManager({ shopSlug, initialCodes }: Props) {
                   onClick={() => handleDelete(row)}
                   aria-label={`Usuń kod ${row.code}`}
                   className="p-1.5 rounded-lg justify-self-end transition-colors"
-                  style={{ color: "oklch(50% 0.15 20)" }}
+                  style={{ color: "var(--panel-danger-ink)" }}
                 >
                   <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
                 </button>

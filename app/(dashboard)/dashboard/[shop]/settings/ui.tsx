@@ -263,8 +263,8 @@ export function SaveButton({
     : state === "error" ? "Błąd, spróbuj ponownie"
     : idleLabel;
   const bg =
-    state === "saved" ? "var(--panel-success)"
-    : state === "error" ? "oklch(50% 0.20 20)"
+    state === "saved" ? "var(--panel-success-strong)"
+    : state === "error" ? "var(--panel-danger-strong)"
     : P.accent;
   return (
     <button
