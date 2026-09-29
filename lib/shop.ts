@@ -2,7 +2,7 @@ import { db } from "./db";
 import { shops, shopConfig, products, blogPosts } from "./db/schema";
 import { eq, and } from "drizzle-orm";
 import { getLowestPrices30 } from "./price-history";
-import { tpayEnabled } from "./tpay";
+import { tpayEnabled } from "./tpay-status";
 import {
   DEFAULT_LEGAL_DATA,
   normalizeLegalData,

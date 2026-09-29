@@ -20,7 +20,9 @@ import { openSecret } from "./secret-box";
  *                                 bo nie zmieni stanu transakcji w Tpay.
  */
 
-export const TPAY_PROVIDER = "tpay";
+import { TPAY_PROVIDER } from "./tpay-status";
+
+export { TPAY_PROVIDER, tpayEnabled } from "./tpay-status";
 
 const PROD_API = "https://openapi.tpay.com";
 const SANDBOX_API = "https://openapi.sandbox.tpay.com";
@@ -239,11 +241,4 @@ export async function getTpayCredentials(
     console.error("Tpay: secret nie daje się odszyfrować", shopId, e);
     return null;
   }
-}
-
-/** Czy checkout ma pokazać płatność online — tanie sprawdzenie bez deszyfrowania. */
-export async function tpayEnabled(shopId: string): Promise<boolean> {
-  const row = await loadTpayRow(shopId);
-  const s = (row?.settings ?? {}) as TpaySettings;
-  return Boolean(row?.enabled && s.clientId && s.secretEnc);
 }
