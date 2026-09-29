@@ -28,6 +28,11 @@ const PROD_API = "https://openapi.tpay.com";
 const SANDBOX_API = "https://openapi.sandbox.tpay.com";
 const TIMEOUT_MS = 10_000;
 
+// API Tpay stoi za Cloudflare. Domyślny User-Agent Node'a („node") łapie się
+// na Browser Integrity Check i dostaje 403 ze stroną HTML zamiast JSON-a,
+// zanim żądanie w ogóle dojdzie do Tpay. Przedstawiamy się jawnie.
+const USER_AGENT = "Sellflow/1.0 (+https://sell-flow.store)";
+
 export interface TpayCredentials {
   clientId: string;
   clientSecret: string;
@@ -72,6 +77,18 @@ type TokenBody = {
 };
 
 /** Komunikat Tpay z odpowiedzi odmownej — bez sekretów, bezpieczny do panelu. */
+/**
+ * Strona blokady Cloudflare zamiast odpowiedzi Tpay. Zwraca krótki opis z
+ * kodem błędu CF i Ray ID — to jest to, o co zapyta support Tpay.
+ */
+function cloudflareBlock(res: Response, raw: string): string | null {
+  const isHtml = /^\s*<!doctype html|<html/i.test(raw);
+  if (!isHtml || !(res.headers.get("cf-ray") || /cloudflare/i.test(raw))) return null;
+  const code = raw.match(/Error(?:\s|&nbsp;|<[^>]+>)*(\d{4})/i)?.[1];
+  const ray = res.headers.get("cf-ray") ?? raw.match(/Ray ID:(?:\s|<[^>]+>)*([0-9a-f]{16})/i)?.[1];
+  return `zablokowane przez Cloudflare przed API Tpay${code ? `, błąd ${code}` : ""}${ray ? `, Ray ID ${ray}` : ""}`;
+}
+
 function tpayErrorText(body: TokenBody, raw: string): string {
   return (
     body.error_description ||
@@ -111,7 +128,7 @@ async function fetchToken(c: TpayCredentials): Promise<{ token: string; expiresI
     const res = await fetch(`${apiBase(c.sandbox)}/oauth/auth`, {
       method: "POST",
       ...init,
-      headers: { Accept: "application/json", ...(init.headers ?? {}) },
+      headers: { Accept: "application/json", "User-Agent": USER_AGENT, ...(init.headers ?? {}) },
       cache: "no-store",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -126,7 +143,8 @@ async function fetchToken(c: TpayCredentials): Promise<{ token: string; expiresI
       return { token: body.access_token, expiresIn: body.expires_in ?? 3600 };
     }
     lastStatus = res.status;
-    lastMessage = tpayErrorText(body, raw);
+    const blocked = cloudflareBlock(res, raw);
+    lastMessage = blocked ?? tpayErrorText(body, raw);
     console.error("Tpay oauth odmowa", {
       attempt: label,
       sandbox: c.sandbox,
@@ -170,6 +188,7 @@ async function tpayFetch(c: TpayCredentials, path: string, init?: RequestInit): 
         Authorization: `Bearer ${await accessToken(c)}`,
         "Content-Type": "application/json",
         Accept: "application/json",
+        "User-Agent": USER_AGENT,
         ...(init?.headers ?? {}),
       },
       cache: "no-store",
