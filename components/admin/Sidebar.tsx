@@ -2,71 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home, Package, ShoppingBag, Info, HelpCircle, FileText, ShieldCheck, Settings,
-  BarChart2, X, ChevronRight, Users, Eye, CreditCard, ClipboardList,
-  Truck, Tag, Mail, Palette, Megaphone, Scale, Layers, Store, RotateCcw,
-  MenuIcon, LayoutDashboard, PanelBottom, PackageCheck,
-} from "lucide-react";
-
-const NAV_SECTIONS = [
-  {
-    id: "store-ops",
-    title: "Obsługa sklepu",
-    items: [
-      { slug: "",          label: "Pulpit",      icon: LayoutDashboard },
-      { slug: "orders",    label: "Zamówienia",  icon: ClipboardList },
-      { slug: "customers", label: "Klienci",      icon: Users },
-      { slug: "stats",     label: "Analityka",    icon: BarChart2 },
-    ],
-  },
-  {
-    id: "store-mgmt",
-    title: "Zarządzanie sklepem",
-    items: [
-      { slug: "products",   label: "Produkty",        icon: Package },
-      { slug: "categories", label: "Kategorie",        icon: Layers },
-      { slug: "payments",   label: "Płatności (Tpay, przelew, pobranie)",  icon: CreditCard },
-      { slug: "delivery",   label: "Dostawa",          icon: Truck },
-      { slug: "furgonetka", label: "Furgonetka",       icon: PackageCheck },
-    ],
-  },
-  {
-    id: "marketing",
-    title: "Marketing",
-    items: [
-      { slug: "discounts",   label: "Kody rabatowe", icon: Tag },
-      { slug: "newsletter",  label: "Newsletter",    icon: Mail },
-    ],
-  },
-  {
-    id: "appearance",
-    title: "Wygląd i treści",
-    items: [
-      { slug: "branding", label: "Logo i kolorystyka", icon: Palette },
-      { slug: "home",     label: "Strona główna",       icon: Home },
-      { slug: "about",    label: "O nas",               icon: Info },
-      { slug: "faq",      label: "FAQ",                 icon: HelpCircle },
-      { slug: "blog",     label: "Blog",                icon: FileText },
-      { slug: "menu",     label: "Menu nawigacji",      icon: MenuIcon },
-      { slug: "footer",   label: "Stopka",              icon: PanelBottom },
-    ],
-  },
-  {
-    id: "legal",
-    title: "Prawo",
-    items: [
-      { slug: "legal", label: "Dokumenty prawne", icon: FileText },
-    ],
-  },
-  {
-    id: "settings-group",
-    title: "Ustawienia",
-    items: [
-      { slug: "settings", label: "Ustawienia panelu", icon: Settings },
-    ],
-  },
-];
+import { X, ChevronRight, Eye } from "lucide-react";
+import { NAV_SECTIONS } from "./nav";
 
 interface SidebarProps {
   shopSlug: string;
@@ -100,46 +37,42 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
         />
       )}
 
+      {/* Kierunek A redesignu: granat Sellflow, gęsta lista, aqua jako znacznik
+          aktywnej strony. Kolory wyłącznie z tokenów --panel-sidebar-* (tryb
+          ciemny podmienia je sam), hover w CSS zamiast w JS. */}
       <aside
         className={[
           "fixed top-0 left-0 h-full w-64 z-50 flex flex-col transition-transform duration-300",
+          "bg-[var(--panel-sidebar)] text-[var(--panel-sidebar-ink)]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           "lg:translate-x-0 lg:static lg:h-screen",
         ].join(" ")}
-        style={{ background: "oklch(8% 0 0)", color: "#fff" }}
       >
         {/* Logo */}
-        <div
-          className="flex items-center justify-between px-5 py-4 shrink-0"
-          style={{ borderBottom: "1px solid oklch(18% 0 0)" }}
-        >
+        <div className="flex items-center justify-between px-5 h-14 shrink-0 border-b border-[var(--panel-sidebar-border)]">
           <Link
             href={base}
-            className="text-sm font-bold tracking-tight text-white"
+            className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Sellflow{" "}
-            <span style={{ color: "oklch(62% 0 0)", fontWeight: 300 }}>admin</span>
+            <span aria-hidden className="w-2.5 h-2.5 rounded-[3px] bg-[var(--panel-aqua)]" />
+            Sellflow
+            <span className="font-light text-[var(--panel-sidebar-muted)]">admin</span>
           </Link>
           <button
             onClick={onClose}
-            className="lg:hidden"
-            style={{ color: "oklch(45% 0 0)" }}
+            aria-label="Zamknij menu"
+            className="lg:hidden text-[var(--panel-sidebar-muted)] hover:text-white"
           >
-            <X className="w-4 h-4" strokeWidth={1.5} />
+            <X className="w-4 h-4" strokeWidth={1.75} />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
+        <nav aria-label="Menu panelu" className="flex-1 overflow-y-auto py-4 px-3">
           {NAV_SECTIONS.map((section) => (
             <div key={section.id} className="mb-5">
-              {/* Kontrast na tle oklch(8%): etykiety sekcji 5,7:1, pozycje 11:1,
-                  ikony 6,7:1 (WCAG AA dla małego tekstu to 4,5:1). */}
-              <p
-                className="text-[10.5px] tracking-[0.12em] uppercase font-semibold px-2.5 mb-2"
-                style={{ color: "oklch(62% 0 0)" }}
-              >
+              <p className="text-[11px] font-semibold px-2.5 mb-1.5 text-[var(--panel-sidebar-muted)]">
                 {section.title}
               </p>
 
@@ -150,32 +83,23 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
                     key={slug || "pulpit"}
                     href={slug ? `${base}/${slug}` : base}
                     onClick={onClose}
-                    className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13.5px] leading-snug transition-colors mb-0.5"
-                    style={
+                    aria-current={active ? "page" : undefined}
+                    className={[
+                      "group w-full flex items-center gap-3 px-2.5 py-1.5 min-h-8 rounded-md text-[13.5px] leading-snug transition-colors mb-px",
                       active
-                        ? { background: "#fff", color: "oklch(10% 0 0)", fontWeight: 600 }
-                        : { color: "oklch(80% 0 0)", fontWeight: 450 }
-                    }
-                    onMouseEnter={(e) => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = "oklch(20% 0 0)";
-                        (e.currentTarget as HTMLElement).style.color = "#fff";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = "transparent";
-                        (e.currentTarget as HTMLElement).style.color = "oklch(80% 0 0)";
-                      }
-                    }}
+                        ? "bg-[var(--panel-sidebar-active)] text-white font-semibold"
+                        : "text-[var(--panel-sidebar-ink)] hover:bg-[var(--panel-sidebar-hover)] hover:text-white",
+                    ].join(" ")}
                   >
                     <Icon
-                      className="w-4 h-4 shrink-0"
+                      className={[
+                        "w-4 h-4 shrink-0 transition-colors",
+                        active ? "text-[var(--panel-aqua)]" : "text-[var(--panel-sidebar-muted)] group-hover:text-white",
+                      ].join(" ")}
                       strokeWidth={1.75}
-                      style={active ? undefined : { color: "oklch(66% 0 0)" }}
                     />
                     <span className="flex-1">{label}</span>
-                    {active && <ChevronRight className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />}
+                    {active && <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-70" strokeWidth={2.25} />}
                   </Link>
                 );
               })}
@@ -184,20 +108,14 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
         </nav>
 
         {/* Preview link */}
-        <div
-          className="px-4 py-3.5 shrink-0"
-          style={{ borderTop: "1px solid oklch(18% 0 0)" }}
-        >
+        <div className="px-3 py-3 shrink-0 border-t border-[var(--panel-sidebar-border)]">
           <Link
             href={previewUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2.5 text-[13px] transition-colors"
-            style={{ color: "oklch(68% 0 0)" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "oklch(68% 0 0)")}
+            className="flex items-center gap-3 px-2.5 h-8 rounded-md text-[13px] transition-colors text-[var(--panel-sidebar-ink)] hover:bg-[var(--panel-sidebar-hover)] hover:text-white"
           >
-            <Eye className="w-4 h-4" strokeWidth={1.75} />
+            <Eye className="w-4 h-4 text-[var(--panel-sidebar-muted)]" strokeWidth={1.75} />
             Podgląd sklepu
           </Link>
         </div>
