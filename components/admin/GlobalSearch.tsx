@@ -14,7 +14,7 @@ const PAGES: { label: string; slug: string }[] = [
   { label: "Analityka", slug: "stats" },
   { label: "Produkty", slug: "products" },
   { label: "Kategorie", slug: "categories" },
-  { label: "Płatności i VAT", slug: "payments" },
+  { label: "Płatności (Tpay, przelew, pobranie)", slug: "payments" },
   { label: "Dostawa", slug: "delivery" },
   { label: "Kody rabatowe", slug: "discounts" },
   { label: "Newsletter", slug: "newsletter" },

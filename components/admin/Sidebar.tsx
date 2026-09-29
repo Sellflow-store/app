@@ -26,7 +26,7 @@ const NAV_SECTIONS = [
     items: [
       { slug: "products",   label: "Produkty",        icon: Package },
       { slug: "categories", label: "Kategorie",        icon: Layers },
-      { slug: "payments",   label: "Płatności i VAT",  icon: CreditCard },
+      { slug: "payments",   label: "Płatności (Tpay, przelew, pobranie)",  icon: CreditCard },
       { slug: "delivery",   label: "Dostawa",          icon: Truck },
       { slug: "furgonetka", label: "Furgonetka",       icon: PackageCheck },
     ],
