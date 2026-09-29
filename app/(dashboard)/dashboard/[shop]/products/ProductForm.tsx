@@ -89,25 +89,22 @@ const TYPE_OPTIONS: { value: ProductType; label: string; hint: string; icon: typ
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div
-      className="rounded-2xl p-5 mb-5"
-      style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
-    >
+    <section className="rounded-xl mb-5 border border-[var(--panel-border)] bg-[var(--panel-surface)]">
       <h2
-        className="text-sm font-semibold mb-4"
-        style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+        className="px-5 h-12 flex items-center text-[15px] font-semibold border-b border-[var(--panel-border)] text-[var(--panel-ink)]"
+        style={{ fontFamily: "var(--font-display)" }}
       >
         {title}
       </h2>
-      {children}
-    </div>
+      <div className="p-5">{children}</div>
+    </section>
   );
 }
 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
-    <div className="mb-4">
-      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+    <div className="mb-4 last:mb-0">
+      <label htmlFor={id} className="block text-[12.5px] font-medium mb-1.5 text-[var(--panel-ink-muted)]">
         {label}
       </label>
       {children}
@@ -116,12 +113,12 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -129,9 +126,9 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 /** "129,99" / "129.99 zł" → "129.99"; returns null when unparseable */
@@ -347,46 +344,42 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
     : saveState === "saved" ? "Zapisano!"
-    : saveState === "error" ? "Błąd — spróbuj ponownie"
+    : saveState === "error" ? "Błąd, spróbuj ponownie"
     : isEdit ? "Zapisz zmiany" : "Dodaj produkt";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
+    saveState === "saved" ? "var(--panel-success)"
     : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    : "var(--panel-accent)";
 
   return (
-    <div className="p-6 lg:p-8 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Link
-            href={listUrl}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "oklch(45% 0 0)", border: "1px solid oklch(88% 0 0)" }}
-          >
-            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          </Link>
-          <div>
-            <h1
-              className="text-xl font-bold"
-              style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
-            >
-              {isEdit ? "Edytuj produkt" : "Nowy produkt"}
-            </h1>
-            <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
-              {isEdit ? form.name : "Uzupełnij dane i zapisz"}
-            </p>
-          </div>
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-3xl mx-auto">
+      <Link
+        href={listUrl}
+        className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-3 text-[var(--panel-ink-muted)] hover:text-[var(--panel-ink)] transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
+        Produkty
+      </Link>
+
+      {/* Header — przyklejony przy przewijaniu, żeby „Zapisz” był zawsze pod ręką */}
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-5 flex items-center justify-between gap-4 bg-[var(--panel-bg)] border-b border-[var(--panel-border)]">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold truncate text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
+            {isEdit ? form.name || "Edytuj produkt" : "Nowy produkt"}
+          </h1>
+          <p className="text-[13px] mt-0.5 text-[var(--panel-ink-muted)]">
+            {isEdit ? "Edycja produktu" : "Uzupełnij dane i zapisz"}
+          </p>
         </div>
 
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold shrink-0 transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
-          <Save className="w-3.5 h-3.5" strokeWidth={2} />
+          <Save className="w-4 h-4" strokeWidth={2} />
           {buttonLabel}
         </button>
       </div>
@@ -413,19 +406,19 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
                 onClick={() => patch({ type: opt.value })}
                 className="flex flex-col items-start gap-1.5 rounded-xl p-3.5 text-left transition-all"
                 style={{
-                  border: active ? "1.5px solid oklch(56% 0.30 335)" : "1.5px solid oklch(90% 0 0)",
-                  background: active ? "oklch(56% 0.30 335 / 0.06)" : "#fff",
+                  border: active ? "1.5px solid var(--panel-primary)" : "1.5px solid var(--panel-border)",
+                  background: active ? "var(--panel-primary-soft)" : "var(--panel-surface)",
                 }}
               >
                 <Icon
                   className="w-5 h-5"
-                  style={{ color: active ? "oklch(56% 0.30 335)" : "oklch(45% 0 0)" }}
+                  style={{ color: active ? "var(--panel-primary)" : "var(--panel-ink-muted)" }}
                   strokeWidth={1.75}
                 />
-                <span className="text-sm font-semibold" style={{ color: active ? "oklch(30% 0.20 335)" : "oklch(20% 0 0)" }}>
+                <span className="text-sm font-semibold" style={{ color: active ? "var(--panel-primary)" : "var(--panel-ink)" }}>
                   {opt.label}
                 </span>
-                <span className="text-[11px] leading-tight" style={{ color: "oklch(55% 0 0)" }}>
+                <span className="text-[11px] leading-tight" style={{ color: "var(--panel-ink-muted)" }}>
                   {opt.hint}
                 </span>
               </button>
@@ -477,7 +470,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             style={inputStyle}
             {...focusProps}
           />
-          <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
             {isEdit
               ? "Zmieniaj tylko świadomie — stary adres przestanie być tym właściwym, a linki i pozycja w Google prowadzą pod niego. Zmiana nazwy produktu adresu nie rusza."
               : "Zostaw puste, a adres powstanie z nazwy produktu."}
@@ -493,7 +486,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             style={inputStyle}
             {...focusProps}
           />
-          <p className="text-[11px] mt-1.5" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px] mt-1.5" style={{ color: "var(--panel-ink-faint)" }}>
             Zostaw puste, jeśli produkt nie ma rozmiarów. Gdy są — klient musi wybrać
             rozmiar, zanim doda produkt do koszyka.
           </p>
@@ -523,7 +516,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         <label className="flex items-center gap-2.5 cursor-pointer w-fit mb-1">
           <div
             className="relative w-9 h-5 rounded-full transition-all shrink-0"
-            style={{ background: form.priceOnRequest ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+            style={{ background: form.priceOnRequest ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
             onClick={() => patch({ priceOnRequest: !form.priceOnRequest })}
           >
             <div
@@ -531,11 +524,11 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
               style={{ left: form.priceOnRequest ? "1.125rem" : "0.125rem" }}
             />
           </div>
-          <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>
+          <span className="text-xs font-medium" style={{ color: "var(--panel-ink)" }}>
             Produkt na zamówienie (bez ceny)
           </span>
         </label>
-        <p className="text-[11px] mb-1" style={{ color: "oklch(60% 0 0)" }}>
+        <p className="text-[11px] mb-1" style={{ color: "var(--panel-ink-faint)" }}>
           Zamiast ceny klient zobaczy &bdquo;Produkt na zamówienie&rdquo; i przycisk, który
           otwiera wiadomość do Ciebie. Takiego produktu nie da się dodać do koszyka.
         </p>
@@ -567,7 +560,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         </div>
         )}
         {!form.priceOnRequest && (
-          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
             Po podaniu ceny przed obniżką klient zobaczy ją przekreśloną obok aktualnej.
           </p>
         )}
@@ -591,9 +584,9 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
                     onClick={() => patch({ digitalKind: k.v })}
                     className="rounded-lg py-2 text-xs font-semibold transition-all"
                     style={{
-                      border: active ? "1.5px solid oklch(56% 0.30 335)" : "1.5px solid oklch(88% 0 0)",
-                      background: active ? "oklch(56% 0.30 335 / 0.06)" : "#fff",
-                      color: active ? "oklch(30% 0.20 335)" : "oklch(35% 0 0)",
+                      border: active ? "1.5px solid var(--panel-primary)" : "1.5px solid var(--panel-border)",
+                      background: active ? "var(--panel-primary-soft)" : "var(--panel-surface)",
+                      color: active ? "var(--panel-primary)" : "var(--panel-ink)",
                     }}
                   >
                     {k.l}
@@ -652,7 +645,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
               {...focusProps}
             />
           </Field>
-          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
             Produkt cyfrowy nie wymaga wysyłki ani adresu — klient otrzyma dostęp e-mailem.
           </p>
         </SectionCard>
@@ -696,7 +689,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
               {...focusProps}
             />
           </Field>
-          <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
             Usługa nie wymaga wysyłki ani adresu — po zamówieniu skontaktujesz się z klientem
             w sprawie realizacji.
           </p>
@@ -727,7 +720,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
                   onClick={() => removeSpec(i)}
                   aria-label="Usuń parametr"
                   className="shrink-0 p-2 rounded-lg transition-colors"
-                  style={{ color: "oklch(45% 0 0)", border: "1.5px solid oklch(88% 0 0)" }}
+                  style={{ color: "var(--panel-ink-muted)", border: "1.5px solid var(--panel-border)" }}
                 >
                   <X className="w-4 h-4" strokeWidth={2} />
                 </button>
@@ -736,7 +729,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           </div>
         )}
         {form.specs.length === 0 && (
-          <p className="text-[11px] mb-3" style={{ color: "oklch(60% 0 0)" }}>
+          <p className="text-[11px] mb-3" style={{ color: "var(--panel-ink-faint)" }}>
             Dodaj dowolne parametry (np. Materiał, Waga, Pojemność) — pokażą się jako
             tabela „Specyfikacja" na stronie produktu.
           </p>
@@ -744,7 +737,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         <button
           onClick={addSpec}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-          style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+          style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
         >
           <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
           Dodaj parametr
@@ -761,12 +754,12 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
                   src={url}
                   alt={`Zdjęcie ${i + 1}`}
                   className="w-20 h-20 rounded-xl object-cover"
-                  style={{ border: "1px solid oklch(88% 0 0)" }}
+                  style={{ border: "1px solid var(--panel-border)" }}
                 />
                 {i === 0 && (
                   <span
                     className="absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+                    style={{ background: "var(--panel-accent)", color: "#fff" }}
                   >
                     Główne
                   </span>
@@ -775,7 +768,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
                   onClick={() => removeImage(i)}
                   aria-label="Usuń zdjęcie"
                   className="absolute -top-1.5 -right-1.5 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: "oklch(25% 0 0)", color: "#fff" }}
+                  style={{ background: "var(--panel-ink)", color: "var(--panel-surface)" }}
                 >
                   <X className="w-3 h-3" strokeWidth={2} />
                 </button>
@@ -787,10 +780,10 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         {form.images.length === 0 && (
           <div
             className="flex flex-col items-center justify-center py-8 rounded-xl mb-4 gap-2"
-            style={{ border: "1.5px dashed oklch(85% 0 0)", background: "oklch(98% 0 0)" }}
+            style={{ border: "1.5px dashed var(--panel-border-strong)", background: "var(--panel-surface-2)" }}
           >
-            <ImageIcon className="w-8 h-8" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-xs" style={{ color: "oklch(55% 0 0)" }}>
+            <ImageIcon className="w-8 h-8" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
+            <p className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
               Brak zdjęć — pierwsze dodane będzie zdjęciem głównym
             </p>
           </div>
@@ -824,7 +817,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
           <button
             onClick={addImage}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all shrink-0"
-            style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+            style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
             Dodaj
@@ -846,7 +839,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             {...focusProps}
           />
         </Field>
-        <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+        <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
           Zostaw puste, jeśli nie chcesz śledzić stanu — produkt będzie zawsze dostępny.
           Przy <strong>0</strong> klient zobaczy „Wyprzedane" i nie doda produktu do koszyka.
           Stan zmniejsza się automatycznie po każdym zamówieniu.
@@ -903,7 +896,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
             />
           </Field>
         </div>
-        <p className="text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
+        <p className="text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
           Potrzebne, żeby policzyć koszt wysyłki i wygenerować etykietę kurierską.
           Możesz zostawić puste i uzupełnić później — bez tego trzeba będzie nadawać paczki ręcznie.
         </p>
@@ -915,7 +908,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         <label className="flex items-center gap-2.5 cursor-pointer w-fit">
           <div
             className="relative w-9 h-5 rounded-full transition-all"
-            style={{ background: form.visible ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+            style={{ background: form.visible ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
             onClick={() => patch({ visible: !form.visible })}
           >
             <div
@@ -923,7 +916,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
               style={{ left: form.visible ? "1.125rem" : "0.125rem" }}
             />
           </div>
-          <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>
+          <span className="text-xs font-medium" style={{ color: "var(--panel-ink)" }}>
             {form.visible ? "Produkt widoczny w sklepie" : "Produkt ukryty"}
           </span>
         </label>
@@ -931,7 +924,7 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
 
       {/* Danger zone */}
       {isEdit && (
-        <div className="mt-8 pt-5" style={{ borderTop: "1px solid oklch(92% 0 0)" }}>
+        <div className="mt-8 pt-5" style={{ borderTop: "1px solid var(--panel-border)" }}>
           <button
             onClick={handleDelete}
             disabled={deleting}
