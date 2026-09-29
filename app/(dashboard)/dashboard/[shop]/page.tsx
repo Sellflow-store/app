@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { shops, shopConfig, products, orders } from "@/lib/db/schema";
 import { and, count, desc, eq, gte, inArray, ne, sum } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { tpayEnabled } from "@/lib/tpay-status";
 import type {
   BrandingConfig, CheckoutConfig, LegalConfig, AboutConfig, AccountConfig, LegalDataConfig,
 } from "@/types/shop";
@@ -31,7 +32,7 @@ export default async function DashboardHome({
   const d30 = new Date(Date.now() - 30 * 24 * 3600 * 1000);
   const notCancelled = ne(orders.status, "cancelled");
 
-  const [shop, configRows, [{ products: productCount }], agg30, recent, [{ toShip }], [{ unpaid }]] =
+  const [shop, configRows, [{ products: productCount }], agg30, recent, [{ toShip }], [{ unpaid }], onlinePayments] =
     await Promise.all([
       db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
       db.select().from(shopConfig).where(eq(shopConfig.shopId, access.shopId)),
@@ -62,6 +63,7 @@ export default async function DashboardHome({
         .select({ unpaid: count() })
         .from(orders)
         .where(and(eq(orders.shopId, access.shopId), eq(orders.paymentStatus, "unpaid"), notCancelled)),
+      tpayEnabled(access.shopId),
     ]);
 
   const configMap = Object.fromEntries(configRows.map((c) => [c.key, c.value]));
@@ -99,7 +101,9 @@ export default async function DashboardHome({
     {
       label: "Skonfiguruj płatności",
       href: `${base}/payments`,
-      done: !!checkout && ((checkout.transferEnabled ? !!checkout.bankAccount : false) || !!checkout.codEnabled),
+      done:
+        onlinePayments ||
+        (!!checkout && ((checkout.transferEnabled ? !!checkout.bankAccount : false) || !!checkout.codEnabled)),
     },
     {
       label: "Uzupełnij dane do dokumentów",

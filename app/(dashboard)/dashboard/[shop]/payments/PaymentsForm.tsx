@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Save, Landmark, HandCoins } from "lucide-react";
 import type { CheckoutConfig } from "@/types/shop";
 import { isValidNrb, formatNrb, normalizeNrb } from "@/lib/nrb";
+import TpayCard, { type TpayState } from "./TpayCard";
 
 const inputStyle = {
   border: "1.5px solid oklch(88% 0 0)",
@@ -64,11 +65,13 @@ function normalizePrice(raw: string): string | null {
 interface Props {
   shopSlug: string;
   initialConfig: CheckoutConfig;
+  initialTpay: TpayState;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export default function PaymentsForm({ shopSlug, initialConfig }: Props) {
+export default function PaymentsForm({ shopSlug, initialConfig, initialTpay }: Props) {
+  const [onlineActive, setOnlineActive] = useState(initialTpay.connected && initialTpay.enabled);
   const [transferEnabled, setTransferEnabled] = useState(initialConfig.transferEnabled);
   const [bankAccount, setBankAccount] = useState(initialConfig.bankAccount);
   const [accountOwner, setAccountOwner] = useState(initialConfig.accountOwner);
@@ -78,7 +81,7 @@ export default function PaymentsForm({ shopSlug, initialConfig }: Props) {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   async function handleSave() {
-    if (!transferEnabled && !codEnabled) {
+    if (!transferEnabled && !codEnabled && !onlineActive) {
       setValidationError("Włącz przynajmniej jedną metodę płatności — inaczej klienci nie złożą zamówienia.");
       return;
     }
@@ -170,6 +173,9 @@ export default function PaymentsForm({ shopSlug, initialConfig }: Props) {
           {validationError}
         </div>
       )}
+
+      {/* Online (Tpay) — zapisuje się osobno, własnym przyciskiem */}
+      <TpayCard shopSlug={shopSlug} initial={initialTpay} onEnabledChange={setOnlineActive} />
 
       {/* Bank transfer */}
       <div

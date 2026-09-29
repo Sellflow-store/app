@@ -64,6 +64,8 @@ export interface LegalVars {
   clauses: string[];
   /** Etykiety realnie włączonych metod płatności (z sekcji „Płatności"). */
   payments: string[];
+  /** Płatności online przez Tpay — regulamin musi wtedy wskazać operatora. */
+  onlinePayments: boolean;
   /** Etykiety realnie włączonych metod dostawy (z sekcji „Dostawa"). */
   shipping: string[];
   /** Czy wśród metod dostawy jest odbiór osobisty. */
@@ -79,6 +81,8 @@ export interface LegalSources {
   delivery: DeliveryConfig;
   shopName: string;
   shopUrl: string;
+  /** Włączona integracja Tpay (płatności online). */
+  onlinePayments?: boolean;
 }
 
 /** Pierwsza niepusta wartość z łańcucha — razem z informacją, skąd pochodzi. */
@@ -139,6 +143,7 @@ export function missingLegalFields(fields: Record<string, ResolvedField>): strin
 export function resolveLegalVars(s: LegalSources): LegalVars {
   const f = resolveLegalFields(s);
   const payments: string[] = [];
+  if (s.onlinePayments) payments.push("płatność online (karta płatnicza, BLIK, szybki przelew) za pośrednictwem Tpay");
   if (s.checkout.transferEnabled) payments.push("przelew bankowy (tradycyjny)");
   if (s.checkout.codEnabled) payments.push("płatność przy odbiorze (za pobraniem)");
 
@@ -161,6 +166,7 @@ export function resolveLegalVars(s: LegalSources): LegalVars {
     personalizedProducts: s.legal.personalizedProducts,
     clauses: s.legal.clauses,
     payments,
+    onlinePayments: Boolean(s.onlinePayments),
     shipping: enabled.map((m) => m.label),
     hasPickup: enabled.some((m) => m.kind === "pickup"),
   };

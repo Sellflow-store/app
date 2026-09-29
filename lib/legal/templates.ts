@@ -139,6 +139,11 @@ export function buildTerms(v: LegalVars): string {
       : "Dostępne metody płatności prezentowane są Klientowi w koszyku przed złożeniem zamówienia.",
     "W przypadku płatności przelewem zamówienie jest realizowane po zaksięgowaniu wpłaty na rachunku Sprzedawcy.",
   ];
+  if (v.onlinePayments) {
+    paymentItems.push(
+      "Rozliczenia transakcji płatnościami online (kartą płatniczą, BLIK, szybkim przelewem) przeprowadzane są za pośrednictwem serwisu Tpay.com, prowadzonego przez Krajowy Integrator Płatności S.A. z siedzibą w Poznaniu. Zamówienie opłacone online jest realizowane po otrzymaniu przez Sprzedawcę potwierdzenia płatności od operatora."
+    );
+  }
   if (v.clauses.includes("subskrypcje")) {
     paymentItems.push(
       "W przypadku płatności cyklicznych (subskrypcji) Klient jest informowany o zasadach i częstotliwości pobierania opłat przed zawarciem umowy."
