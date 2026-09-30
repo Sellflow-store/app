@@ -6,6 +6,7 @@ import { eq, count } from "drizzle-orm";
 import { ArrowLeft, ExternalLink, LogIn } from "lucide-react";
 import ShopActions from "./ShopActions";
 import DomainActions from "./DomainActions";
+import ShopHealth from "./ShopHealth";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -127,6 +128,15 @@ export default async function ShopDetailPage({ params }: PageProps) {
           tone={shop.deletedAt || shop.suspended || !shop.active ? "muted" : "success"}
         />
       </section>
+
+      {/* ── Shop health: setup, integrations, catalog, orders ──── */}
+      <ShopHealth
+        shopId={shop.id}
+        shopName={shop.name}
+        customDomain={shop.customDomain}
+        customDomainVerified={shop.customDomainVerified}
+        ordersBaseUrl={shop.deletedAt ? null : `${appUrl}/dashboard/${shop.slug}/orders`}
+      />
 
       {/* ── Operator actions ─────────────────────────────────────── */}
       <ShopActions

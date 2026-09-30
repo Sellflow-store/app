@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Store } from "lucide-react";
+import { Activity, LayoutGrid, Store } from "lucide-react";
 
 const ITEMS = [
   { href: "/ops", label: "Przegląd", icon: LayoutGrid, exact: true },
   { href: "/ops/shops", label: "Sklepy", icon: Store, exact: false },
+  { href: "/ops/system", label: "Stan systemu", icon: Activity, exact: false },
 ];
 
 /** Menu ops w tym samym stylu co menu panelu sklepu (granat, aqua na aktywnej). */
