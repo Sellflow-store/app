@@ -1085,19 +1085,31 @@ function AgentDataCard({
         </div>
       </div>
 
-      {aiEnabled && (
+      {/* Asystent AI: bez klucza API na platformie przycisk jest widoczny,
+          ale wyszarzony z oznaczeniem „wkrótce”, żeby sprzedawca wiedział,
+          że ta pomoc nadchodzi. */}
+      {(
         <div className="mb-5">
           <button
             type="button"
-            onClick={ask}
-            disabled={asking || !form.name.trim()}
-            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold border border-[var(--panel-border-strong)] text-[var(--panel-ink)] hover:bg-[var(--panel-surface-hover)] disabled:opacity-50 transition-colors"
+            onClick={aiEnabled ? ask : undefined}
+            disabled={!aiEnabled || asking || !form.name.trim()}
+            aria-disabled={!aiEnabled}
+            title={aiEnabled ? undefined : "Asystent AI będzie dostępny wkrótce"}
+            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold border border-[var(--panel-border-strong)] text-[var(--panel-ink)] hover:bg-[var(--panel-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
           >
             <Sparkles className="w-4 h-4 text-[var(--panel-primary)]" strokeWidth={1.75} />
             {asking ? "Analizuję opis i zdjęcie…" : "Zaproponuj z AI"}
+            {!aiEnabled && (
+              <span className="ml-1 text-[10.5px] font-semibold uppercase tracking-[0.06em] px-1.5 py-px rounded-md bg-[var(--panel-surface-2)] text-[var(--panel-ink-muted)] border border-[var(--panel-border)]">
+                wkrótce
+              </span>
+            )}
           </button>
           <p className="text-[11px] mt-1.5 text-[var(--panel-ink-faint)]">
-            AI czyta nazwę, opis i pierwsze zdjęcie. Nic nie zmieni się bez Twojego kliknięcia.
+            {aiEnabled
+              ? "AI czyta nazwę, opis i pierwsze zdjęcie. Nic nie zmieni się bez Twojego kliknięcia."
+              : "Wkrótce AI zaproponuje materiał, kategorię i krótki opis na podstawie opisu i zdjęcia."}
           </p>
           {askError && <p className="text-[12px] mt-2 text-[var(--panel-danger-ink)]">{askError}</p>}
           {suggestion && rows.length === 0 && (
