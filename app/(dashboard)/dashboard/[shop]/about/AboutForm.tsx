@@ -5,12 +5,12 @@ import { Save } from "lucide-react";
 import type { AboutConfig } from "@/types/shop";
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -18,25 +18,25 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 function SectionCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div
       className="rounded-2xl p-5 mb-5"
-      style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+      style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
     >
       <h2
         className="text-sm font-semibold mb-1"
-        style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+        style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
       >
         {title}
       </h2>
       {hint && (
-        <p className="text-xs mb-4" style={{ color: "oklch(50% 0 0)" }}>{hint}</p>
+        <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>{hint}</p>
       )}
       {!hint && <div className="mb-4" />}
       {children}
@@ -47,7 +47,7 @@ function SectionCard({ title, hint, children }: { title: string; hint?: string; 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
         {label}
       </label>
       {children}
@@ -87,33 +87,33 @@ export default function AboutForm({ shopSlug, initialConfig }: Props) {
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved" ? "Zapisano!"
-    : saveState === "error" ? "Błąd — spróbuj ponownie"
+    : saveState === "saved" ? "Zapisano"
+    : saveState === "error" ? "Błąd, spróbuj ponownie"
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            className="text-xl font-semibold"
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             O nas
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Historia Twojej marki i dane kontaktowe dla klientów
           </p>
         </div>
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />

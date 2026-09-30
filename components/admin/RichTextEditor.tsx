@@ -49,8 +49,8 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
 
   const btn =
     "flex items-center justify-center w-8 h-8 rounded-md transition-colors hover:bg-[oklch(94%_0_0)]";
-  const iconStyle = { color: "oklch(35% 0 0)" } as const;
-  const divider = <span className="w-px h-5 mx-1" style={{ background: "oklch(90% 0 0)" }} />;
+  const iconStyle = { color: "var(--panel-ink)" } as const;
+  const divider = <span className="w-px h-5 mx-1" style={{ background: "var(--panel-border)" }} />;
 
   // Keep the selection when a toolbar button is pressed.
   const hold = (fn: () => void) => (e: React.MouseEvent) => {
@@ -61,11 +61,11 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
   return (
     <div
       className="rounded-[10px] overflow-hidden"
-      style={{ border: "1.5px solid oklch(88% 0 0)", background: "#fff" }}
+      style={{ border: "1.5px solid var(--panel-border)", background: "var(--panel-surface)" }}
     >
       <div
         className="flex items-center gap-0.5 px-2 py-1.5"
-        style={{ borderBottom: "1px solid oklch(92% 0 0)", background: "oklch(98.5% 0 0)" }}
+        style={{ borderBottom: "1px solid var(--panel-border)", background: "var(--panel-surface-2)" }}
       >
         <button type="button" className={btn} onMouseDown={hold(() => exec("bold"))} aria-label="Pogrubienie" title="Pogrubienie">
           <Bold className="w-4 h-4" style={iconStyle} strokeWidth={2.25} />
@@ -100,13 +100,13 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         onInput={sync}
         data-placeholder={placeholder ?? "Materiały, wymiary, pielęgnacja…"}
         className="rte-content px-3 py-2.5 text-[13px] leading-relaxed outline-none min-h-[160px]"
-        style={{ color: "oklch(11% 0.10 275)", fontFamily: "var(--font-body)" }}
+        style={{ color: "var(--panel-ink)", fontFamily: "var(--font-body)" }}
       />
 
       <style jsx global>{`
         .rte-content:empty:before {
           content: attr(data-placeholder);
-          color: oklch(65% 0 0);
+          color: var(--panel-ink-faint);
           pointer-events: none;
         }
         .rte-content ul { list-style: disc; padding-left: 1.25rem; margin: 0.25rem 0; }

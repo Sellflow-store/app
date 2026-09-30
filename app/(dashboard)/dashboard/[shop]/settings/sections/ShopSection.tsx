@@ -71,7 +71,7 @@ export default function ShopSection({ shopSlug, initialName, initialActive }: Pr
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium"
-              style={{ color: active ? "oklch(60% 0.16 145)" : "oklch(60% 0.15 20)" }}>
+              style={{ color: active ? "var(--panel-success)" : "var(--panel-danger)" }}>
               {active ? "Sklep jest włączony" : "Sklep jest wyłączony"}
             </p>
             <p className="text-[11px] mt-1" style={{ color: P.faint }}>
@@ -86,8 +86,8 @@ export default function ShopSection({ shopSlug, initialName, initialActive }: Pr
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all disabled:opacity-50 shrink-0"
             style={
               active
-                ? { color: "oklch(60% 0.18 20)", border: "1.5px solid oklch(60% 0.20 20 / 0.35)" }
-                : { background: "oklch(52% 0.20 158)", color: "#fff" }
+                ? { color: "var(--panel-danger)", border: "1.5px solid var(--panel-danger-border)" }
+                : { background: "var(--panel-success)", color: "var(--panel-surface)" }
             }
           >
             <Power className="w-3.5 h-3.5" strokeWidth={1.5} />

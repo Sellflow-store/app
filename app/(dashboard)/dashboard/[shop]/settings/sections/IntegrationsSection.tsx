@@ -46,7 +46,7 @@ export default function IntegrationsSection({
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
-        <SectionTitle title="Integracje" desc="Podłącz narzędzia analityczne i marketingowe. Wystarczy wkleić identyfikatory — kod dodajemy do sklepu automatycznie." />
+        <SectionTitle title="Integracje" desc="Podłącz narzędzia analityczne i marketingowe. Wystarczy wkleić identyfikatory, kod dodamy do sklepu automatycznie." />
         <SaveButton state={state} onClick={save} />
       </div>
 

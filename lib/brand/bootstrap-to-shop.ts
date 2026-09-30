@@ -133,6 +133,7 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
     integrations: DEFAULT_INTEGRATIONS,
     compliance: DEFAULT_COMPLIANCE,
     legal: DEFAULT_LEGAL_DATA,
+    onlinePaymentsEnabled: false,
     products,
   };
 }

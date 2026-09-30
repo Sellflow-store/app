@@ -25,7 +25,7 @@ export default function DashboardError({
         style={{ background: P.surface, border: `1px solid ${P.border}` }}
       >
         <h1
-          className="text-xl font-bold"
+          className="text-xl font-semibold"
           style={{ fontFamily: "var(--font-display)", color: P.ink }}
         >
           Nie udało się wczytać danych

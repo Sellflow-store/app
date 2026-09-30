@@ -31,7 +31,7 @@ export default function Welcome({ firstName, onContinue }: Props) {
         style={{ color: "var(--brand-ink-2)", lineHeight: 1.55 }}
       >
         Kilka pytań o to, co sprzedajesz i jak chcesz, żeby Twój sklep wyglądał. Resztą
-        zajmiemy się my — zobaczysz go zanim klikniesz Publikuj.
+        zajmiemy się my. Zobaczysz go, zanim klikniesz Publikuj.
       </p>
       <button
         type="button"

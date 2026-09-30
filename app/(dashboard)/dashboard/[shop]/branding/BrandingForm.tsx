@@ -54,11 +54,11 @@ function SectionCard({ title, children }: { title: string; children: React.React
   return (
     <div
       className="rounded-2xl p-5 mb-5"
-      style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+      style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
     >
       <h2
         className="text-sm font-semibold mb-4"
-        style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+        style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
       >
         {title}
       </h2>
@@ -70,7 +70,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
         {label}
       </label>
       {children}
@@ -91,10 +91,10 @@ function Slider({
   return (
     <div className="mb-3">
       <div className="flex items-center justify-between mb-1.5">
-        <label htmlFor={id} className="text-xs font-semibold" style={{ color: "oklch(30% 0 0)" }}>
+        <label htmlFor={id} className="text-xs font-semibold" style={{ color: "var(--panel-ink)" }}>
           {label}
         </label>
-        <span className="text-xs tabular-nums" style={{ color: "oklch(50% 0 0)" }}>
+        <span className="text-xs tabular-nums" style={{ color: "var(--panel-ink-muted)" }}>
           {value} px
         </span>
       </div>
@@ -106,19 +106,19 @@ function Slider({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full"
-        style={{ accentColor: "oklch(56% 0.30 335)" }}
+        style={{ accentColor: "var(--panel-accent)" }}
       />
     </div>
   );
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -191,14 +191,14 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved"  ? "Zapisano!"
-    : saveState === "error"  ? "Błąd — spróbuj ponownie"
+    : saveState === "saved"  ? "Zapisano"
+    : saveState === "error"  ? "Błąd, spróbuj ponownie"
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved"  ? "oklch(52% 0.20 158)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    saveState === "saved"  ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
@@ -208,12 +208,12 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            className="text-xl font-semibold"
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Logo i kolorystyka
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Wygląd Twojego sklepu i identyfikacja marki
           </p>
         </div>
@@ -221,7 +221,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />
@@ -235,7 +235,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           <div className="relative shrink-0">
             <div
               className="w-20 h-20 rounded-xl flex items-center justify-center"
-              style={{ background: "oklch(95% 0.008 260)", border: "1.5px dashed oklch(80% 0 0)" }}
+              style={{ background: "var(--panel-surface-hover)", border: "1.5px dashed var(--panel-border-strong)" }}
             >
               {logoUrl ? (
                 <img src={logoUrl} alt="logo" className="w-full h-full object-contain rounded-xl" />
@@ -253,7 +253,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onClick={() => setLogoUrl("")}
                 aria-label="Usuń logo"
                 className="absolute -top-1.5 -right-1.5 p-1 rounded-full"
-                style={{ background: "oklch(25% 0 0)", color: "#fff" }}
+                style={{ background: "var(--panel-ink)", color: "var(--panel-surface)" }}
               >
                 <X className="w-3 h-3" strokeWidth={2} />
               </button>
@@ -261,7 +261,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           </div>
 
           <div className="flex-1">
-            <p className="text-xs mb-2" style={{ color: "oklch(45% 0 0)" }}>
+            <p className="text-xs mb-2" style={{ color: "var(--panel-ink-muted)" }}>
               PNG lub SVG, min. 200×200 px. Zalecane tło transparentne. Pamiętaj o
               kliknięciu „Zapisz zmiany” po wgraniu.
             </p>
@@ -274,20 +274,20 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         </div>
 
         {logoUrl && (
-          <div className="mt-5 pt-5" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
-            <p className="text-xs mb-2" style={{ color: "oklch(45% 0 0)" }}>
-              Jasna wersja logo — pokazuje się, gdy menu leży na ciemnym zdjęciu
+          <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--panel-border)" }}>
+            <p className="text-xs mb-2" style={{ color: "var(--panel-ink-muted)" }}>
+              Jasna wersja logo. Pokazuje się, gdy menu leży na ciemnym zdjęciu
               (układ hero „sam kadr”). Bez niej zostaje logo podstawowe.
             </p>
             <div className="flex items-center gap-3 mb-1">
               <div
                 className="w-24 h-12 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "oklch(25% 0 0)" }}
+                style={{ background: "var(--panel-ink)" }}
               >
                 {logoUrlLight ? (
                   <img src={logoUrlLight} alt="logo jasne" className="max-w-[85%] max-h-[80%] object-contain" />
                 ) : (
-                  <span className="text-[10px]" style={{ color: "oklch(70% 0 0)" }}>
+                  <span className="text-[10px]" style={{ color: "var(--panel-ink-faint)" }}>
                     brak
                   </span>
                 )}
@@ -302,7 +302,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                   type="button"
                   onClick={() => setLogoUrlLight("")}
                   className="text-[11px] font-medium underline-offset-2 hover:underline"
-                  style={{ color: "oklch(45% 0.18 20)" }}
+                  style={{ color: "var(--panel-danger-ink)" }}
                 >
                   Usuń
                 </button>
@@ -312,10 +312,10 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         )}
 
         {logoUrl && (
-          <div className="mt-5 pt-5" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
-            <p className="text-xs mb-3" style={{ color: "oklch(45% 0 0)" }}>
+          <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--panel-border)" }}>
+            <p className="text-xs mb-3" style={{ color: "var(--panel-ink-muted)" }}>
               Rozmiar w nagłówku sklepu. Logo poziome (szerokie i niskie) potrzebuje
-              zwykle większej maks. szerokości — inaczej zmniejsza się do ledwie
+              zwykle większej maks. szerokości, inaczej zmniejsza się do ledwie
               widocznego paska.
             </p>
 
@@ -342,14 +342,14 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 setLogoMaxWidth(DEFAULT_LOGO_MAX_WIDTH);
               }}
               className="text-xs underline"
-              style={{ color: "oklch(50% 0 0)" }}
+              style={{ color: "var(--panel-ink-muted)" }}
             >
               Przywróć domyślne
             </button>
 
             {/* Podgląd nagłówka — te same reguły co w storefroncie */}
             <div className="mt-4">
-              <p className="text-[11px] font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+              <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
                 Podgląd nagłówka
               </p>
               <div
@@ -386,12 +386,12 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           <div className="relative shrink-0">
             <div
               className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden"
-              style={{ background: "oklch(95% 0.008 260)", border: "1.5px dashed oklch(80% 0 0)" }}
+              style={{ background: "var(--panel-surface-hover)", border: "1.5px dashed var(--panel-border-strong)" }}
             >
               {faviconUrl || logoUrl ? (
                 <img src={faviconUrl || logoUrl} alt="favicon" className="w-full h-full object-contain p-1.5" />
               ) : (
-                <span className="text-[10px] text-center px-1" style={{ color: "oklch(55% 0 0)" }}>
+                <span className="text-[10px] text-center px-1" style={{ color: "var(--panel-ink-muted)" }}>
                   brak
                 </span>
               )}
@@ -401,7 +401,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onClick={() => setFaviconUrl("")}
                 aria-label="Usuń favicon"
                 className="absolute -top-1.5 -right-1.5 p-1 rounded-full"
-                style={{ background: "oklch(25% 0 0)", color: "#fff" }}
+                style={{ background: "var(--panel-ink)", color: "var(--panel-surface)" }}
               >
                 <X className="w-3 h-3" strokeWidth={2} />
               </button>
@@ -409,9 +409,9 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           </div>
 
           <div className="flex-1">
-            <p className="text-xs mb-2" style={{ color: "oklch(45% 0 0)" }}>
+            <p className="text-xs mb-2" style={{ color: "var(--panel-ink-muted)" }}>
               Mała ikona na karcie przeglądarki i w zakładkach. Bez własnego pliku
-              używamy logo sklepu. Kwadratowy PNG/SVG, min. 64×64 px — logo poziome
+              używamy logo sklepu. Kwadratowy PNG/SVG, min. 64×64 px. Logo poziome
               zrobi się w tym miejscu nieczytelne, więc warto wgrać sam znak (np.
               samą chatkę bez napisu).
             </p>
@@ -423,19 +423,19 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
 
             {(faviconUrl || logoUrl) && (
               <div className="mt-4">
-                <p className="text-[11px] font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+                <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
                   Podgląd karty
                 </p>
                 <div
                   className="inline-flex items-center gap-2 px-3 py-2 rounded-t-lg"
-                  style={{ background: "oklch(96% 0 0)", border: "1px solid oklch(88% 0 0)" }}
+                  style={{ background: "var(--panel-surface-hover)", border: "1px solid var(--panel-border)" }}
                 >
                   <img
                     src={faviconUrl || logoUrl}
                     alt=""
                     className="w-4 h-4 object-contain"
                   />
-                  <span className="text-xs" style={{ color: "oklch(30% 0 0)" }}>
+                  <span className="text-xs" style={{ color: "var(--panel-ink)" }}>
                     {shopName || "Mój sklep"}
                   </span>
                 </div>
@@ -454,8 +454,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               value={shopName}
               onChange={(e) => setShopName(e.target.value)}
               style={inputStyle}
-              onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-              onBlur={(e) =>  (e.target.style.borderColor = "oklch(88% 0 0)")}
+              onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+              onBlur={(e) =>  (e.target.style.borderColor = "var(--panel-border)")}
             />
           </Field>
           <div className="sm:pl-3">
@@ -465,8 +465,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
                 style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                onBlur={(e) =>  (e.target.style.borderColor = "oklch(88% 0 0)")}
+                onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+                onBlur={(e) =>  (e.target.style.borderColor = "var(--panel-border)")}
               />
             </Field>
             <Field label="Podpis pod logo (opcjonalnie)" id="logo-caption">
@@ -476,8 +476,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onChange={(e) => setLogoCaption(e.target.value)}
                 placeholder="np. imię i nazwisko projektantki"
                 style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+                onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--panel-border)")}
               />
             </Field>
           </div>
@@ -491,7 +491,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded-lg shrink-0"
-                style={{ background: primaryColor, border: "2px solid oklch(85% 0 0)" }}
+                style={{ background: primaryColor, border: "2px solid var(--panel-border-strong)" }}
               />
               <input
                 id="primary-color"
@@ -499,8 +499,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 value={primaryColor}
                 onChange={(e) => setPrimary(e.target.value)}
                 style={{ ...inputStyle, width: "auto", flex: 1 }}
-                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                onBlur={(e) =>  (e.target.style.borderColor = "oklch(88% 0 0)")}
+                onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+                onBlur={(e) =>  (e.target.style.borderColor = "var(--panel-border)")}
               />
             </div>
           </Field>
@@ -509,7 +509,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded-lg shrink-0"
-                style={{ background: accentColor, border: "2px solid oklch(85% 0 0)" }}
+                style={{ background: accentColor, border: "2px solid var(--panel-border-strong)" }}
               />
               <input
                 id="accent-color"
@@ -517,8 +517,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 value={accentColor}
                 onChange={(e) => setAccent(e.target.value)}
                 style={{ ...inputStyle, width: "auto", flex: 1 }}
-                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                onBlur={(e) =>  (e.target.style.borderColor = "oklch(88% 0 0)")}
+                onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+                onBlur={(e) =>  (e.target.style.borderColor = "var(--panel-border)")}
               />
             </div>
           </Field>
@@ -526,7 +526,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
 
         {/* Presets */}
         <div className="mb-5">
-          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--panel-ink-muted)" }}>
             Gotowe palety
           </p>
           <div className="flex flex-wrap gap-2">
@@ -536,9 +536,9 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onClick={() => setPrimary(c.hex)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all"
                 style={{
-                  background: primaryColor === c.hex ? `${c.hex}20` : "oklch(96% 0 0)",
-                  border: `1.5px solid ${primaryColor === c.hex ? c.hex : "oklch(88% 0 0)"}`,
-                  color: "oklch(25% 0 0)",
+                  background: primaryColor === c.hex ? `${c.hex}20` : "var(--panel-surface-hover)",
+                  border: `1.5px solid ${primaryColor === c.hex ? c.hex : "var(--panel-border)"}`,
+                  color: "var(--panel-ink)",
                 }}
               >
                 <span className="w-3 h-3 rounded-full" style={{ background: c.hex }} />
@@ -549,8 +549,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         </div>
 
         {/* Heading weight */}
-        <div className="pt-4" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
-          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+        <div className="pt-4" style={{ borderTop: "1px solid var(--panel-border)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--panel-ink-muted)" }}>
             Grubość nagłówków
           </p>
           <select
@@ -558,18 +558,18 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             onChange={(e) => setHeadingWeight(e.target.value as HeadingWeight)}
             style={inputStyle}
           >
-            <option value="bold">Gruba — mocna, wyrazista</option>
-            <option value="regular">Zwykła — spokojna</option>
-            <option value="light">Lekka — elegancka, do cienkich logotypów</option>
+            <option value="bold">Gruba: mocna, wyrazista</option>
+            <option value="regular">Zwykła: spokojna</option>
+            <option value="light">Lekka: elegancka, do cienkich logotypów</option>
           </select>
-          <p className="text-[11px] mt-1.5 mb-4" style={{ color: "oklch(60% 0 0)" }}>
-            Dotyczy tytułów hero i sekcji. Nie każdy font ma wagę lekką — wtedy pokaże się zwykła.
+          <p className="text-[11px] mt-1.5 mb-4" style={{ color: "var(--panel-ink-faint)" }}>
+            Dotyczy tytułów hero i sekcji. Jeśli font nie ma wagi lekkiej, pokaże się zwykła.
           </p>
         </div>
 
         {/* Card style */}
-        <div className="pt-4" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
-          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+        <div className="pt-4" style={{ borderTop: "1px solid var(--panel-border)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--panel-ink-muted)" }}>
             Karty produktów
           </p>
           <select
@@ -577,18 +577,18 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
             onChange={(e) => setCardStyle(e.target.value as CardStyle)}
             style={inputStyle}
           >
-            <option value="default">Klasyczne — zaokrąglone zdjęcie, etykieta, torebka na hoverze</option>
-            <option value="minimal">Minimalne — zdjęcie, nazwa, cena; bez zaokrągleń i przycisków</option>
+            <option value="default">Klasyczne: zaokrąglone zdjęcie, etykieta, torebka na hoverze</option>
+            <option value="minimal">Minimalne: zdjęcie, nazwa, cena; bez zaokrągleń i przycisków</option>
           </select>
-          <p className="text-[11px] mt-1.5 mb-4" style={{ color: "oklch(60% 0 0)" }}>
-            Minimalne karty pasują do marek modowych i premium — kupujący wchodzi w produkt,
+          <p className="text-[11px] mt-1.5 mb-4" style={{ color: "var(--panel-ink-faint)" }}>
+            Minimalne karty pasują do marek modowych i premium: kupujący wchodzi w produkt,
             zamiast dodawać z listy.
           </p>
         </div>
 
         {/* Page background */}
-        <div className="pt-4" style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
-          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+        <div className="pt-4" style={{ borderTop: "1px solid var(--panel-border)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--panel-ink-muted)" }}>
             Tło sklepu
           </p>
           <div className="flex flex-wrap gap-2 mb-3">
@@ -598,16 +598,16 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onClick={() => setPaper(p.hex)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all"
                 style={{
-                  background: paperColor === p.hex ? "oklch(93% 0.01 250)" : "oklch(96% 0 0)",
-                  border: `1.5px solid ${paperColor === p.hex ? "oklch(22% 0.24 270)" : "oklch(88% 0 0)"}`,
-                  color: "oklch(25% 0 0)",
+                  background: paperColor === p.hex ? "var(--panel-border)" : "var(--panel-surface-hover)",
+                  border: `1.5px solid ${paperColor === p.hex ? "var(--panel-primary)" : "var(--panel-border)"}`,
+                  color: "var(--panel-ink)",
                 }}
               >
                 <span
                   className="w-3 h-3 rounded-full"
                   style={{
-                    background: p.hex || "oklch(99% 0.005 250)",
-                    border: "1px solid oklch(85% 0 0)",
+                    background: p.hex || "var(--panel-surface-2)",
+                    border: "1px solid var(--panel-border-strong)",
                   }}
                 />
                 {p.name}
@@ -620,8 +620,8 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               placeholder="#ffffff"
               aria-label="Własny kolor tła (hex)"
               style={{ ...inputStyle, width: "7.5rem", padding: "6px 10px", fontSize: "11px" }}
-              onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-              onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+              onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--panel-border)")}
             />
           </div>
           <label className="flex items-start gap-2.5 mb-3 cursor-pointer">
@@ -632,11 +632,11 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               className="mt-0.5"
             />
             <span>
-              <span className="block text-[12px] font-medium" style={{ color: "oklch(25% 0 0)" }}>
+              <span className="block text-[12px] font-medium" style={{ color: "var(--panel-ink)" }}>
                 Jednolite tło całej strony
               </span>
-              <span className="block text-[11px]" style={{ color: "oklch(60% 0 0)" }}>
-                Sekcje, pasek hero i stopka w tym samym kolorze co strona — rozdzielone tylko
+              <span className="block text-[11px]" style={{ color: "var(--panel-ink-faint)" }}>
+                Sekcje, pasek hero i stopka w tym samym kolorze co strona, rozdzielone tylko
                 cienkimi liniami. Bez tego dostają lekko ciemniejsze odcienie.
               </span>
             </span>
@@ -647,7 +647,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               style={{ color: "oklch(50% 0.15 70)" }}
             >
               <TriangleAlert className="w-3.5 h-3.5" strokeWidth={2} />
-              Ciemne tło może zlewać się z tekstem sklepu — sprawdź czytelność na podglądzie.
+              Ciemne tło może zlewać się z tekstem sklepu. Sprawdź czytelność na podglądzie.
             </p>
           )}
         </div>
@@ -656,7 +656,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
       {/* Typography */}
       <SectionCard title="Typografia">
         <div className="mb-5">
-          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--panel-ink-muted)" }}>
             Font nagłówków
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -666,17 +666,17 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onClick={() => setDisplayFont(f.id)}
                 className="text-left rounded-xl px-3 py-2.5 transition-all"
                 style={{
-                  border: `1.5px solid ${displayFont === f.id ? "oklch(22% 0.24 270)" : "oklch(88% 0 0)"}`,
-                  background: displayFont === f.id ? "oklch(96% 0.01 270)" : "#fff",
+                  border: `1.5px solid ${displayFont === f.id ? "var(--panel-primary)" : "var(--panel-border)"}`,
+                  background: displayFont === f.id ? "var(--panel-surface-hover)" : "var(--panel-surface)",
                 }}
               >
                 <span
                   className="block text-base leading-tight"
-                  style={{ fontFamily: `'${f.id}', ${f.serif ? "serif" : "sans-serif"}`, color: "oklch(15% 0 0)", fontWeight: 600 }}
+                  style={{ fontFamily: `'${f.id}', ${f.serif ? "serif" : "sans-serif"}`, color: "var(--panel-ink)", fontWeight: 600 }}
                 >
                   {f.id}
                 </span>
-                <span className="block text-[10px] mt-0.5" style={{ color: "oklch(55% 0 0)" }}>
+                <span className="block text-[10px] mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
                   {f.hint}
                 </span>
               </button>
@@ -685,7 +685,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
         </div>
 
         <div>
-          <p className="text-[11px] font-semibold mb-2" style={{ color: "oklch(55% 0 0)" }}>
+          <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--panel-ink-muted)" }}>
             Font tekstu
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -695,17 +695,17 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
                 onClick={() => setBodyFont(f.id)}
                 className="text-left rounded-xl px-3 py-2.5 transition-all"
                 style={{
-                  border: `1.5px solid ${bodyFont === f.id ? "oklch(22% 0.24 270)" : "oklch(88% 0 0)"}`,
-                  background: bodyFont === f.id ? "oklch(96% 0.01 270)" : "#fff",
+                  border: `1.5px solid ${bodyFont === f.id ? "var(--panel-primary)" : "var(--panel-border)"}`,
+                  background: bodyFont === f.id ? "var(--panel-surface-hover)" : "var(--panel-surface)",
                 }}
               >
                 <span
                   className="block text-sm leading-tight"
-                  style={{ fontFamily: `'${f.id}', ${f.serif ? "serif" : "sans-serif"}`, color: "oklch(15% 0 0)" }}
+                  style={{ fontFamily: `'${f.id}', ${f.serif ? "serif" : "sans-serif"}`, color: "var(--panel-ink)" }}
                 >
                   {f.id}
                 </span>
-                <span className="block text-[10px] mt-0.5" style={{ color: "oklch(55% 0 0)" }}>
+                <span className="block text-[10px] mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
                   {f.hint}
                 </span>
               </button>
@@ -718,7 +718,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
       <SectionCard title="Podgląd na żywo">
         <div
           className="rounded-xl overflow-hidden"
-          style={{ border: "1px solid oklch(90% 0 0)" }}
+          style={{ border: "1px solid var(--panel-border)" }}
         >
           <div
             className="p-4 flex items-center justify-between"
@@ -753,7 +753,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               className="text-xs leading-relaxed"
               style={{ fontFamily: `'${bodyFont}', sans-serif`, color: "oklch(35% 0 0)" }}
             >
-              Tak wygląda treść Twojego sklepu — nagłówki w foncie „{displayFont}”,
+              Tak wygląda treść Twojego sklepu: nagłówki w foncie „{displayFont}”,
               tekst w foncie „{bodyFont}”, na wybranym tle.
             </p>
           </div>

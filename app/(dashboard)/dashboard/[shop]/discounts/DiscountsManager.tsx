@@ -15,12 +15,12 @@ export interface DiscountRow {
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -28,9 +28,9 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 interface Props {
@@ -143,12 +143,12 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1
-          className="text-xl font-bold"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          className="text-xl font-semibold"
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Kody rabatowe
         </h1>
-        <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
           Pole na kod jest w koszyku zwinięte pod „Mam kod rabatowy”, żeby nie odsyłać klientek bez kodu
           do szukania kuponów. Najwygodniej dawać kod w linku (przycisk przy kodzie): sam trafia do koszyka.
         </p>
@@ -157,16 +157,16 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
       {/* Offers in cart */}
       <div
         className="rounded-2xl p-5 mb-6 flex items-start justify-between gap-6"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <div>
           <h2
             className="text-sm font-semibold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Pokazuj promocje w koszyku
           </h2>
-          <p className="text-xs mt-1 max-w-xl" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-1 max-w-xl" style={{ color: "var(--panel-ink-muted)" }}>
             Zamiast pustego pola koszyk podpowie promocję, którą i tak dajesz: kod z paska na górze strony
             (jednym kliknięciem) albo rabat za zapis do newslettera. Mniej porzuconych koszyków, ale rabat
             weźmie też część osób, które kupiłyby bez niego. Przy markach premium zwykle lepiej zostawić
@@ -181,7 +181,7 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
           aria-checked={showOffers}
           aria-label="Pokazuj promocje w koszyku"
           className="relative w-9 h-5 rounded-full transition-all shrink-0 mt-0.5 disabled:opacity-60"
-          style={{ background: showOffers ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+          style={{ background: showOffers ? "var(--panel-primary)" : "var(--panel-toggle-off)" }}
         >
           <span
             className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
@@ -194,17 +194,17 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
       <form
         onSubmit={handleCreate}
         className="rounded-2xl p-5 mb-6"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <h2
           className="text-sm font-semibold mb-4"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Nowy kod
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-[2fr_1fr_1.2fr_1fr_auto] gap-3 items-end">
           <div>
-            <label htmlFor="dc-code" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-code" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Kod
             </label>
             <input
@@ -218,7 +218,7 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
             />
           </div>
           <div>
-            <label htmlFor="dc-pct" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-pct" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Rabat (%)
             </label>
             <input
@@ -234,7 +234,7 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
             />
           </div>
           <div>
-            <label htmlFor="dc-exp" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-exp" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Wygasa (opcjonalnie)
             </label>
             <input
@@ -247,7 +247,7 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
             />
           </div>
           <div>
-            <label htmlFor="dc-max" className="block text-[11px] font-semibold mb-1" style={{ color: "oklch(40% 0 0)" }}>
+            <label htmlFor="dc-max" className="block text-[11px] font-semibold mb-1" style={{ color: "var(--panel-ink)" }}>
               Limit użyć
             </label>
             <input
@@ -264,15 +264,15 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
           <button
             type="submit"
             disabled={busy}
-            className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60 h-fit"
-            style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+            className="flex items-center gap-1.5 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 h-fit"
+            style={{ background: "var(--panel-accent)", color: "#fff" }}
           >
             <Plus className="w-4 h-4" strokeWidth={2} />
             Dodaj
           </button>
         </div>
         {error && (
-          <p className="text-xs font-medium mt-3" style={{ color: "oklch(45% 0.18 20)" }} role="alert">
+          <p className="text-xs font-medium mt-3" style={{ color: "var(--panel-danger-ink)" }} role="alert">
             {error}
           </p>
         )}
@@ -281,13 +281,13 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
       {/* List */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ border: "1px solid oklch(90% 0 0)", background: "#fff" }}
+        style={{ border: "1px solid var(--panel-border)", background: "var(--panel-surface)" }}
       >
         {codes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Tag className="w-10 h-10" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-sm" style={{ color: "oklch(55% 0 0)" }}>
-              Brak kodów — dodaj pierwszy powyżej
+            <Tag className="w-10 h-10" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
+            <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
+              Brak kodów. Dodaj pierwszy powyżej
             </p>
           </div>
         ) : (
@@ -296,9 +296,9 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
               className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
               style={{
                 gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 6rem",
-                color: "oklch(50% 0 0)",
-                borderBottom: "1px solid oklch(92% 0 0)",
-                background: "oklch(98% 0 0)",
+                color: "var(--panel-ink-muted)",
+                borderBottom: "1px solid var(--panel-border)",
+                background: "var(--panel-surface-2)",
               }}
             >
               <span>Kod</span>
@@ -314,21 +314,21 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
                 className="grid items-center px-5 py-3"
                 style={{
                   gridTemplateColumns: "1.5fr 0.8fr 1fr 1fr 1fr 6rem",
-                  borderBottom: i < codes.length - 1 ? "1px solid oklch(94% 0 0)" : "none",
+                  borderBottom: i < codes.length - 1 ? "1px solid var(--panel-surface-hover)" : "none",
                   opacity: row.active ? 1 : 0.55,
                 }}
               >
-                <span className="text-xs font-bold tracking-wide" style={{ color: "oklch(11% 0.10 275)", fontFamily: "var(--font-mono, monospace)" }}>
+                <span className="text-xs font-bold tracking-wide" style={{ color: "var(--panel-ink)", fontFamily: "var(--font-mono, monospace)" }}>
                   {row.code}
                 </span>
-                <span className="text-xs font-semibold tabular-nums" style={{ color: "oklch(25% 0 0)" }}>
+                <span className="text-xs font-semibold tabular-nums" style={{ color: "var(--panel-ink)" }}>
                   −{row.discountPercent}%
                 </span>
-                <span className="text-xs tabular-nums" style={{ color: "oklch(40% 0 0)" }}>
+                <span className="text-xs tabular-nums" style={{ color: "var(--panel-ink)" }}>
                   {row.usesCount}
                   {row.maxUses ? ` / ${row.maxUses}` : ""}
                 </span>
-                <span className="text-xs" style={{ color: "oklch(50% 0 0)" }}>
+                <span className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
                   {row.expiresAt ?? "—"}
                 </span>
                 <button
@@ -336,8 +336,8 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
                   className="text-xs font-medium w-fit px-2 py-0.5 rounded-full transition-all"
                   style={
                     row.active
-                      ? { background: "oklch(93% 0.08 145)", color: "oklch(30% 0.16 145)" }
-                      : { background: "oklch(95% 0 0)", color: "oklch(45% 0 0)" }
+                      ? { background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }
+                      : { background: "var(--panel-surface-hover)", color: "var(--panel-ink-muted)" }
                   }
                 >
                   {row.active ? "Aktywny" : "Wyłączony"}
@@ -348,10 +348,10 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
                     aria-label={`Kopiuj link z kodem ${row.code}`}
                     title="Kopiuj link, który sam doda kod do koszyka"
                     className="p-1.5 rounded-lg transition-colors"
-                    style={{ color: "oklch(40% 0 0)" }}
+                    style={{ color: "var(--panel-ink-muted)" }}
                   >
                     {copiedId === row.id ? (
-                      <Check className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "oklch(52% 0.16 145)" }} />
+                      <Check className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "var(--panel-success)" }} />
                     ) : (
                       <Link2 className="w-3.5 h-3.5" strokeWidth={1.5} />
                     )}
@@ -360,7 +360,7 @@ export default function DiscountsManager({ shopSlug, initialCodes, shopUrl, init
                     onClick={() => handleDelete(row)}
                     aria-label={`Usuń kod ${row.code}`}
                     className="p-1.5 rounded-lg transition-colors"
-                    style={{ color: "oklch(50% 0.15 20)" }}
+                    style={{ color: "var(--panel-danger-ink)" }}
                   >
                     <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
                   </button>

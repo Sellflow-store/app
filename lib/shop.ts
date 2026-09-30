@@ -2,6 +2,7 @@ import { db } from "./db";
 import { shops, shopConfig, products, blogPosts } from "./db/schema";
 import { eq, and } from "drizzle-orm";
 import { getLowestPrices30 } from "./price-history";
+import { tpayEnabled } from "./tpay-status";
 import {
   DEFAULT_LEGAL_DATA,
   normalizeLegalData,
@@ -229,11 +230,12 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
   // suspended it, and it isn't soft-deleted. The flags are independent (schema).
   if (!shop || !shop.active || shop.suspended || shop.deletedAt) return null;
 
-  const [configs, shopProducts] = await Promise.all([
+  const [configs, shopProducts, onlinePaymentsEnabled] = await Promise.all([
     db.select().from(shopConfig).where(eq(shopConfig.shopId, shop.id)),
     db.select().from(products).where(
       and(eq(products.shopId, shop.id), eq(products.visible, true))
     ),
+    tpayEnabled(shop.id),
   ]);
 
   const configMap = Object.fromEntries(configs.map((c) => [c.key, c.value]));
@@ -351,6 +353,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     delivery,
     shopName: shop.name,
     shopUrl: shopPublicUrl(shop),
+    onlinePayments: onlinePaymentsEnabled,
   };
   const legalVars = resolveLegalVars(legalSources);
   // Storefront dostaje dane JUŻ rozwiązane (puste pole „legal" zastąpione tym,
@@ -437,6 +440,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     integrations,
     compliance,
     legal: legalResolved,
+    onlinePaymentsEnabled,
     products: storefrontProducts,
   };
 }

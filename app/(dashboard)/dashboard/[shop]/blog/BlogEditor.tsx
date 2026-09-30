@@ -24,8 +24,8 @@ const EMPTY: BlogFormData = {
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-5 mb-5" style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}>
-      <h2 className="text-sm font-semibold mb-4" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+    <div className="rounded-2xl p-5 mb-5" style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}>
+      <h2 className="text-sm font-semibold mb-4" style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}>
         {title}
       </h2>
       {children}
@@ -36,7 +36,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(30% 0 0)" }}>
+      <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
         {label}
       </label>
       {children}
@@ -45,12 +45,12 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -58,9 +58,9 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 interface Props {
@@ -146,14 +146,14 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved" ? "Zapisano!"
-    : saveState === "error" ? "Błąd — spróbuj ponownie"
+    : saveState === "saved" ? "Zapisano"
+    : saveState === "error" ? "Błąd, spróbuj ponownie"
     : isEdit ? "Zapisz zmiany" : "Zapisz wpis";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
@@ -162,15 +162,15 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
           <Link
             href={listUrl}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "oklch(45% 0 0)", border: "1px solid oklch(88% 0 0)" }}
+            style={{ color: "var(--panel-ink-muted)", border: "1px solid var(--panel-border)" }}
           >
             <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
           </Link>
           <div>
-            <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+            <h1 className="text-xl font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}>
               {isEdit ? "Edytuj wpis" : "Nowy wpis"}
             </h1>
-            <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+            <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
               {isEdit ? form.title : "Napisz artykuł i opublikuj"}
             </p>
           </div>
@@ -179,7 +179,7 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
         <button
           onClick={() => save()}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />
@@ -190,7 +190,7 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
       {validationError && (
         <div
           className="rounded-xl px-4 py-3 mb-5 text-xs font-medium"
-          style={{ background: "oklch(50% 0.20 20 / 0.08)", color: "oklch(40% 0.18 20)", border: "1px solid oklch(50% 0.20 20 / 0.25)" }}
+          style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)", border: "1px solid var(--panel-danger-border)" }}
         >
           {validationError}
         </div>
@@ -237,13 +237,13 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
               src={form.coverImage}
               alt="Zdjęcie główne"
               className="w-40 h-24 rounded-xl object-cover"
-              style={{ border: "1px solid oklch(88% 0 0)" }}
+              style={{ border: "1px solid var(--panel-border)" }}
             />
             <button
               onClick={() => patch({ coverImage: "" })}
               aria-label="Usuń zdjęcie główne"
               className="absolute -top-1.5 -right-1.5 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ background: "oklch(25% 0 0)", color: "#fff" }}
+              style={{ background: "var(--panel-ink)", color: "var(--panel-surface)" }}
             >
               <X className="w-3 h-3" strokeWidth={2} />
             </button>
@@ -251,10 +251,10 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
         ) : (
           <div
             className="flex flex-col items-center justify-center py-8 rounded-xl mb-4 gap-2"
-            style={{ border: "1.5px dashed oklch(85% 0 0)", background: "oklch(98% 0 0)" }}
+            style={{ border: "1.5px dashed var(--panel-border-strong)", background: "var(--panel-surface-2)" }}
           >
-            <ImageIcon className="w-8 h-8" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-xs" style={{ color: "oklch(55% 0 0)" }}>
+            <ImageIcon className="w-8 h-8" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
+            <p className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
               Brak zdjęcia głównego
             </p>
           </div>
@@ -270,7 +270,7 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
         <label className="flex items-center gap-2.5 cursor-pointer w-fit">
           <div
             className="relative w-9 h-5 rounded-full transition-all"
-            style={{ background: form.published ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+            style={{ background: form.published ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
             onClick={() => patch({ published: !form.published })}
           >
             <div
@@ -278,19 +278,19 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
               style={{ left: form.published ? "1.125rem" : "0.125rem" }}
             />
           </div>
-          <span className="text-xs font-medium" style={{ color: "oklch(35% 0 0)" }}>
+          <span className="text-xs font-medium" style={{ color: "var(--panel-ink)" }}>
             {form.published ? "Wpis opublikowany (widoczny w sklepie)" : "Szkic (ukryty)"}
           </span>
         </label>
       </SectionCard>
 
       {isEdit && (
-        <div className="mt-8 pt-5" style={{ borderTop: "1px solid oklch(92% 0 0)" }}>
+        <div className="mt-8 pt-5" style={{ borderTop: "1px solid var(--panel-border)" }}>
           <button
             onClick={handleDelete}
             disabled={deleting}
             className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg transition-all disabled:opacity-60"
-            style={{ color: "oklch(45% 0.18 20)", border: "1.5px solid oklch(50% 0.20 20 / 0.3)" }}
+            style={{ color: "var(--panel-danger-ink)", border: "1.5px solid var(--panel-danger-border)" }}
           >
             <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
             {deleting ? "Usuwanie…" : "Usuń wpis"}

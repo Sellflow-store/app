@@ -101,7 +101,7 @@ export function orderConfirmationEmail(params: {
   shopName: string;
   customerName: string;
   order: OrderSummary;
-  paymentMethod: "transfer" | "cod";
+  paymentMethod: "transfer" | "cod" | "online";
   transfer: TransferDetails | null;
   fulfillmentNote?: string; // digital/service delivery note for the customer
 }): { subject: string; html: string } {
@@ -122,6 +122,10 @@ export function orderConfirmationEmail(params: {
           <p style="margin:0 0 4px;font-size:13px;color:#444444;">Tytuł: <strong>${esc(transfer.title)}</strong></p>
           <p style="margin:0;font-size:13px;color:#444444;">Kwota: <strong>${pln(order.total)}</strong></p>
           <p style="margin:12px 0 0;font-size:12px;color:#888888;">Zamówienie zrealizujemy po zaksięgowaniu wpłaty.</p>
+        </div>`
+      : paymentMethod === "online"
+      ? `<div style="background:#f8f8f7;border-radius:12px;padding:20px;margin:20px 0;">
+          <p style="margin:0;font-size:13px;color:#444444;">Płatność online (Tpay): <strong>${pln(order.total)}</strong>. Zamówienie zrealizujemy po potwierdzeniu wpłaty przez Tpay. Nieopłacone zamówienie anulujemy automatycznie po 48 godzinach.</p>
         </div>`
       : `<div style="background:#f8f8f7;border-radius:12px;padding:20px;margin:20px 0;">
           <p style="margin:0;font-size:13px;color:#444444;">Płatność przy odbiorze: <strong>${pln(order.total)}</strong> — przygotuj gotówkę lub kartę dla kuriera.</p>
@@ -148,7 +152,7 @@ export function merchantNewOrderEmail(params: {
   order: OrderSummary;
   customerName: string;
   customerEmail: string;
-  paymentMethod: "transfer" | "cod";
+  paymentMethod: "transfer" | "cod" | "online";
   orderUrl: string;
   fulfillmentDetails?: string; // HTML block with digital access / service notes
 }): { subject: string; html: string } {
@@ -163,7 +167,7 @@ export function merchantNewOrderEmail(params: {
     <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Nowe zamówienie ${esc(order.orderNumber)} 🎉</h1>
     <p style="margin:0 0 16px;font-size:14px;color:#444444;">
       ${esc(customerName)} (${esc(customerEmail)}) złożył(a) zamówienie na
-      <strong>${pln(order.total)}</strong> — płatność: ${paymentMethod === "transfer" ? "przelew" : "za pobraniem"}.
+      <strong>${pln(order.total)}</strong> — płatność: ${paymentMethod === "transfer" ? "przelew" : paymentMethod === "online" ? "online (Tpay)" : "za pobraniem"}.
     </p>
     ${itemsTable(order)}
     ${pickupBlock(order)}
@@ -209,6 +213,51 @@ export function orderShippedEmail(params: {
 
   return {
     subject: `Zamówienie ${orderNumber} wysłane — ${shopName}`,
+    html: shell(shopName, body),
+  };
+}
+
+/** Zamówienie online anulowane automatycznie po 48 h bez płatności. */
+export function orderUnpaidCancelledEmail(params: {
+  shopName: string;
+  customerName: string;
+  orderNumber: string;
+  total: string;
+  shopUrl: string;
+}): { subject: string; html: string } {
+  const { shopName, customerName, orderNumber, total, shopUrl } = params;
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Zamówienie anulowane</h1>
+    <p style="margin:0 0 8px;font-size:14px;color:#444444;">Cześć ${esc(customerName)},</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#444444;">nie otrzymaliśmy płatności za zamówienie <strong>${esc(orderNumber)}</strong> (${pln(total)}) w ciągu 48 godzin, więc zostało ono anulowane, a zarezerwowane produkty wróciły do sprzedaży.</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#444444;">Jeśli nadal chcesz je kupić, złóż zamówienie ponownie. Jeżeli płatność została już pobrana z Twojego konta, odpisz sklepowi, a zwrócimy pieniądze.</p>
+    <p style="margin:20px 0 0;">
+      <a href="${esc(shopUrl)}" style="display:inline-block;background:#16161d;color:#ffffff;font-size:13px;font-weight:bold;padding:12px 24px;border-radius:99px;text-decoration:none;">Wróć do sklepu</a>
+    </p>`;
+  return {
+    subject: `Zamówienie ${orderNumber} anulowane — brak płatności`,
+    html: shell(shopName, body),
+  };
+}
+
+/** Wpłata przyszła za zamówienie, które już jest anulowane — merchant musi zdecydować. */
+export function merchantPaidAfterCancelEmail(params: {
+  shopName: string;
+  orderNumber: string;
+  total: string;
+  customerEmail: string;
+  orderUrl: string;
+}): { subject: string; html: string } {
+  const { shopName, orderNumber, total, customerEmail, orderUrl } = params;
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:22px;color:#111111;">Wpłata za anulowane zamówienie</h1>
+    <p style="margin:0 0 16px;font-size:14px;color:#444444;">Tpay potwierdził płatność <strong>${pln(total)}</strong> za zamówienie <strong>${esc(orderNumber)}</strong> (${esc(customerEmail)}), które było już anulowane. Towar z tego zamówienia wrócił do sprzedaży.</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#444444;">Zwróć płatność w panelu Tpay albo skontaktuj się z klientem i zrealizuj zamówienie ręcznie, jeśli towar jest dostępny.</p>
+    <p style="margin:20px 0 0;">
+      <a href="${orderUrl}" style="display:inline-block;background:#d6009f;color:#ffffff;font-size:13px;font-weight:bold;padding:12px 24px;border-radius:99px;text-decoration:none;">Zobacz zamówienie w panelu</a>
+    </p>`;
+  return {
+    subject: `Wpłata za anulowane zamówienie ${orderNumber}`,
     html: shell(shopName, body),
   };
 }

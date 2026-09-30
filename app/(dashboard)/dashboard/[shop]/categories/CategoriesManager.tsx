@@ -12,12 +12,12 @@ export interface CategoryRow {
 }
 
 const inputStyle = {
-  border: "1.5px solid oklch(22% 0.24 270)",
+  border: "1.5px solid var(--panel-primary)",
   borderRadius: "8px",
   padding: "6px 10px",
   fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   outline: "none",
 };
@@ -94,80 +94,58 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
     await call("DELETE", row.name);
   }
 
+  const ICON_BTN =
+    "flex items-center justify-center w-8 h-8 rounded-md transition-colors disabled:opacity-50 text-[var(--panel-ink-faint)] hover:bg-[var(--panel-surface-2)] hover:text-[var(--panel-ink)]";
+  const COLS = "grid-cols-[minmax(0,2fr)_110px_150px_120px]";
+
   return (
-    <div className="p-6 lg:p-8 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1
-          className="text-xl font-bold"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
-        >
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-5xl mx-auto">
+      <div className="mb-5">
+        <h1 className="text-xl font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
           Kategorie
         </h1>
-        <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
-          Zmień nazwę, ukryj lub usuń kategorię — zmiany obejmą wszystkie produkty w środku
+        <p className="text-[13px] mt-0.5 text-[var(--panel-ink-muted)]">
+          Zmień nazwę, ukryj lub usuń kategorię. Zmiana obejmie wszystkie produkty w środku.
         </p>
       </div>
 
       {error && (
-        <div
-          className="rounded-xl px-4 py-3 mb-5 text-xs font-medium"
-          style={{
-            background: "oklch(50% 0.20 20 / 0.08)",
-            color: "oklch(40% 0.18 20)",
-            border: "1px solid oklch(50% 0.20 20 / 0.25)",
-          }}
-        >
+        <div role="alert" className="rounded-lg px-4 py-3 mb-5 text-[13px] font-medium bg-[oklch(50%_0.20_20/0.08)] text-[oklch(45%_0.18_20)] border border-[oklch(50%_0.20_20/0.25)]">
           {error}
         </div>
       )}
 
-      <div
-        className="rounded-2xl overflow-hidden mb-5"
-        style={{ border: "1px solid oklch(90% 0 0)", background: "#fff" }}
-      >
+      <div className="rounded-xl overflow-hidden mb-4 border border-[var(--panel-border)] bg-[var(--panel-surface)]">
         {categories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Layers className="w-10 h-10" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-            <p className="text-sm" style={{ color: "oklch(55% 0 0)" }}>
-              Brak kategorii — nadaj produktom kategorie w ich formularzach
-            </p>
+            <Layers className="w-10 h-10 text-[var(--panel-ink-faint)]" strokeWidth={1} />
+            <p className="text-sm text-[var(--panel-ink-muted)]">Brak kategorii. Nadaj produktom kategorie w ich formularzach.</p>
             <Link
               href={`/dashboard/${shopSlug}/products`}
-              className="text-xs font-semibold px-4 py-2 rounded-full"
-              style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+              className="h-9 px-3.5 flex items-center rounded-lg text-[13px] font-semibold bg-[var(--panel-primary)] text-[var(--panel-surface)] hover:opacity-90"
             >
               Przejdź do produktów
             </Link>
           </div>
         ) : (
-          <>
+          <div role="table" aria-label="Kategorie" className="overflow-x-auto">
             <div
-              className="grid text-[11px] font-semibold tracking-wide uppercase px-5 py-3"
-              style={{
-                gridTemplateColumns: "2fr 0.8fr 1fr auto",
-                color: "oklch(50% 0 0)",
-                borderBottom: "1px solid oklch(92% 0 0)",
-                background: "oklch(98% 0 0)",
-              }}
+              role="row"
+              className={`grid ${COLS} gap-4 items-center px-5 h-9 min-w-[560px] text-[12px] font-medium text-[var(--panel-ink-muted)] border-b border-[var(--panel-border)] bg-[var(--panel-surface-2)]`}
             >
-              <span>Kategoria</span>
-              <span>Produkty</span>
-              <span>Widoczne</span>
-              <span />
+              <span role="columnheader">Kategoria</span>
+              <span role="columnheader" className="text-right">Produkty</span>
+              <span role="columnheader">Widoczne w sklepie</span>
+              <span role="columnheader" className="sr-only">Akcje</span>
             </div>
-            {categories.map((row, i) => {
+            {categories.map((row) => {
               const rowBusy = busy === row.name;
               return (
                 <div
                   key={row.name}
-                  className="grid items-center px-5 py-3"
-                  style={{
-                    gridTemplateColumns: "2fr 0.8fr 1fr auto",
-                    borderBottom: i < categories.length - 1 ? "1px solid oklch(94% 0 0)" : "none",
-                    opacity: rowBusy ? 0.5 : 1,
-                  }}
+                  role="row"
+                  className={`grid ${COLS} gap-4 items-center px-5 h-[52px] min-w-[560px] text-[13.5px] border-b last:border-b-0 border-[var(--panel-border)] transition-colors hover:bg-[var(--panel-surface-hover)] ${rowBusy ? "opacity-50" : ""}`}
                 >
-                  {/* Name / inline edit */}
                   {editing === row.name ? (
                     <div className="flex items-center gap-1.5">
                       <input
@@ -181,97 +159,70 @@ export default function CategoriesManager({ shopSlug, categories, uncategorized 
                         aria-label="Nazwa kategorii"
                         style={inputStyle}
                       />
-                      <button
-                        onClick={() => saveRename(row)}
-                        aria-label="Zapisz nazwę"
-                        className="p-1.5 rounded-lg"
-                        style={{ color: "oklch(40% 0.16 145)" }}
-                      >
-                        <Check className="w-3.5 h-3.5" strokeWidth={2} />
+                      <button onClick={() => saveRename(row)} aria-label="Zapisz nazwę" className={ICON_BTN}>
+                        <Check className="w-4 h-4 text-[var(--panel-success)]" strokeWidth={2} />
                       </button>
-                      <button
-                        onClick={() => setEditing(null)}
-                        aria-label="Anuluj"
-                        className="p-1.5 rounded-lg"
-                        style={{ color: "oklch(55% 0 0)" }}
-                      >
-                        <X className="w-3.5 h-3.5" strokeWidth={2} />
+                      <button onClick={() => setEditing(null)} aria-label="Anuluj" className={ICON_BTN}>
+                        <X className="w-4 h-4" strokeWidth={2} />
                       </button>
                     </div>
                   ) : (
-                    <span className="text-xs font-medium" style={{ color: "oklch(15% 0 0)" }}>
-                      {row.name}
-                    </span>
+                    <span className="font-medium truncate text-[var(--panel-ink)]">{row.name}</span>
                   )}
 
-                  <span className="text-xs tabular-nums" style={{ color: "oklch(25% 0 0)" }}>
-                    {row.total}
-                  </span>
+                  <span className="text-right tabular-nums text-[var(--panel-ink)]">{row.total}</span>
 
-                  <span
-                    className="flex items-center gap-1.5 text-xs tabular-nums"
-                    style={{ color: row.visible > 0 ? "oklch(40% 0.16 145)" : "oklch(55% 0 0)" }}
-                  >
-                    {row.visible > 0 ? (
-                      <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
-                    ) : (
-                      <EyeOff className="w-3.5 h-3.5" strokeWidth={1.5} />
-                    )}
+                  <span className="flex items-center gap-2 text-[13px] tabular-nums text-[var(--panel-ink)]">
+                    <span
+                      aria-hidden
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{
+                        background:
+                          row.visible === 0 ? "var(--panel-ink-faint)" : row.visible < row.total ? "var(--panel-warning)" : "var(--panel-success)",
+                      }}
+                    />
                     {row.visible} z {row.total}
                   </span>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 justify-end">
+                  <div className="flex items-center gap-0.5 justify-end">
                     <button
                       onClick={() => toggleVisible(row)}
                       disabled={rowBusy}
                       aria-label={row.visible > 0 ? "Ukryj kategorię" : "Pokaż kategorię"}
                       title={row.visible > 0 ? "Ukryj wszystkie produkty" : "Pokaż wszystkie produkty"}
-                      className="p-1.5 rounded-lg transition-colors disabled:opacity-50"
-                      style={{ color: "oklch(45% 0 0)" }}
+                      className={ICON_BTN}
                     >
-                      {row.visible > 0 ? (
-                        <EyeOff className="w-3.5 h-3.5" strokeWidth={1.5} />
-                      ) : (
-                        <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
-                      )}
+                      {row.visible > 0 ? <EyeOff className="w-4 h-4" strokeWidth={1.75} /> : <Eye className="w-4 h-4" strokeWidth={1.75} />}
                     </button>
                     <button
                       onClick={() => startEdit(row)}
                       disabled={rowBusy || editing === row.name}
                       aria-label={`Zmień nazwę kategorii ${row.name}`}
-                      className="p-1.5 rounded-lg transition-colors disabled:opacity-50"
-                      style={{ color: "oklch(45% 0 0)" }}
+                      className={ICON_BTN}
                     >
-                      <Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />
+                      <Pencil className="w-4 h-4" strokeWidth={1.75} />
                     </button>
                     <button
                       onClick={() => remove(row)}
                       disabled={rowBusy}
                       aria-label={`Usuń kategorię ${row.name}`}
-                      className="p-1.5 rounded-lg transition-colors disabled:opacity-50"
-                      style={{ color: "oklch(50% 0.15 20)" }}
+                      className={`${ICON_BTN} hover:text-[oklch(55%_0.19_25)]`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                      <Trash2 className="w-4 h-4" strokeWidth={1.75} />
                     </button>
                   </div>
                 </div>
               );
             })}
-          </>
+          </div>
         )}
       </div>
 
       {uncategorized > 0 && (
-        <p className="text-xs" style={{ color: "oklch(50% 0 0)" }}>
-          {uncategorized}{" "}
-          {uncategorized === 1 ? "produkt nie ma" : "produkty(ów) nie ma"} przypisanej kategorii —{" "}
-          <Link
-            href={`/dashboard/${shopSlug}/products`}
-            className="underline underline-offset-2 font-medium"
-            style={{ color: "oklch(22% 0.24 270)" }}
-          >
-            uzupełnij w produktach
+        <p className="text-[13px] text-[var(--panel-ink-muted)]">
+          {uncategorized} {uncategorized === 1 ? "produkt nie ma" : "produkty(ów) nie ma"} przypisanej kategorii.{" "}
+          <Link href={`/dashboard/${shopSlug}/products`} className="underline underline-offset-2 font-medium text-[var(--panel-primary)]">
+            Uzupełnij w produktach
           </Link>
           .
         </p>

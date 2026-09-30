@@ -1,72 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import {
-  Home, Package, ShoppingBag, Info, HelpCircle, FileText, ShieldCheck, Settings,
-  BarChart2, X, ChevronRight, Users, Eye, CreditCard, ClipboardList,
-  Truck, Tag, Mail, Palette, Megaphone, Scale, Layers, Store, RotateCcw,
-  MenuIcon, LayoutDashboard, PanelBottom, PackageCheck,
-} from "lucide-react";
-
-const NAV_SECTIONS = [
-  {
-    id: "store-ops",
-    title: "Obsługa sklepu",
-    items: [
-      { slug: "",          label: "Pulpit",      icon: LayoutDashboard },
-      { slug: "orders",    label: "Zamówienia",  icon: ClipboardList },
-      { slug: "customers", label: "Klienci",      icon: Users },
-      { slug: "stats",     label: "Analityka",    icon: BarChart2 },
-    ],
-  },
-  {
-    id: "store-mgmt",
-    title: "Zarządzanie sklepem",
-    items: [
-      { slug: "products",   label: "Produkty",        icon: Package },
-      { slug: "categories", label: "Kategorie",        icon: Layers },
-      { slug: "payments",   label: "Płatności i VAT",  icon: CreditCard },
-      { slug: "delivery",   label: "Dostawa",          icon: Truck },
-      { slug: "furgonetka", label: "Furgonetka",       icon: PackageCheck },
-    ],
-  },
-  {
-    id: "marketing",
-    title: "Marketing",
-    items: [
-      { slug: "discounts",   label: "Kody rabatowe", icon: Tag },
-      { slug: "newsletter",  label: "Newsletter",    icon: Mail },
-    ],
-  },
-  {
-    id: "appearance",
-    title: "Wygląd i treści",
-    items: [
-      { slug: "branding", label: "Logo i kolorystyka", icon: Palette },
-      { slug: "home",     label: "Strona główna",       icon: Home },
-      { slug: "about",    label: "O nas",               icon: Info },
-      { slug: "faq",      label: "FAQ",                 icon: HelpCircle },
-      { slug: "blog",     label: "Blog",                icon: FileText },
-      { slug: "menu",     label: "Menu nawigacji",      icon: MenuIcon },
-      { slug: "footer",   label: "Stopka",              icon: PanelBottom },
-    ],
-  },
-  {
-    id: "legal",
-    title: "Prawo",
-    items: [
-      { slug: "legal", label: "Dokumenty prawne", icon: FileText },
-    ],
-  },
-  {
-    id: "settings-group",
-    title: "Ustawienia",
-    items: [
-      { slug: "settings", label: "Ustawienia panelu", icon: Settings },
-    ],
-  },
-];
+import { X, ChevronRight, ChevronDown, Eye } from "lucide-react";
+import { NAV_SECTIONS, type NavSection } from "./nav";
 
 interface SidebarProps {
   shopSlug: string;
@@ -86,6 +24,10 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
   const isLocal = appUrl.includes("localhost") || appUrl.includes("127.0.0.1");
   const previewUrl = isLocal ? `/${shopSlug}` : `https://${shopSlug}.${appDomain}`;
 
+  // Stan zwinięcia żyje w layoucie panelu, więc przetrwa przejścia między
+  // stronami; po przeładowaniu wraca do domyślnego (zwinięte).
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
   function isActive(slug: string) {
     if (slug === "") return pathname === base; // Pulpit — only the bare base
     return pathname === `${base}/${slug}` || pathname.startsWith(`${base}/${slug}/`);
@@ -100,102 +42,130 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
         />
       )}
 
+      {/* Kierunek A redesignu: granat Sellflow, gęsta lista, aqua jako znacznik
+          aktywnej strony. Kolory wyłącznie z tokenów --panel-sidebar-* (tryb
+          ciemny podmienia je sam), hover w CSS zamiast w JS. */}
       <aside
         className={[
-          "fixed top-0 left-0 h-full w-60 z-50 flex flex-col transition-transform duration-300",
+          "fixed top-0 left-0 h-full w-64 z-50 flex flex-col transition-transform duration-300",
+          "bg-[var(--panel-sidebar)] text-[var(--panel-sidebar-ink)]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           "lg:translate-x-0 lg:static lg:h-screen",
         ].join(" ")}
-        style={{ background: "oklch(8% 0 0)", color: "#fff" }}
       >
         {/* Logo */}
-        <div
-          className="flex items-center justify-between px-5 py-4 shrink-0"
-          style={{ borderBottom: "1px solid oklch(18% 0 0)" }}
-        >
+        <div className="flex items-center justify-between px-5 h-14 shrink-0 border-b border-[var(--panel-sidebar-border)]">
           <Link
             href={base}
-            className="text-sm font-bold tracking-tight text-white"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="flex items-center gap-2.5 text-white"
           >
-            Sellflow{" "}
-            <span style={{ color: "oklch(45% 0 0)", fontWeight: 300 }}>admin</span>
+            <span aria-hidden className="w-2.5 h-2.5 rounded-[3px] bg-[var(--panel-aqua)]" />
+            <span className="flex flex-col leading-none">
+              <span className="text-[15px] font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
+                Sellflow
+              </span>
+              <span className="text-[10.5px] font-medium tracking-[0.08em] uppercase mt-1 text-[var(--panel-sidebar-muted)]">
+                admin
+              </span>
+            </span>
           </Link>
           <button
             onClick={onClose}
-            className="lg:hidden"
-            style={{ color: "oklch(45% 0 0)" }}
+            aria-label="Zamknij menu"
+            className="lg:hidden text-[var(--panel-sidebar-muted)] hover:text-white"
           >
-            <X className="w-4 h-4" strokeWidth={1.5} />
+            <X className="w-4 h-4" strokeWidth={1.75} />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.id} className="mb-4">
-              <p
-                className="text-[9px] tracking-[0.18em] uppercase font-semibold px-2 mb-1.5"
-                style={{ color: "oklch(38% 0 0)" }}
-              >
-                {section.title}
-              </p>
+        <nav aria-label="Menu panelu" className="flex-1 overflow-y-auto py-4 px-3">
+          {NAV_SECTIONS.map((section) => {
+            const hasActive = section.items.some((i) => isActive(i.slug));
+            // Zwinięta grupa rozwija się sama, gdy otwarta strona jest w środku.
+            const open = !section.collapsible || hasActive || !!expanded[section.id];
+            return (
+              <div key={section.id} className={section.title ? "mb-4" : "mb-3"}>
+                {section.title && (
+                  section.collapsible ? (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((e) => ({ ...e, [section.id]: !open }))}
+                      aria-expanded={open}
+                      disabled={hasActive}
+                      className="w-full flex items-center gap-1.5 text-[11px] font-semibold px-2.5 mb-1.5 text-[var(--panel-sidebar-muted)] hover:text-white disabled:hover:text-[var(--panel-sidebar-muted)] transition-colors"
+                    >
+                      <span className="flex-1 text-left">{section.title}</span>
+                      {!open && <span className="font-normal tabular-nums">{section.items.length}</span>}
+                      <ChevronDown
+                        className={["w-3.5 h-3.5 transition-transform", open ? "" : "-rotate-90"].join(" ")}
+                        strokeWidth={2}
+                      />
+                    </button>
+                  ) : (
+                    <p className="text-[11px] font-semibold px-2.5 mb-1.5 text-[var(--panel-sidebar-muted)]">
+                      {section.title}
+                    </p>
+                  )
+                )}
 
-              {section.items.map(({ slug, label, icon: Icon }) => {
-                const active = isActive(slug);
-                return (
-                  <Link
-                    key={slug || "pulpit"}
-                    href={slug ? `${base}/${slug}` : base}
+                {open && section.items.map((item) => (
+                  <NavLink
+                    key={item.slug || "pulpit"}
+                    item={item}
+                    href={item.slug ? `${base}/${item.slug}` : base}
+                    active={isActive(item.slug)}
                     onClick={onClose}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-colors mb-0.5"
-                    style={
-                      active
-                        ? { background: "#fff", color: "oklch(10% 0 0)", fontWeight: 600 }
-                        : { color: "oklch(50% 0 0)" }
-                    }
-                    onMouseEnter={(e) => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = "oklch(15% 0 0)";
-                        (e.currentTarget as HTMLElement).style.color = "#fff";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = "transparent";
-                        (e.currentTarget as HTMLElement).style.color = "oklch(50% 0 0)";
-                      }
-                    }}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
-                    <span className="flex-1">{label}</span>
-                    {active && <ChevronRight className="w-3 h-3 shrink-0" strokeWidth={2.5} />}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+                  />
+                ))}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Preview link */}
-        <div
-          className="px-4 py-3.5 shrink-0"
-          style={{ borderTop: "1px solid oklch(18% 0 0)" }}
-        >
+        <div className="px-3 py-3 shrink-0 border-t border-[var(--panel-sidebar-border)]">
           <Link
             href={previewUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 text-[11px] transition-colors"
-            style={{ color: "oklch(45% 0 0)" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#fff")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "oklch(45% 0 0)")}
+            className="flex items-center gap-3 px-2.5 h-8 rounded-md text-[13px] transition-colors text-[var(--panel-sidebar-ink)] hover:bg-[var(--panel-sidebar-hover)] hover:text-white"
           >
-            <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <Eye className="w-4 h-4 text-[var(--panel-sidebar-muted)]" strokeWidth={1.75} />
             Podgląd sklepu
           </Link>
         </div>
       </aside>
     </>
+  );
+}
+
+function NavLink({
+  item, href, active, onClick,
+}: { item: NavSection["items"][number]; href: string; active: boolean; onClick: () => void }) {
+  const { label, icon: Icon, hint } = item;
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      title={hint}
+      aria-current={active ? "page" : undefined}
+      className={[
+        "group w-full flex items-center gap-3 px-2.5 py-1.5 min-h-8 rounded-md text-[13.5px] leading-snug transition-colors mb-px",
+        active
+          ? "bg-[var(--panel-sidebar-active)] text-white font-semibold"
+          : "text-[var(--panel-sidebar-ink)] hover:bg-[var(--panel-sidebar-hover)] hover:text-white",
+      ].join(" ")}
+    >
+      <Icon
+        className={[
+          "w-4 h-4 shrink-0 transition-colors",
+          active ? "text-[var(--panel-aqua)]" : "text-[var(--panel-sidebar-muted)] group-hover:text-white",
+        ].join(" ")}
+        strokeWidth={1.75}
+      />
+      <span className="flex-1">{label}</span>
+      {active && <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-70" strokeWidth={2.25} />}
+    </Link>
   );
 }

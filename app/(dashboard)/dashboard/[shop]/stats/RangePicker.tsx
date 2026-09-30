@@ -74,45 +74,45 @@ export default function RangePicker({
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)", color: "oklch(25% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)", color: "var(--panel-ink)" }}
       >
-        <Calendar className="w-4 h-4" style={{ color: "oklch(55% 0 0)" }} strokeWidth={1.75} />
+        <Calendar className="w-4 h-4" style={{ color: "var(--panel-ink-muted)" }} strokeWidth={1.75} />
         {label}
-        <ChevronDown className="w-4 h-4" style={{ color: "oklch(55% 0 0)" }} strokeWidth={1.75} />
+        <ChevronDown className="w-4 h-4" style={{ color: "var(--panel-ink-muted)" }} strokeWidth={1.75} />
       </button>
 
       {open && (
         <div
           className="absolute left-0 mt-1.5 z-20 rounded-xl overflow-hidden min-w-[240px]"
-          style={{ background: "#fff", border: "1px solid oklch(90% 0 0)", boxShadow: "0 8px 24px oklch(0% 0 0 / 0.08)" }}
+          style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)", boxShadow: "0 8px 24px oklch(0% 0 0 / 0.08)" }}
         >
           {PRESETS.map((o) => (
             <button
               key={o.value}
               onClick={() => applyPreset(o.value)}
-              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[oklch(97%_0_0)]"
-              style={{ color: "oklch(25% 0 0)" }}
+              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[var(--panel-surface-hover)]"
+              style={{ color: "var(--panel-ink)" }}
             >
               {o.label}
               {value === o.value && (
-                <Check className="w-4 h-4" style={{ color: "oklch(56% 0.30 335)" }} strokeWidth={2} />
+                <Check className="w-4 h-4" style={{ color: "var(--panel-accent)" }} strokeWidth={2} />
               )}
             </button>
           ))}
 
-          <div style={{ borderTop: "1px solid oklch(93% 0 0)" }}>
+          <div style={{ borderTop: "1px solid var(--panel-border)" }}>
             <button
               onClick={() => setCustomOpen((c) => !c)}
-              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[oklch(97%_0_0)]"
-              style={{ color: "oklch(25% 0 0)" }}
+              className="flex items-center justify-between w-full gap-3 px-3.5 py-2.5 text-sm text-left transition-colors hover:bg-[var(--panel-surface-hover)]"
+              style={{ color: "var(--panel-ink)" }}
             >
               Własny zakres
               {value === "" ? (
-                <Check className="w-4 h-4" style={{ color: "oklch(56% 0.30 335)" }} strokeWidth={2} />
+                <Check className="w-4 h-4" style={{ color: "var(--panel-accent)" }} strokeWidth={2} />
               ) : (
                 <ChevronDown
                   className="w-4 h-4 transition-transform"
-                  style={{ color: "oklch(55% 0 0)", transform: customOpen ? "rotate(180deg)" : "none" }}
+                  style={{ color: "var(--panel-ink-muted)", transform: customOpen ? "rotate(180deg)" : "none" }}
                   strokeWidth={1.75}
                 />
               )}
@@ -121,18 +121,18 @@ export default function RangePicker({
             {customOpen && (
               <div className="px-3.5 pb-3.5 pt-1 space-y-2">
                 <label className="block">
-                  <span className="text-[11px] font-medium" style={{ color: "oklch(50% 0 0)" }}>Od</span>
+                  <span className="text-[11px] font-medium" style={{ color: "var(--panel-ink-muted)" }}>Od</span>
                   <input
                     type="date"
                     value={f}
                     max={t || max}
                     onChange={(e) => setF(e.target.value)}
                     className="mt-1 w-full rounded-lg px-2.5 py-1.5 text-sm tabular-nums"
-                    style={{ border: "1px solid oklch(88% 0 0)", color: "oklch(20% 0 0)" }}
+                    style={{ border: "1px solid var(--panel-border)", color: "var(--panel-ink)" }}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-[11px] font-medium" style={{ color: "oklch(50% 0 0)" }}>Do</span>
+                  <span className="text-[11px] font-medium" style={{ color: "var(--panel-ink-muted)" }}>Do</span>
                   <input
                     type="date"
                     value={t}
@@ -140,14 +140,14 @@ export default function RangePicker({
                     max={max}
                     onChange={(e) => setT(e.target.value)}
                     className="mt-1 w-full rounded-lg px-2.5 py-1.5 text-sm tabular-nums"
-                    style={{ border: "1px solid oklch(88% 0 0)", color: "oklch(20% 0 0)" }}
+                    style={{ border: "1px solid var(--panel-border)", color: "var(--panel-ink)" }}
                   />
                 </label>
                 <button
                   onClick={applyCustom}
                   disabled={!f || !t}
                   className="w-full rounded-lg py-2 text-sm font-medium transition-opacity disabled:opacity-40"
-                  style={{ background: "oklch(11% 0.10 275)", color: "#fff" }}
+                  style={{ background: "var(--panel-ink)", color: "var(--panel-surface)" }}
                 >
                   Zastosuj zakres
                 </button>

@@ -18,12 +18,12 @@ const PAGE_OPTIONS = [
 ];
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -81,33 +81,33 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved" ? "Zapisano!"
-    : saveState === "error" ? "Błąd — spróbuj ponownie"
+    : saveState === "saved" ? "Zapisano"
+    : saveState === "error" ? "Błąd, spróbuj ponownie"
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            className="text-xl font-semibold"
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Menu nawigacji
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Pozycje widoczne w górnym menu Twojego sklepu
           </p>
         </div>
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />
@@ -118,7 +118,7 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
       {validationError && (
         <div
           className="rounded-xl px-4 py-3 mb-5 text-xs font-medium"
-          style={{ background: "oklch(50% 0.20 20 / 0.08)", color: "oklch(40% 0.18 20)", border: "1px solid oklch(50% 0.20 20 / 0.25)" }}
+          style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)", border: "1px solid var(--panel-danger-border)" }}
         >
           {validationError}
         </div>
@@ -129,7 +129,7 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
           <div
             key={i}
             className="rounded-2xl p-4"
-            style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+            style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
           >
             <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-3 items-center">
               {/* Reorder */}
@@ -139,7 +139,7 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
                   disabled={i === 0}
                   aria-label="Przesuń wyżej"
                   className="p-0.5 disabled:opacity-25"
-                  style={{ color: "oklch(45% 0 0)" }}
+                  style={{ color: "var(--panel-ink-muted)" }}
                 >
                   <ChevronUp className="w-4 h-4" strokeWidth={1.5} />
                 </button>
@@ -148,7 +148,7 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
                   disabled={i === items.length - 1}
                   aria-label="Przesuń niżej"
                   className="p-0.5 disabled:opacity-25"
-                  style={{ color: "oklch(45% 0 0)" }}
+                  style={{ color: "var(--panel-ink-muted)" }}
                 >
                   <ChevronDown className="w-4 h-4" strokeWidth={1.5} />
                 </button>
@@ -160,8 +160,8 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
                 placeholder="Etykieta, np. Sklep"
                 aria-label={`Etykieta pozycji ${i + 1}`}
                 style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
-                onBlur={(e) => (e.target.style.borderColor = "oklch(88% 0 0)")}
+                onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--panel-border)")}
               />
 
               <select
@@ -181,7 +181,7 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
                 onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}
                 aria-label={`Usuń pozycję ${item.label || i + 1}`}
                 className="p-1.5 rounded-lg transition-colors"
-                style={{ color: "oklch(50% 0.15 20)" }}
+                style={{ color: "var(--panel-danger-ink)" }}
               >
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
@@ -193,14 +193,14 @@ export default function MenuForm({ shopSlug, initialItems }: Props) {
       <button
         onClick={() => setItems((prev) => [...prev, { label: "", href: "/produkty" }])}
         className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-        style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+        style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
       >
         <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
         Dodaj pozycję
       </button>
 
-      <p className="text-[11px] mt-4" style={{ color: "oklch(60% 0 0)" }}>
-        Koszyk jest zawsze widoczny jako ikona — nie musisz dodawać go do menu.
+      <p className="text-[11px] mt-4" style={{ color: "var(--panel-ink-faint)" }}>
+        Koszyk jest zawsze widoczny jako ikona, nie musisz dodawać go do menu.
       </p>
     </div>
   );

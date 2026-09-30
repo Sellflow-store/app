@@ -18,7 +18,7 @@ export default function ThemeSection() {
       <SectionTitle title="Motyw" />
       <Card
         title="Motyw aplikacji"
-        desc="Wybierz wygląd panelu. Motyw dotyczy tylko interfejsu aplikacji — Twój sklep pozostaje bez zmian."
+        desc="Wybierz wygląd panelu. Motyw dotyczy tylko interfejsu aplikacji. Twój sklep pozostaje bez zmian."
       >
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {OPTIONS.map((o) => {

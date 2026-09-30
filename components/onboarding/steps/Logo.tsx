@@ -85,7 +85,7 @@ export default function Logo({ onNext, onBack }: Props) {
         Masz już logo?
       </h2>
       <p className="text-sm leading-relaxed" style={{ color: "var(--brand-ink-2)" }}>
-        Wrzuć plik PNG lub SVG. Jeśli pominiesz — użyjemy typografii.
+        Wrzuć plik PNG lub SVG. Jeśli pominiesz, użyjemy samej nazwy w ładnej typografii.
       </p>
 
       <div className="mt-7 space-y-4">

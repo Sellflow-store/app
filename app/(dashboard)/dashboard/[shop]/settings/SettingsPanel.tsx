@@ -88,8 +88,8 @@ export default function SettingsPanel(props: Props) {
                       onClick={() => setActive(item.id)}
                       className="flex items-center gap-2.5 w-full text-left rounded-lg px-2.5 py-2 text-sm font-medium transition-colors whitespace-nowrap"
                       style={{
-                        background: on ? P.accentSoft : "transparent",
-                        color: on ? P.accent : P.muted,
+                        background: on ? P.primarySoft : "transparent",
+                        color: on ? P.primary : P.muted,
                       }}
                     >
                       <Icon className="w-4 h-4 shrink-0" strokeWidth={1.75} />

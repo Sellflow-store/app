@@ -15,19 +15,21 @@ export const P = {
   borderStrong: "var(--panel-border-strong)",
   accent: "var(--panel-accent)",
   accentSoft: "var(--panel-accent-soft)",
+  primary: "var(--panel-primary)",
+  primarySoft: "var(--panel-primary-soft)",
 };
 
 export function SectionTitle({ title, desc }: { title: string; desc?: string }) {
   return (
     <div className="mb-6">
       <h1
-        className="text-2xl font-bold"
+        className="text-xl font-semibold"
         style={{ fontFamily: "var(--font-display)", color: P.ink }}
       >
         {title}
       </h1>
       {desc && (
-        <p className="text-sm mt-1" style={{ color: P.muted }}>
+        <p className="text-[13.5px] mt-1" style={{ color: P.muted }}>
           {desc}
         </p>
       )}
@@ -46,19 +48,19 @@ export function Card({
 }) {
   return (
     <div
-      className="rounded-2xl p-5 mb-5"
+      className="rounded-xl p-5 mb-5"
       style={{ background: P.surface, border: `1px solid ${P.border}` }}
     >
       {title && (
         <h2
-          className="text-sm font-semibold"
+          className="text-[15px] font-semibold"
           style={{ fontFamily: "var(--font-display)", color: P.ink }}
         >
           {title}
         </h2>
       )}
       {desc && (
-        <p className="text-xs mt-1 mb-3" style={{ color: P.faint }}>
+        <p className="text-[12.5px] mt-1 mb-3" style={{ color: P.muted }}>
           {desc}
         </p>
       )}
@@ -78,12 +80,12 @@ export function Field({
 }) {
   return (
     <label className="block mb-4 last:mb-0">
-      <span className="block text-xs font-medium mb-1.5" style={{ color: P.muted }}>
+      <span className="block text-[12.5px] font-medium mb-1.5" style={{ color: P.muted }}>
         {label}
       </span>
       {children}
       {hint && (
-        <span className="block text-[11px] mt-1.5" style={{ color: P.faint }}>
+        <span className="block text-[12px] mt-1.5" style={{ color: P.faint }}>
           {hint}
         </span>
       )}
@@ -95,23 +97,23 @@ export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={"w-full text-sm outline-none rounded-[10px] " + (props.className ?? "")}
+      className={"w-full text-sm outline-none rounded-lg " + (props.className ?? "")}
       style={{
-        border: `1.5px solid ${P.borderStrong}`,
-        borderRadius: "10px",
-        padding: "10px 12px",
-        fontSize: "13px",
+        border: `1px solid ${P.border}`,
+        borderRadius: "8px",
+        padding: "8px 12px",
+        fontSize: "13.5px",
         color: P.ink,
         background: P.surface,
         fontFamily: "var(--font-body)",
         ...props.style,
       }}
       onFocus={(e) => {
-        e.target.style.borderColor = P.accent;
+        e.target.style.borderColor = P.primary;
         props.onFocus?.(e);
       }}
       onBlur={(e) => {
-        e.target.style.borderColor = P.borderStrong;
+        e.target.style.borderColor = P.border;
         props.onBlur?.(e);
       }}
     />
@@ -168,9 +170,9 @@ export function Toggle({
           {
             width: 44,
             height: 24,
-            background: checked ? P.accent : "var(--panel-toggle-off)",
-            border: checked ? `1px solid ${P.accent}` : "1px solid var(--panel-knob-border)",
-            "--tw-ring-color": P.accent,
+            background: checked ? P.primary : "var(--panel-toggle-off)",
+            border: checked ? `1px solid ${P.primary}` : "1px solid var(--panel-knob-border)",
+            "--tw-ring-color": P.primary,
             "--tw-ring-offset-color": P.surface,
           } as React.CSSProperties
         }
@@ -207,7 +209,7 @@ export function LockedCard({
 }) {
   return (
     <div
-      className="rounded-2xl p-6"
+      className="rounded-xl p-6"
       style={{ background: P.surface, border: `1px solid ${P.border}` }}
     >
       <div className="flex items-start gap-3.5">
@@ -257,18 +259,18 @@ export function SaveButton({
 }) {
   const label =
     state === "saving" ? "Zapisywanie…"
-    : state === "saved" ? "Zapisano!"
-    : state === "error" ? "Błąd — spróbuj ponownie"
+    : state === "saved" ? "Zapisano"
+    : state === "error" ? "Błąd, spróbuj ponownie"
     : idleLabel;
   const bg =
-    state === "saved" ? "oklch(52% 0.20 158)"
-    : state === "error" ? "oklch(50% 0.20 20)"
+    state === "saved" ? "var(--panel-success-strong)"
+    : state === "error" ? "var(--panel-danger-strong)"
     : P.accent;
   return (
     <button
       onClick={onClick}
       disabled={disabled || state === "saving"}
-      className="text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-50"
+      className="h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
       style={{ background: bg, color: "#fff" }}
     >
       {label}

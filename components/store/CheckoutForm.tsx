@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Landmark, HandCoins, Check, Copy } from "lucide-react";
+import { ChevronLeft, Landmark, HandCoins, CreditCard, Check, Copy } from "lucide-react";
 import { useCart, useCartDiscount, discountValue, formatPln, lineKey } from "@/lib/cart";
 import { trackCheckoutEvent } from "@/lib/checkout-events";
 import { useStoreBase } from "./StoreBaseContext";
@@ -19,12 +19,16 @@ interface Props {
   codEnabled: boolean;
   codFee: string;
   offers: CartOffers | null;
+  /** Sklep ma podpięte i włączone konto Tpay. */
+  onlineEnabled: boolean;
 }
+
+type PaymentChoice = "transfer" | "cod" | "online";
 
 interface Confirmation {
   orderNumber: string;
   total: string;
-  paymentMethod: "transfer" | "cod";
+  paymentMethod: PaymentChoice;
   transfer: {
     bankAccount: string;
     accountOwner: string;
@@ -33,6 +37,8 @@ interface Confirmation {
     qr: string | null;
   } | null;
   pickupPoint: { code: string; address: string } | null;
+  /** Strona płatności Tpay — tylko przy płatności online. */
+  paymentUrl: string | null;
 }
 
 const inputClass =
@@ -54,6 +60,7 @@ export default function CheckoutForm({
   codEnabled,
   codFee,
   offers,
+  onlineEnabled,
 }: Props) {
   const { items, subtotal, clear } = useCart(shopSlug);
   const { discount, setDiscount } = useCartDiscount(shopSlug);
@@ -77,9 +84,12 @@ export default function CheckoutForm({
   const [notes, setNotes] = useState("");
   const [deliveryId, setDeliveryId] = useState(deliveryMethods[0]?.id ?? "");
   const [pickupPoint, setPickupPoint] = useState<PickedPoint | null>(null);
-  const [payment, setPayment] = useState<"transfer" | "cod">(transferEnabled ? "transfer" : "cod");
+  const [payment, setPayment] = useState<PaymentChoice>(
+    onlineEnabled ? "online" : transferEnabled ? "transfer" : "cod"
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -203,6 +213,14 @@ export default function CheckoutForm({
   }
 
   // ── Empty cart ────────────────────────────────────────────────────────────
+  if (redirecting) {
+    return (
+      <div className="max-w-md mx-auto text-center py-24">
+        <p className="text-sm text-ink-2">Przekierowujemy do płatności Tpay…</p>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="text-center py-20">
@@ -229,7 +247,10 @@ export default function CheckoutForm({
   const hasDigital = items.some((i) => i.type === "digital");
   const hasService = items.some((i) => i.type === "service");
   const codShown = codEnabled && hasPhysical;
-  const effPayment: "transfer" | "cod" = payment === "cod" && !codShown ? "transfer" : payment;
+  // Pobranie znika przy koszyku bez produktów fizycznych — wtedy spadamy na
+  // pierwszą metodę, która w ogóle jest dostępna.
+  const effPayment: PaymentChoice =
+    payment === "cod" && !codShown ? (onlineEnabled ? "online" : "transfer") : payment;
 
   // ── Totals ────────────────────────────────────────────────────────────────
   const method = deliveryMethods.find((m) => m.id === deliveryId) ?? null;
@@ -277,9 +298,18 @@ export default function CheckoutForm({
         setError(data.error ?? "Nie udało się złożyć zamówienia. Spróbuj ponownie.");
         return;
       }
-      setConfirmation(data as Confirmation);
+      const confirmation = data as Confirmation;
       clear();
       setDiscount(null);
+      // Płatność online: od razu na stronę Tpay. Koszyk czyścimy wcześniej, bo
+      // zamówienie już istnieje, a powrót przyciskiem „wstecz” nie może go
+      // złożyć drugi raz.
+      if (confirmation.paymentUrl) {
+        setRedirecting(true);
+        window.location.assign(confirmation.paymentUrl);
+        return;
+      }
+      setConfirmation(confirmation);
       window.scrollTo({ top: 0 });
     } catch {
       setError("Nie udało się złożyć zamówienia. Sprawdź połączenie i spróbuj ponownie.");
@@ -418,6 +448,26 @@ export default function CheckoutForm({
           <section>
             <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">Płatność</h2>
             <div className="space-y-2.5">
+              {onlineEnabled && (
+                <label
+                  className={`flex items-center justify-between gap-3 border rounded-input px-4 py-3.5 cursor-pointer transition-colors ${
+                    effPayment === "online" ? "border-ink" : "border-rule hover:border-ink-2/40"
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={effPayment === "online"}
+                      onChange={() => setPayment("online")}
+                      className="accent-current"
+                    />
+                    <CreditCard className="w-4 h-4 text-ink-2" strokeWidth={1.5} />
+                    <span className="text-sm text-ink">Płatność online</span>
+                  </span>
+                  <span className="text-xs text-ink-2/70">BLIK, karta, szybki przelew · Tpay</span>
+                </label>
+              )}
               {transferEnabled && (
                 <label
                   className={`flex items-center justify-between gap-3 border rounded-input px-4 py-3.5 cursor-pointer transition-colors ${

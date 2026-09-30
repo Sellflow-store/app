@@ -6,17 +6,17 @@ import { FURGONETKA_SERVICES } from "@/lib/furgonetka-services";
 import type { DeliveryMethodKind } from "@/types/shop";
 
 const CARD = {
-  background: "#fff",
-  border: "1px solid oklch(90% 0 0)",
+  background: "var(--panel-surface)",
+  border: "1px solid var(--panel-border)",
 } as const;
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -49,7 +49,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   return (
     <div
       className="relative w-9 h-5 rounded-full transition-all cursor-pointer shrink-0"
-      style={{ background: checked ? "oklch(56% 0.30 335)" : "oklch(82% 0 0)" }}
+      style={{ background: checked ? "var(--panel-primary)" : "var(--panel-border-strong)" }}
       onClick={() => onChange(!checked)}
     >
       <div
@@ -76,7 +76,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 
   return (
     <div>
-      <label className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(35% 0 0)" }}>
+      <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
         {label}
       </label>
       <div className="flex gap-2">
@@ -90,9 +90,9 @@ function CopyField({ label, value }: { label: string; value: string }) {
           onClick={copy}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 rounded-[10px] shrink-0 transition-all"
           style={{
-            background: copied ? "oklch(52% 0.20 158)" : "oklch(96% 0 0)",
-            color: copied ? "#fff" : "oklch(25% 0 0)",
-            border: "1.5px solid oklch(88% 0 0)",
+            background: copied ? "var(--panel-success)" : "var(--panel-surface-hover)",
+            color: copied ? "var(--panel-surface)" : "var(--panel-ink)",
+            border: "1.5px solid var(--panel-border)",
           }}
         >
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -184,12 +184,12 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="mb-6">
         <h1
-          className="text-xl font-bold"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          className="text-xl font-semibold"
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Furgonetka
         </h1>
-        <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
           Zamówienia ze sklepu trafiają do Twojego panelu Furgonetki, a numer przesyłki
           wraca tutaj i sam idzie mailem do klienta.
         </p>
@@ -199,9 +199,9 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
         <div
           className="rounded-xl px-4 py-3 mb-5 text-xs font-medium"
           style={{
-            background: "oklch(50% 0.20 20 / 0.08)",
-            color: "oklch(40% 0.18 20)",
-            border: "1px solid oklch(50% 0.20 20 / 0.25)",
+            background: "var(--panel-danger-soft)",
+            color: "var(--panel-danger-ink)",
+            border: "1px solid var(--panel-danger-border)",
           }}
         >
           {error}
@@ -211,27 +211,27 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
       {/* ── Krok 1: dane do wklejenia ─────────────────────────────────────── */}
       <div className="rounded-2xl p-5 mb-5" style={CARD}>
         <div className="flex items-center gap-2 mb-1">
-          <Link2 className="w-4 h-4" style={{ color: "oklch(56% 0.30 335)" }} />
+          <Link2 className="w-4 h-4" style={{ color: "var(--panel-accent)" }} />
           <h2
             className="text-sm font-semibold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Dane do wklejenia w Furgonetce
           </h2>
         </div>
-        <p className="text-xs mb-4" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>
           W Furgonetce wejdź w{" "}
           <a
             href="https://furgonetka.pl/konto/integracje/dodaj/universal"
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
-            style={{ color: "oklch(56% 0.30 335)" }}
+            style={{ color: "var(--panel-accent)" }}
           >
             Ustawienia → Integracje → Własne
           </a>{" "}
           i wklej te dwie wartości. Włącz tam „Synchronizację zamówień” oraz „Wysyłkę
-          informacji o przesyłce” — bez tego drugiego numer nie wróci do sklepu.
+          informacji o przesyłce”. Bez tego drugiego numer nie wróci do sklepu.
         </p>
 
         <div className="space-y-3">
@@ -248,18 +248,18 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
                   border: "1px solid oklch(75% 0.15 85 / 0.3)",
                 }}
               >
-                Skopiuj go teraz — trzymamy tylko jego skrót i nie pokażemy go ponownie.
+                Skopiuj go teraz. Trzymamy tylko jego skrót i nie pokażemy go ponownie.
                 Jeśli go zgubisz, wygeneruj nowy i wklej w Furgonetce jeszcze raz.
               </p>
             </div>
           ) : (
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: "oklch(35% 0 0)" }}>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--panel-ink)" }}>
                 Token
               </label>
               <div
                 className="rounded-[10px] px-3 py-2.5 text-xs"
-                style={{ background: "oklch(97% 0 0)", border: "1.5px solid oklch(90% 0 0)", color: "oklch(45% 0 0)" }}
+                style={{ background: "var(--panel-surface-2)", border: "1.5px solid var(--panel-border)", color: "var(--panel-ink-muted)" }}
               >
                 {state.connected
                   ? `Token jest aktywny (kończy się na „${state.tokenHint}”). Nie możemy go pokazać ponownie.`
@@ -273,8 +273,8 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
           <button
             onClick={generateToken}
             disabled={busy}
-            className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
-            style={{ background: "oklch(56% 0.30 335)", color: "#fff" }}
+            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{ background: "var(--panel-accent)", color: "#fff" }}
           >
             {state.connected ? <RefreshCw className="w-3.5 h-3.5" /> : <KeyRound className="w-3.5 h-3.5" />}
             {busy ? "Chwila…" : state.connected ? "Wygeneruj nowy token" : "Wygeneruj token"}
@@ -284,8 +284,8 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
             <button
               onClick={disconnect}
               disabled={busy}
-              className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
-              style={{ background: "oklch(96% 0 0)", color: "oklch(40% 0.18 20)", border: "1px solid oklch(88% 0 0)" }}
+              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ background: "var(--panel-surface-hover)", color: "var(--panel-danger-ink)", border: "1px solid var(--panel-border)" }}
             >
               <Unplug className="w-3.5 h-3.5" />
               Rozłącz
@@ -294,8 +294,8 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
         </div>
 
         {state.connected && (
-          <p className="text-xs mt-3" style={{ color: "oklch(55% 0 0)" }}>
-            Wymiana tokena unieważnia poprzedni — po wygenerowaniu nowego trzeba go
+          <p className="text-xs mt-3" style={{ color: "var(--panel-ink-muted)" }}>
+            Wymiana tokena unieważnia poprzedni. Po wygenerowaniu nowego trzeba go
             wkleić w Furgonetce, inaczej synchronizacja stanie.
           </p>
         )}
@@ -308,11 +308,11 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
             <div>
               <h2
                 className="text-sm font-semibold"
-                style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+                style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
               >
                 Synchronizacja włączona
               </h2>
-              <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+              <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
                 Wyłącznik zatrzymuje wydawanie zamówień bez kasowania tokena.
               </p>
             </div>
@@ -321,10 +321,10 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
 
           <div
             className="grid grid-cols-2 gap-3 mt-4 pt-4 text-xs"
-            style={{ borderTop: "1px solid oklch(93% 0 0)", color: "oklch(45% 0 0)" }}
+            style={{ borderTop: "1px solid var(--panel-border)", color: "var(--panel-ink-muted)" }}
           >
             <div>
-              <div className="font-semibold" style={{ color: "oklch(25% 0 0)" }}>
+              <div className="font-semibold" style={{ color: "var(--panel-ink)" }}>
                 Ostatnie pobranie zamówień
               </div>
               <div className="mt-0.5">
@@ -335,7 +335,7 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
               </div>
             </div>
             <div>
-              <div className="font-semibold" style={{ color: "oklch(25% 0 0)" }}>
+              <div className="font-semibold" style={{ color: "var(--panel-ink)" }}>
                 Ostatni numer przesyłki z Furgonetki
               </div>
               <div className="mt-0.5">{formatMoment(state.lastPushAt)}</div>
@@ -349,11 +349,11 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
         <div className="rounded-2xl p-5" style={CARD}>
           <h2
             className="text-sm font-semibold mb-1"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Metody dostawy → przewoźnik
           </h2>
-          <p className="text-xs mb-4" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>
             Przy zamówieniu podpowiemy Furgonetce, jakim przewoźnikiem ma iść paczka.
             Zostaw „nie podpowiadaj”, jeśli wolisz wybierać za każdym razem sam.
           </p>
@@ -363,13 +363,13 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
               <div
                 key={m.id}
                 className="grid grid-cols-[1fr_12rem] gap-3 items-center p-3 rounded-xl"
-                style={{ background: "oklch(97% 0 0)", border: "1px solid oklch(92% 0 0)" }}
+                style={{ background: "var(--panel-surface-2)", border: "1px solid var(--panel-border)" }}
               >
                 <div>
-                  <div className="text-sm font-medium" style={{ color: "oklch(20% 0 0)" }}>
+                  <div className="text-sm font-medium" style={{ color: "var(--panel-ink)" }}>
                     {m.label}
                   </div>
-                  <div className="text-xs" style={{ color: "oklch(55% 0 0)" }}>
+                  <div className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
                     {m.kind === "parcel_locker" ? "Paczkomat / punkt odbioru" : "Kurier pod adres"}
                   </div>
                 </div>
@@ -396,17 +396,17 @@ export default function FurgonetkaForm({ shopSlug, initialState, baseUrl, method
             ))}
           </div>
 
-          <p className="text-xs mt-3" style={{ color: "oklch(55% 0 0)" }}>
-            Kod paczkomatu przekazujemy tylko wtedy, gdy wskazany przewoźnik go obsłuży —
-            punkty zbieramy z sieci InPostu.
+          <p className="text-xs mt-3" style={{ color: "var(--panel-ink-muted)" }}>
+            Kod paczkomatu przekazujemy tylko wtedy, gdy wskazany przewoźnik go obsłuży.
+            Punkty zbieramy z sieci InPostu.
           </p>
 
           <button
             onClick={saveMapping}
-            className="mt-4 text-sm font-semibold px-4 py-2.5 rounded-full transition-all"
-            style={{ background: mapSaved ? "oklch(52% 0.20 158)" : "oklch(56% 0.30 335)", color: "#fff" }}
+            className="mt-4 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90"
+            style={{ background: mapSaved ? "var(--panel-success)" : "var(--panel-accent)", color: "var(--panel-surface)" }}
           >
-            {mapSaved ? "Zapisano!" : "Zapisz mapowanie"}
+            {mapSaved ? "Zapisano" : "Zapisz mapowanie"}
           </button>
         </div>
       )}

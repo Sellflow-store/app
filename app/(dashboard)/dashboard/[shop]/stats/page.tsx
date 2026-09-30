@@ -4,6 +4,7 @@ import { and, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { TrendingUp, TrendingDown, ShoppingBag } from "lucide-react";
 import RangePicker from "./RangePicker";
+import { formatPln } from "@/lib/money";
 import {
   SOURCE_LABELS,
   AI_LABELS,
@@ -11,13 +12,16 @@ import {
   type AiSource,
 } from "@/lib/traffic";
 
-const pln = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
-const INK = "oklch(11% 0.10 275)";
-const MUTE = "oklch(50% 0 0)";
-const RULE = "oklch(90% 0 0)";
-const ACCENT = "#e8590c"; // analytics accent (orange, per design)
-const UP = "oklch(58% 0.15 150)";
-const DOWN = "oklch(58% 0.20 25)";
+const pln = (v: number) => formatPln(v);
+const INK = "var(--panel-ink)";
+const MUTE = "var(--panel-ink-muted)";
+const RULE = "var(--panel-border)";
+// Wykres w granacie Sellflow, karta AI w aqua — paleta z design.md zamiast
+// osobnego pomarańczu tylko dla analityki.
+const ACCENT = "var(--panel-primary)";
+const AQUA = "var(--panel-aqua)";
+const UP = "var(--panel-success)";
+const DOWN = "var(--panel-danger)";
 const DAY = 24 * 3600 * 1000;
 
 interface OrderItem {
@@ -38,8 +42,8 @@ const AI_DOTS: Record<AiSource, string> = {
 };
 const SOURCE_ORDER: TrafficSource[] = ["direct", "ai", "search", "social", "referral"];
 const SOURCE_COLOR: Record<TrafficSource, string> = {
-  direct: "oklch(60% 0 0)",
-  ai: ACCENT,
+  direct: "var(--panel-ink-faint)",
+  ai: AQUA,
   search: "#4285f4",
   social: "#c13584",
   referral: "oklch(45% 0.10 275)",
@@ -52,7 +56,7 @@ function pctDelta(cur: number, prev: number): number | null {
 
 function DeltaBadge({ delta, unit = "%" }: { delta: number | null; unit?: string }) {
   if (delta === null || !isFinite(delta)) {
-    return <span className="text-[13px]" style={{ color: "oklch(70% 0 0)" }}>—</span>;
+    return <span className="text-[13px]" style={{ color: "var(--panel-ink-faint)" }}>—</span>;
   }
   const up = delta >= 0;
   const Icon = up ? TrendingUp : TrendingDown;
@@ -286,13 +290,13 @@ export default async function AnalyticsPage({
   }
   const topProducts = [...productAgg.values()].sort((a, b) => b.qty - a.qty).slice(0, 5);
 
-  const card = { background: "#fff", border: `1px solid ${RULE}` };
+  const card = { background: "var(--panel-surface)", border: `1px solid ${RULE}` };
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-3" style={{ fontFamily: "var(--font-display)", color: INK }}>
+        <h1 className="text-xl font-semibold mb-3" style={{ fontFamily: "var(--font-display)", color: INK }}>
           Analityka
         </h1>
         <RangePicker
@@ -304,14 +308,14 @@ export default async function AnalyticsPage({
       </div>
 
       {/* KPI tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {tiles.map((t) => (
-          <div key={t.label} className="rounded-2xl p-4" style={card}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] mb-2" style={{ color: MUTE }}>
+          <div key={t.label} className="rounded-xl p-4 flex flex-col gap-1.5" style={card}>
+            <p className="text-[12.5px] font-medium" style={{ color: MUTE }}>
               {t.label}
             </p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold tabular-nums" style={{ fontFamily: "var(--font-display)", color: INK }}>
+              <p className="text-[26px] leading-none font-semibold tabular-nums" style={{ fontFamily: "var(--font-display)", color: INK }}>
                 {t.value}
               </p>
               <DeltaBadge delta={t.delta} unit={t.unit} />
@@ -323,8 +327,8 @@ export default async function AnalyticsPage({
       {/* Sales chart + AI visibility */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6 items-stretch">
         {/* Sales over time */}
-        <div className="lg:col-span-2 rounded-2xl p-5" style={card}>
-          <p className="text-sm font-semibold mb-1" style={{ fontFamily: "var(--font-display)", color: INK }}>
+        <div className="lg:col-span-2 rounded-xl p-5" style={card}>
+          <p className="text-[15px] font-semibold mb-1" style={{ fontFamily: "var(--font-display)", color: INK }}>
             Łączna sprzedaż w czasie
           </p>
           <p className="text-2xl font-bold tabular-nums mb-4" style={{ fontFamily: "var(--font-display)", color: INK }}>
@@ -334,8 +338,8 @@ export default async function AnalyticsPage({
           <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height: 200 }}>
             <defs>
               <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={ACCENT} stopOpacity="0.18" />
-                <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+                <stop offset="0%" style={{ stopColor: ACCENT, stopOpacity: 0.16 }} />
+                <stop offset="100%" style={{ stopColor: ACCENT, stopOpacity: 0 }} />
               </linearGradient>
             </defs>
             {/* baselines */}
@@ -347,7 +351,7 @@ export default async function AnalyticsPage({
             <polyline
               points={prevLine.join(" ")}
               fill="none"
-              stroke="oklch(72% 0 0)"
+              stroke="var(--panel-ink-faint)"
               strokeWidth="1.5"
               strokeDasharray="5 4"
               vectorEffect="non-scaling-stroke"
@@ -356,7 +360,7 @@ export default async function AnalyticsPage({
             <polyline
               points={curLine.join(" ")}
               fill="none"
-              stroke={ACCENT}
+              style={{ stroke: ACCENT }}
               strokeWidth="2"
               strokeLinejoin="round"
               strokeLinecap="round"
@@ -366,7 +370,7 @@ export default async function AnalyticsPage({
 
           <div className="flex items-center justify-between mt-2">
             {axisLabels.map((d, i) => (
-              <span key={i} className="text-[10px] tabular-nums" style={{ color: "oklch(60% 0 0)" }}>
+              <span key={i} className="text-[10px] tabular-nums" style={{ color: "var(--panel-ink-faint)" }}>
                 {d ? fmtDay(d) : ""}
               </span>
             ))}
@@ -377,24 +381,24 @@ export default async function AnalyticsPage({
               Wybrany okres
             </span>
             <span className="inline-flex items-center gap-1.5 text-[11px]" style={{ color: MUTE }}>
-              <span className="w-4 h-0 border-t-[1.5px] border-dashed" style={{ borderColor: "oklch(72% 0 0)" }} />
+              <span className="w-4 h-0 border-t-[1.5px] border-dashed" style={{ borderColor: "var(--panel-ink-faint)" }} />
               Poprzedni okres
             </span>
           </div>
         </div>
 
         {/* AI visibility */}
-        <div className="rounded-2xl p-5 relative overflow-hidden flex flex-col" style={{ background: "#111014", border: "1px solid #26242c" }}>
+        <div className="rounded-2xl p-5 relative overflow-hidden flex flex-col" style={{ background: "var(--panel-sidebar)", border: "1px solid var(--panel-sidebar-border)" }}>
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: `radial-gradient(120% 80% at 50% 30%, ${ACCENT}22 0%, transparent 60%)` }}
+            style={{ background: "radial-gradient(120% 80% at 50% 30%, color-mix(in oklch, var(--panel-aqua) 14%, transparent) 0%, transparent 60%)" }}
           />
           <div className="relative flex-1 flex flex-col">
             <span
               className="self-center inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium mb-4"
               style={{ background: "#ffffff10", color: "#f5f5f7", border: "1px solid #ffffff1a" }}
             >
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} />
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: AQUA }} />
               Widoczność w AI
             </span>
 
@@ -405,7 +409,7 @@ export default async function AnalyticsPage({
                 <ellipse cx="60" cy="60" rx="46" ry="18" fill="none" stroke="#ffffff14" strokeWidth="1" />
                 <ellipse cx="60" cy="60" rx="18" ry="46" fill="none" stroke="#ffffff14" strokeWidth="1" />
                 <ellipse cx="60" cy="60" rx="38" ry="46" fill="none" stroke="#ffffff0d" strokeWidth="1" />
-                <circle cx="60" cy="60" r="5" fill={ACCENT} />
+                <circle cx="60" cy="60" r="5" style={{ fill: AQUA }} />
                 <circle cx="60" cy="14" r="2.5" fill="#ffffff66" />
                 <circle cx="106" cy="60" r="2.5" fill="#ffffff66" />
                 <circle cx="78" cy="98" r="2.5" fill="#ffffff66" />
@@ -422,7 +426,7 @@ export default async function AnalyticsPage({
               <p className="text-[12px] mt-2 leading-snug" style={{ color: "#a1a1aa" }}>
                 {aiVisits.length > 0
                   ? "Klienci trafiają do Ciebie z asystentów AI"
-                  : "Gotowy na erę AI — widoczny dla ChatGPT, Claude i Perplexity"}
+                  : "Gotowy na erę AI: widoczny dla ChatGPT, Claude i Perplexity"}
               </p>
             </div>
 
@@ -449,8 +453,8 @@ export default async function AnalyticsPage({
       {/* Top products + traffic sources */}
       <div className="grid lg:grid-cols-2 gap-6 items-start">
         {/* Top products */}
-        <div className="rounded-2xl overflow-hidden" style={card}>
-          <h2 className="text-sm font-semibold px-5 py-4" style={{ fontFamily: "var(--font-display)", color: INK, borderBottom: `1px solid ${RULE}` }}>
+        <div className="rounded-xl overflow-hidden" style={card}>
+          <h2 className="text-[15px] font-semibold px-5 h-12 flex items-center" style={{ fontFamily: "var(--font-display)", color: INK, borderBottom: `1px solid ${RULE}` }}>
             Najlepsze produkty
           </h2>
           {topProducts.length === 0 ? (
@@ -459,13 +463,13 @@ export default async function AnalyticsPage({
             </p>
           ) : (
             topProducts.map((p, i) => (
-              <div key={p.name + i} className="flex items-center justify-between gap-3 px-5 py-3" style={{ borderTop: i > 0 ? `1px solid oklch(94% 0 0)` : "none" }}>
+              <div key={p.name + i} className="flex items-center justify-between gap-3 px-5 py-3" style={{ borderTop: i > 0 ? `1px solid var(--panel-surface-hover)` : "none" }}>
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-[11px] w-4 shrink-0" style={{ color: MUTE }}>{i + 1}.</span>
-                  <span className="text-xs font-medium truncate" style={{ color: "oklch(15% 0 0)" }}>{p.name}</span>
+                  <span className="text-[13.5px] font-medium truncate" style={{ color: "var(--panel-ink)" }}>{p.name}</span>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-xs font-semibold tabular-nums" style={{ color: INK }}>{p.qty} szt.</p>
+                  <p className="text-[13.5px] font-semibold tabular-nums" style={{ color: INK }}>{p.qty} szt.</p>
                   <p className="text-[11px] tabular-nums" style={{ color: MUTE }}>{pln(p.revenue)}</p>
                 </div>
               </div>
@@ -474,9 +478,9 @@ export default async function AnalyticsPage({
         </div>
 
         {/* Traffic sources */}
-        <div className="rounded-2xl overflow-hidden" style={card}>
-          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${RULE}` }}>
-            <h2 className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)", color: INK }}>
+        <div className="rounded-xl overflow-hidden" style={card}>
+          <div className="flex items-center justify-between px-5 h-12" style={{ borderBottom: `1px solid ${RULE}` }}>
+            <h2 className="text-[15px] font-semibold" style={{ fontFamily: "var(--font-display)", color: INK }}>
               Źródła ruchu
             </h2>
             {totalVisits > 0 && (
@@ -487,7 +491,7 @@ export default async function AnalyticsPage({
           </div>
           {sourceRows.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-5 py-10 gap-2">
-              <ShoppingBag className="w-7 h-7" style={{ color: "oklch(82% 0 0)" }} strokeWidth={1} />
+              <ShoppingBag className="w-7 h-7" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
               <p className="text-sm text-center" style={{ color: MUTE }}>Brak danych w wybranym okresie.</p>
             </div>
           ) : (
@@ -497,7 +501,7 @@ export default async function AnalyticsPage({
                 return (
                   <div key={r.source}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="inline-flex items-center gap-2 text-xs font-medium" style={{ color: "oklch(20% 0 0)" }}>
+                      <span className="inline-flex items-center gap-2 text-[13px] font-medium" style={{ color: "var(--panel-ink)" }}>
                         <span className="w-2 h-2 rounded-full" style={{ background: SOURCE_COLOR[r.source] }} />
                         {SOURCE_LABELS[r.source]}
                       </span>
@@ -505,7 +509,7 @@ export default async function AnalyticsPage({
                         {r.count} · {pct.toFixed(0)}%
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "oklch(94% 0 0)" }}>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--panel-surface-hover)" }}>
                       <div className="h-full rounded-full" style={{ width: `${pct}%`, background: SOURCE_COLOR[r.source] }} />
                     </div>
                   </div>
@@ -528,7 +532,7 @@ export default async function AnalyticsPage({
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ background: RULE }}>
           {funnelTiles.map((t) => (
-            <div key={t.label} className="px-5 py-4" style={{ background: "#fff" }}>
+            <div key={t.label} className="px-5 py-4" style={{ background: "var(--panel-surface)" }}>
               <p className="text-[11px]" style={{ color: MUTE }}>{t.label}</p>
               <p className="text-lg font-bold tabular-nums mt-1" style={{ color: INK }}>{t.value}</p>
             </div>
@@ -544,7 +548,7 @@ export default async function AnalyticsPage({
               <dl className="space-y-1.5">
                 {group.rows.map((r) => (
                   <div key={r.label} className="flex items-center justify-between text-xs">
-                    <dt style={{ color: "oklch(35% 0 0)" }}>{r.label}</dt>
+                    <dt style={{ color: "var(--panel-ink-muted)" }}>{r.label}</dt>
                     <dd className="tabular-nums" style={{ color: r.n ? INK : MUTE }}>{r.n}</dd>
                   </div>
                 ))}

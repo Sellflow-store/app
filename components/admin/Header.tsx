@@ -4,26 +4,7 @@ import { Menu, ShieldCheck } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import GlobalSearch from "./GlobalSearch";
 import NotificationsBell from "./NotificationsBell";
-
-const PAGE_LABELS: Record<string, string> = {
-  "":         "Pulpit",
-  orders:     "Zamówienia",
-  customers:  "Klienci",
-  stats:      "Analityka",
-  products:   "Produkty",
-  categories: "Kategorie",
-  payments:   "Płatności i VAT",
-  delivery:   "Dostawa",
-  discounts:  "Kody rabatowe",
-  newsletter: "Newsletter",
-  branding:   "Logo i kolorystyka",
-  home:       "Strona główna",
-  about:      "O nas",
-  faq:        "FAQ",
-  menu:       "Menu nawigacji",
-  legal:      "Dokumenty prawne",
-  settings:   "Ustawienia panelu",
-};
+import { findNavItem } from "./nav";
 
 interface HeaderProps {
   shopSlug: string;
@@ -34,6 +15,7 @@ interface HeaderProps {
 }
 
 export default function Header({ shopSlug, section, adminHref = null, onMenuToggle }: HeaderProps) {
+  const page = findNavItem(section);
   return (
     <header
       className="h-14 flex items-center gap-4 px-4 sm:px-6 shrink-0"
@@ -41,18 +23,30 @@ export default function Header({ shopSlug, section, adminHref = null, onMenuTogg
     >
       <button
         onClick={onMenuToggle}
+        aria-label="Otwórz menu"
         className="lg:hidden"
         style={{ color: "var(--panel-ink-muted)" }}
       >
         <Menu className="w-5 h-5" strokeWidth={1.5} />
       </button>
 
-      <h2
-        className="text-sm font-semibold hidden sm:block"
-        style={{ color: "var(--panel-ink)", fontFamily: "var(--font-display)" }}
-      >
-        {PAGE_LABELS[section] ?? "Panel administracyjny"}
-      </h2>
+      {/* Okruszki: grupa z menu / strona. Szczegóły (np. /orders/[id]) nadal
+          pokazują stronę nadrzędną, bo tytuł rekordu jest już w treści. */}
+      <nav aria-label="Ścieżka" className="hidden sm:flex items-center gap-2 text-[13.5px] min-w-0">
+        {page ? (
+          <>
+            {page.section.title && (
+              <>
+                <span className="text-[var(--panel-ink-muted)] whitespace-nowrap">{page.section.title}</span>
+                <span aria-hidden className="text-[var(--panel-ink-faint)]">/</span>
+              </>
+            )}
+            <span className="font-semibold text-[var(--panel-ink)] truncate">{page.item.label}</span>
+          </>
+        ) : (
+          <span className="font-semibold text-[var(--panel-ink)]">Panel administracyjny</span>
+        )}
+      </nav>
 
       <div className="flex-1 flex justify-end sm:justify-center">
         <GlobalSearch shopSlug={shopSlug} />
@@ -63,7 +57,7 @@ export default function Header({ shopSlug, section, adminHref = null, onMenuTogg
           href={adminHref}
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors hover:opacity-90"
           style={{
-            background: "oklch(22% 0.24 270)",
+            background: "var(--panel-sidebar)",
             color: "#fff",
             fontFamily: "var(--font-mono)",
           }}

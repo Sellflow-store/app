@@ -76,6 +76,10 @@ export async function addDomainToProject(domain: string): Promise<AddDomainResul
     // Domain already attached to *this* project → treat as success.
     if (code === "domain_already_exists") return { ok: true };
     if (code === "domain_already_in_use" || code === "forbidden") {
+      // Vercel answers a re-add of a domain already on *this* project (e.g.
+      // attached by hand in the Vercel dashboard) with the same "in use" code
+      // it gives for a foreign project — tell them apart by asking the project.
+      if (await isOnProject(domain)) return { ok: true };
       return { ok: false, error: "already_in_use", message: body.error?.message };
     }
     if (code === "invalid_domain") {
@@ -84,6 +88,19 @@ export async function addDomainToProject(domain: string): Promise<AddDomainResul
     return { ok: false, error: "vercel_error", message: body.error?.message };
   } catch {
     return { ok: false, error: "vercel_error" };
+  }
+}
+
+/** True when `domain` is already attached to our Vercel project. */
+async function isOnProject(domain: string): Promise<boolean> {
+  const { projectId } = env();
+  try {
+    const res = await vercelFetch(
+      `/v9/projects/${projectId}/domains/${encodeURIComponent(domain)}${teamQuery()}`,
+    );
+    return res.ok;
+  } catch {
+    return false;
   }
 }
 

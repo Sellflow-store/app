@@ -5,12 +5,12 @@ import { Save, Plus, Trash2, HelpCircle } from "lucide-react";
 import type { FaqConfig, FaqItem } from "@/types/shop";
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -18,9 +18,9 @@ const inputStyle = {
 
 const focusProps = {
   onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(22% 0.24 270)"),
+    (e.target.style.borderColor = "var(--panel-primary)"),
   onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    (e.target.style.borderColor = "oklch(88% 0 0)"),
+    (e.target.style.borderColor = "var(--panel-border)"),
 };
 
 interface Props {
@@ -57,33 +57,33 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved" ? "Zapisano!"
-    : saveState === "error" ? "Błąd — spróbuj ponownie"
+    : saveState === "saved" ? "Zapisano"
+    : saveState === "error" ? "Błąd, spróbuj ponownie"
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved" ? "oklch(52% 0.20 158)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    saveState === "saved" ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            className="text-xl font-semibold"
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             FAQ
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Najczęstsze pytania klientów i odpowiedzi
           </p>
         </div>
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />
@@ -94,11 +94,11 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
       {items.length === 0 && (
         <div
           className="flex flex-col items-center justify-center py-12 gap-3 rounded-2xl mb-5"
-          style={{ border: "1.5px dashed oklch(85% 0 0)", background: "oklch(98% 0 0)" }}
+          style={{ border: "1.5px dashed var(--panel-border-strong)", background: "var(--panel-surface-2)" }}
         >
-          <HelpCircle className="w-8 h-8" style={{ color: "oklch(80% 0 0)" }} strokeWidth={1} />
-          <p className="text-sm" style={{ color: "oklch(55% 0 0)" }}>
-            Brak pytań — dodaj pierwsze poniżej
+          <HelpCircle className="w-8 h-8" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
+          <p className="text-sm" style={{ color: "var(--panel-ink-muted)" }}>
+            Brak pytań. Dodaj pierwsze poniżej
           </p>
         </div>
       )}
@@ -108,7 +108,7 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
           <div
             key={i}
             className="rounded-2xl p-4"
-            style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+            style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
           >
             <div className="flex items-start gap-3">
               <div className="flex-1 space-y-3">
@@ -134,7 +134,7 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
                 onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}
                 aria-label={`Usuń pytanie ${i + 1}`}
                 className="p-1.5 rounded-lg transition-colors shrink-0 mt-1"
-                style={{ color: "oklch(50% 0.15 20)" }}
+                style={{ color: "var(--panel-danger-ink)" }}
               >
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
@@ -146,7 +146,7 @@ export default function FaqForm({ shopSlug, initialConfig }: Props) {
       <button
         onClick={() => setItems((prev) => [...prev, { q: "", a: "" }])}
         className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-        style={{ border: "1.5px solid oklch(85% 0 0)", color: "oklch(30% 0 0)", background: "oklch(97% 0 0)" }}
+        style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
       >
         <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
         Dodaj pytanie

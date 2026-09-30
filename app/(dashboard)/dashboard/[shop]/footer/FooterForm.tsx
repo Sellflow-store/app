@@ -13,12 +13,12 @@ interface Props {
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 const inputStyle = {
-  border: "1.5px solid oklch(88% 0 0)",
-  borderRadius: "10px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  color: "oklch(11% 0.10 275)",
-  background: "#fff",
+  border: "1px solid var(--panel-border)",
+  borderRadius: "8px",
+  padding: "8px 12px",
+  fontSize: "13.5px",
+  color: "var(--panel-ink)",
+  background: "var(--panel-surface)",
   fontFamily: "var(--font-body)",
   width: "100%",
   outline: "none",
@@ -65,26 +65,26 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
 
   const buttonLabel =
     saveState === "saving" ? "Zapisywanie…"
-    : saveState === "saved"  ? "Zapisano!"
-    : saveState === "error"  ? "Błąd — spróbuj ponownie"
+    : saveState === "saved"  ? "Zapisano"
+    : saveState === "error"  ? "Błąd, spróbuj ponownie"
     : "Zapisz zmiany";
 
   const buttonBg =
-    saveState === "saved"  ? "oklch(52% 0.20 158)"
-    : saveState === "error" ? "oklch(50% 0.20 20)"
-    : "oklch(56% 0.30 335)";
+    saveState === "saved"  ? "var(--panel-success-strong)"
+    : saveState === "error" ? "var(--panel-danger-strong)"
+    : "var(--panel-accent)";
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+            className="text-xl font-semibold"
+            style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
           >
             Stopka
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "oklch(50% 0 0)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--panel-ink-muted)" }}>
             Opis sklepu i linki do social mediów na dole każdej strony
           </p>
         </div>
@@ -92,7 +92,7 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
         <button
           onClick={handleSave}
           disabled={saveState === "saving" || invalid.length > 0}
-          className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-full transition-all disabled:opacity-60"
+          className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
           <Save className="w-3.5 h-3.5" strokeWidth={2} />
@@ -102,11 +102,11 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
 
       <div
         className="rounded-2xl p-5 mb-5"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <h2
           className="text-sm font-semibold mb-4"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Opis pod nazwą sklepu
         </h2>
@@ -118,24 +118,24 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
           placeholder="np. Kreatywne materiały do druku dla dzieci i rodziców."
           style={{ ...inputStyle, resize: "vertical" }}
         />
-        <p className="text-xs mt-2" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mt-2" style={{ color: "var(--panel-ink-muted)" }}>
           Puste pole = użyjemy tagline&apos;u z sekcji „Logo i kolorystyka”.
         </p>
       </div>
 
       <div
         className="rounded-2xl p-5"
-        style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
+        style={{ background: "var(--panel-surface)", border: "1px solid var(--panel-border)" }}
       >
         <h2
           className="text-sm font-semibold mb-1"
-          style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
+          style={{ fontFamily: "var(--font-display)", color: "var(--panel-ink)" }}
         >
           Social media
         </h2>
-        <p className="text-xs mb-4" style={{ color: "oklch(50% 0 0)" }}>
+        <p className="text-xs mb-4" style={{ color: "var(--panel-ink-muted)" }}>
           Wklej pełne adresy swoich profili. Ikona pojawi się w stopce tylko dla
-          uzupełnionych pól — puste profile nie są pokazywane.
+          uzupełnionych pól. Puste profile nie są pokazywane.
         </p>
 
         {SOCIAL_PLATFORMS.map((p) => {
@@ -146,7 +146,7 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
               <label
                 htmlFor={`social-${p.key}`}
                 className="block text-xs font-semibold mb-1.5"
-                style={{ color: "oklch(30% 0 0)" }}
+                style={{ color: "var(--panel-ink)" }}
               >
                 {p.label}
               </label>
@@ -158,11 +158,11 @@ export default function FooterForm({ shopSlug, initialConfig }: Props) {
                 placeholder={p.placeholder}
                 style={{
                   ...inputStyle,
-                  border: bad ? "1.5px solid oklch(50% 0.20 20)" : inputStyle.border,
+                  border: bad ? "1.5px solid var(--panel-danger)" : inputStyle.border,
                 }}
               />
               {bad && (
-                <p className="text-xs mt-1" style={{ color: "oklch(50% 0.20 20)" }}>
+                <p className="text-xs mt-1" style={{ color: "var(--panel-danger)" }}>
                   Podaj pełny adres zaczynający się od https://
                 </p>
               )}

@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { shops, shopConfig, products, orders } from "@/lib/db/schema";
 import { and, count, desc, eq, gte, inArray, ne, sum } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { STATUS_STYLES } from "@/lib/order-status";
+import { formatPln } from "@/lib/money";
+import { tpayEnabled } from "@/lib/tpay-status";
 import type {
   BrandingConfig, CheckoutConfig, LegalConfig, AboutConfig, AccountConfig, LegalDataConfig,
 } from "@/types/shop";
@@ -16,7 +19,7 @@ import {
   Plus, ClipboardList, Home as HomeIcon, Eye, ArrowRight, Check,
 } from "lucide-react";
 
-const pln = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
+const pln = (v: number) => formatPln(v);
 
 export default async function DashboardHome({
   params,
@@ -31,7 +34,7 @@ export default async function DashboardHome({
   const d30 = new Date(Date.now() - 30 * 24 * 3600 * 1000);
   const notCancelled = ne(orders.status, "cancelled");
 
-  const [shop, configRows, [{ products: productCount }], agg30, recent, [{ toShip }], [{ unpaid }]] =
+  const [shop, configRows, [{ products: productCount }], agg30, recent, [{ toShip }], [{ unpaid }], onlinePayments] =
     await Promise.all([
       db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
       db.select().from(shopConfig).where(eq(shopConfig.shopId, access.shopId)),
@@ -62,6 +65,7 @@ export default async function DashboardHome({
         .select({ unpaid: count() })
         .from(orders)
         .where(and(eq(orders.shopId, access.shopId), eq(orders.paymentStatus, "unpaid"), notCancelled)),
+      tpayEnabled(access.shopId),
     ]);
 
   const configMap = Object.fromEntries(configRows.map((c) => [c.key, c.value]));
@@ -92,211 +96,247 @@ export default async function DashboardHome({
     ).length === 0;
 
   // ── Setup checklist ──────────────────────────────────────────────────────
+  // Kolejność = kolejność, w jakiej sklep zaczyna zarabiać: bez produktu,
+  // płatności i dostawy nie ma zamówienia; bez dokumentów nie wolno sprzedawać;
+  // logo i „O nas” podnoszą zaufanie, ale nie blokują pierwszej sprzedaży.
   const steps = [
-    { label: "Dodaj pierwszy produkt", href: `${base}/products/new`, done: productCount > 0 },
-    { label: "Wgraj logo sklepu", href: `${base}/branding`, done: !!branding?.logoUrl },
-    { label: "Ustaw metody dostawy", href: `${base}/delivery`, done: !!configMap.delivery },
     {
-      label: "Skonfiguruj płatności",
+      label: "Dodaj pierwszy produkt",
+      desc: "Nazwa, cena i zdjęcie wystarczą. Resztę uzupełnisz później.",
+      cta: "Dodaj produkt",
+      href: `${base}/products/new`,
+      done: productCount > 0,
+    },
+    {
+      label: "Ustaw płatności",
+      desc: "Podłącz Tpay (BLIK, karty) albo włącz przelew lub pobranie.",
+      cta: "Ustaw płatności",
       href: `${base}/payments`,
-      done: !!checkout && ((checkout.transferEnabled ? !!checkout.bankAccount : false) || !!checkout.codEnabled),
+      done:
+        onlinePayments ||
+        (!!checkout && ((checkout.transferEnabled ? !!checkout.bankAccount : false) || !!checkout.codEnabled)),
+    },
+    {
+      label: "Ustaw dostawę",
+      desc: "Wybierz, jak wysyłasz, i ile to kosztuje klienta.",
+      cta: "Ustaw dostawę",
+      href: `${base}/delivery`,
+      done: !!configMap.delivery,
     },
     {
       label: "Uzupełnij dane do dokumentów",
+      desc: "Regulamin i polityka prywatności złożą się same z danych Twojej firmy.",
+      cta: "Uzupełnij dane",
       href: `${base}/legal`,
       // Dokumenty składają się same, więc „gotowe" nie znaczy „ktoś wkleił
       // tekst", tylko „nie zostały w nich luki po brakujących danych".
       done: terms?.mode === "custom" ? !!terms.content?.trim() : legalComplete,
     },
-    { label: "Dodaj dane „O nas” i kontakt", href: `${base}/about`, done: !!(about?.content?.trim() || about?.email?.trim()) },
+    {
+      label: "Wgraj logo",
+      desc: "Pojawi się w menu sklepu, w mailach i na karcie przeglądarki.",
+      cta: "Wgraj logo",
+      href: `${base}/branding`,
+      done: !!branding?.logoUrl,
+    },
+    {
+      label: "Napisz kilka zdań o marce",
+      desc: "Strona „O nas” i kontakt. Klienci sprawdzają ją przed pierwszym zakupem.",
+      cta: "Uzupełnij „O nas”",
+      href: `${base}/about`,
+      done: !!(about?.content?.trim() || about?.email?.trim()),
+    },
   ];
   const doneCount = steps.filter((s) => s.done).length;
   const allDone = doneCount === steps.length;
   const pct = Math.round((doneCount / steps.length) * 100);
+  const nextStep = steps.find((s) => !s.done);
 
   const gmv30 = parseFloat(agg30[0]?.gmv ?? "0") || 0;
   const orders30 = agg30[0]?.total ?? 0;
 
+  // Najpierw to, co wymaga ruchu dziś (do obsługi, nieopłacone), potem
+  // liczby sprzedażowe. Magenta tylko wtedy, gdy jest co zrobić.
   const tiles = [
-    { label: "Sprzedaż (30 dni)", value: pln(gmv30), href: `${base}/stats`, accent: false },
-    { label: "Zamówienia (30 dni)", value: String(orders30), href: `${base}/stats`, accent: false },
-    { label: "Do obsługi", value: String(toShip), href: `${base}/orders`, accent: toShip > 0 },
-    { label: "Nieopłacone", value: String(unpaid), href: `${base}/orders`, accent: unpaid > 0 },
+    { label: "Do obsługi", value: String(toShip), hint: "nowe i w realizacji", href: `${base}/orders`, accent: toShip > 0 },
+    { label: "Czeka na płatność", value: String(unpaid), hint: "online anulujemy po 48 h", href: `${base}/orders`, accent: unpaid > 0 },
+    { label: "Sprzedaż, 30 dni", value: pln(gmv30), hint: "bez anulowanych", href: `${base}/stats`, accent: false },
+    { label: "Zamówienia, 30 dni", value: String(orders30), hint: "bez anulowanych", href: `${base}/stats`, accent: false },
   ];
 
-  const STATUS_LABEL: Record<string, string> = {
-    pending: "Nowe", processing: "W realizacji", shipped: "Wysłane",
-    delivered: "Dostarczone", cancelled: "Anulowane",
-  };
-
   return (
-    <div className="p-6 lg:p-8 max-w-5xl mx-auto">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-6xl mx-auto">
       {/* Greeting */}
       <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
         <div>
-          <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
-          >
-            Cześć, {shopName} 👋
+          <h1 className="text-2xl font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
+            Cześć, {shopName}
           </h1>
-          <p className="text-xs mt-1" style={{ color: "oklch(50% 0 0)" }}>
-            Oto co dzieje się w Twoim sklepie.
+          <p className="text-[13.5px] mt-1 text-[var(--panel-ink-muted)]">
+            {allDone
+              ? "Oto co dzieje się dziś w Twoim sklepie."
+              : `Do uruchomienia sklepu ${stepsLeftLabel(steps.length - doneCount)}.`}
           </p>
         </div>
         <Link
           href={`/${shopSlug}`}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-full transition-all"
-          style={{ border: "1.5px solid oklch(88% 0 0)", color: "oklch(25% 0 0)", background: "#fff" }}
+          className="flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-medium border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--panel-ink)] hover:border-[var(--panel-border-strong)] transition-colors"
         >
-          <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+          <Eye className="w-4 h-4 text-[var(--panel-ink-muted)]" strokeWidth={1.75} />
           Zobacz sklep
         </Link>
       </div>
 
-      {/* Setup checklist */}
-      {!allDone && (
-        <div
-          className="rounded-2xl p-5 mb-6"
-          style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <h2
-              className="text-sm font-semibold"
-              style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}
-            >
-              Skonfiguruj swój sklep
-            </h2>
-            <span className="text-xs font-semibold tabular-nums" style={{ color: "oklch(45% 0 0)" }}>
-              {doneCount}/{steps.length}
-            </span>
-          </div>
-          {/* Progress bar */}
-          <div className="h-1.5 rounded-full mb-4 overflow-hidden" style={{ background: "oklch(93% 0 0)" }}>
-            <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${pct}%`, background: "oklch(56% 0.30 335)" }}
-            />
+      {/* Uruchomienie sklepu: dopóki coś zostało, to jest pierwsza rzecz na
+          pulpicie, z jednym wyraźnym następnym krokiem zamiast listy do wyboru. */}
+      {!allDone && nextStep && (
+        <section className="rounded-xl mb-6 border border-[var(--panel-border)] bg-[var(--panel-surface)] overflow-hidden">
+          <div className="px-5 pt-5 pb-4">
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <h2 className="text-[15px] font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
+                Uruchom sklep
+              </h2>
+              <span className="text-[12.5px] font-medium tabular-nums text-[var(--panel-ink-muted)]">
+                {doneCount} z {steps.length} gotowe
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden bg-[var(--panel-surface-2)]">
+              <div className="h-full rounded-full transition-all bg-[var(--panel-primary)]" style={{ width: `${pct}%` }} />
+            </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-2">
-            {steps.map((s) => (
-              <Link
-                key={s.label}
-                href={s.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors"
-                style={{ background: s.done ? "oklch(97% 0.02 150)" : "oklch(98% 0 0)" }}
-              >
-                <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                  style={
-                    s.done
-                      ? { background: "oklch(52% 0.20 158)", color: "#fff" }
-                      : { border: "1.5px solid oklch(80% 0 0)" }
-                  }
-                >
-                  {s.done && <Check className="w-3 h-3" strokeWidth={3} />}
-                </span>
-                <span
-                  className="text-xs flex-1"
-                  style={{
-                    color: s.done ? "oklch(45% 0.05 150)" : "oklch(20% 0 0)",
-                    textDecoration: s.done ? "line-through" : "none",
-                    fontWeight: s.done ? 400 : 500,
-                  }}
-                >
-                  {s.label}
-                </span>
-                {!s.done && <ArrowRight className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} style={{ color: "oklch(60% 0 0)" }} />}
-              </Link>
-            ))}
+          <div className="mx-5 mb-4 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3 bg-[var(--panel-primary-soft)]">
+            <div className="flex-1 min-w-0">
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--panel-ink-muted)]">
+                Następny krok
+              </p>
+              <p className="text-[15px] font-semibold mt-0.5 text-[var(--panel-ink)]">{nextStep.label}</p>
+              <p className="text-[13px] mt-0.5 text-[var(--panel-ink-muted)]">{nextStep.desc}</p>
+            </div>
+            <Link
+              href={nextStep.href}
+              className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-lg text-[13px] font-semibold bg-[var(--panel-accent)] text-white hover:opacity-90 transition-opacity shrink-0"
+            >
+              {nextStep.cta}
+              <ArrowRight className="w-4 h-4" strokeWidth={2} />
+            </Link>
           </div>
-        </div>
+
+          <ol className="border-t border-[var(--panel-border)] divide-y divide-[var(--panel-border)]">
+            {steps.map((s, i) => (
+              <li key={s.label}>
+                <Link
+                  href={s.href}
+                  className="group flex items-center gap-3 px-5 min-h-11 py-2 transition-colors hover:bg-[var(--panel-surface-hover)]"
+                >
+                  <span
+                    className={[
+                      "w-[20px] h-[20px] rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold tabular-nums",
+                      s.done
+                        ? "bg-[var(--panel-success-strong)] text-white"
+                        : s === nextStep
+                          ? "border-[1.5px] border-[var(--panel-primary)] text-[var(--panel-primary)]"
+                          : "border-[1.5px] border-[var(--panel-border-strong)] text-[var(--panel-ink-faint)]",
+                    ].join(" ")}
+                  >
+                    {s.done ? <Check className="w-3 h-3" strokeWidth={3} /> : i + 1}
+                  </span>
+                  <span className={["text-[13.5px] flex-1", s.done ? "text-[var(--panel-ink-muted)]" : "text-[var(--panel-ink)] font-medium"].join(" ")}>
+                    {s.label}
+                  </span>
+                  <span className="text-[12.5px] text-[var(--panel-ink-faint)] group-hover:text-[var(--panel-ink)] transition-colors">
+                    {s.done ? "Zmień" : "Przejdź"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
 
       {/* Stat tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {tiles.map((t) => (
           <Link
             key={t.label}
             href={t.href}
-            className="rounded-2xl p-4 transition-all"
-            style={{
-              background: "#fff",
-              border: `1px solid ${t.accent ? "oklch(56% 0.30 335 / 0.4)" : "oklch(90% 0 0)"}`,
-            }}
+            className={[
+              "rounded-xl p-4 border bg-[var(--panel-surface)] transition-colors flex flex-col gap-1.5",
+              t.accent
+                ? "border-[color-mix(in_oklch,var(--panel-accent)_45%,transparent)] hover:border-[var(--panel-accent)]"
+                : "border-[var(--panel-border)] hover:border-[var(--panel-border-strong)]",
+            ].join(" ")}
           >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] mb-2" style={{ color: "oklch(50% 0 0)" }}>
+            <span className="text-[12.5px] font-medium text-[var(--panel-ink-muted)] flex items-center gap-2">
+              {t.accent && <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-[var(--panel-accent)]" />}
               {t.label}
-            </p>
-            <p
-              className="text-2xl font-bold tabular-nums"
-              style={{ fontFamily: "var(--font-display)", color: t.accent ? "oklch(46% 0.25 333)" : "oklch(11% 0.10 275)" }}
+            </span>
+            <span
+              className={["text-[26px] font-semibold tabular-nums leading-none", t.accent ? "text-[var(--panel-accent)]" : "text-[var(--panel-ink)]"].join(" ")}
+              style={{ fontFamily: "var(--font-display)" }}
             >
               {t.value}
-            </p>
+            </span>
+            <span className="text-[12px] text-[var(--panel-ink-faint)]">{t.hint}</span>
           </Link>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-6 items-start">
         {/* Recent orders */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
-        >
-          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid oklch(92% 0 0)" }}>
-            <h2 className="text-sm font-semibold" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+        <div className="rounded-xl overflow-hidden border border-[var(--panel-border)] bg-[var(--panel-surface)]">
+          <div className="flex items-center justify-between px-5 h-12 border-b border-[var(--panel-border)]">
+            <h2 className="text-[15px] font-semibold text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
               Ostatnie zamówienia
             </h2>
-            <Link href={`${base}/orders`} className="text-[11px] font-medium" style={{ color: "oklch(22% 0.24 270)" }}>
-              Wszystkie →
+            <Link href={`${base}/orders`} className="text-[13px] font-medium text-[var(--panel-primary)] hover:underline">
+              Wszystkie
             </Link>
           </div>
           {recent.length === 0 ? (
-            <p className="px-5 py-10 text-sm text-center" style={{ color: "oklch(55% 0 0)" }}>
-              Brak zamówień — pojawią się tu po pierwszym zakupie
+            <p className="px-5 py-10 text-sm text-center text-[var(--panel-ink-muted)]">
+              Brak zamówień. Pojawią się tu po pierwszym zakupie.
             </p>
           ) : (
-            recent.map((o, i) => (
-              <Link
-                key={o.id}
-                href={`${base}/orders/${o.id}`}
-                className="flex items-center justify-between gap-3 px-5 py-3"
-                style={{ borderTop: i > 0 ? "1px solid oklch(94% 0 0)" : "none" }}
-              >
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold" style={{ color: "oklch(22% 0.24 270)", fontFamily: "var(--font-display)" }}>
-                    {o.orderNumber}
-                    <span className="font-normal ml-2" style={{ color: "oklch(40% 0 0)" }}>
-                      {o.customerName ?? "—"}
-                    </span>
-                  </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "oklch(55% 0 0)" }}>
-                    {STATUS_LABEL[o.status] ?? o.status}
-                    {o.paymentStatus === "unpaid" ? " · nieopłacone" : ""}
-                  </p>
-                </div>
-                <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: "oklch(11% 0.10 275)" }}>
-                  {pln(parseFloat(o.total))}
-                </span>
-              </Link>
-            ))
+            <ul className="divide-y divide-[var(--panel-border)]">
+              {recent.map((o) => {
+                const st = STATUS_STYLES[o.status] ?? STATUS_STYLES.pending;
+                return (
+                  <li key={o.id}>
+                    <Link
+                      href={`${base}/orders/${o.id}`}
+                      className="flex items-center gap-4 px-5 h-[52px] transition-colors hover:bg-[var(--panel-surface-hover)]"
+                    >
+                      <span className="text-[12.5px] font-medium text-[var(--panel-primary)] w-[88px] shrink-0" style={{ fontFamily: "var(--font-mono)" }}>
+                        {o.orderNumber}
+                      </span>
+                      <span className="text-[13.5px] font-medium text-[var(--panel-ink)] truncate flex-1 min-w-0">
+                        {o.customerName ?? "—"}
+                      </span>
+                      <span className="hidden sm:flex items-center gap-2 text-[13px] text-[var(--panel-ink-muted)] w-[118px] shrink-0">
+                        <span aria-hidden className="w-2 h-2 rounded-full shrink-0" style={{ background: st.dot }} />
+                        {st.label}
+                      </span>
+                      <span className="text-[13.5px] font-semibold tabular-nums text-[var(--panel-ink)] shrink-0 text-right w-[92px]">
+                        {pln(parseFloat(o.total))}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
 
         {/* Quick actions */}
-        <div
-          className="rounded-2xl p-5"
-          style={{ background: "#fff", border: "1px solid oklch(90% 0 0)" }}
-        >
-          <h2 className="text-sm font-semibold mb-4" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+        <div className="rounded-xl p-5 border border-[var(--panel-border)] bg-[var(--panel-surface)]">
+          <h2 className="text-[15px] font-semibold mb-4 text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
             Szybkie akcje
           </h2>
-          <div className="space-y-2">
-            <QuickAction href={`${base}/products/new`} icon={Plus} label="Dodaj produkt" primary />
+          <div className="flex flex-col gap-2">
+            <QuickAction href={`${base}/products/new`} icon={Plus} label="Dodaj produkt" primary={allDone} />
             <QuickAction href={`${base}/orders`} icon={ClipboardList} label="Zarządzaj zamówieniami" />
             <QuickAction href={`${base}/home`} icon={HomeIcon} label="Edytuj stronę główną" />
             <QuickAction href={`${base}/branding`} icon={Palette} label="Logo i kolorystyka" />
@@ -307,20 +347,26 @@ export default async function DashboardHome({
   );
 }
 
+function stepsLeftLabel(n: number): string {
+  if (n === 1) return "został 1 krok";
+  const few = n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14);
+  return few ? `zostały ${n} kroki` : `zostało ${n} kroków`;
+}
+
 function QuickAction({
   href, icon: Icon, label, primary,
 }: { href: string; icon: typeof Plus; label: string; primary?: boolean }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all"
-      style={
+      className={[
+        "flex items-center gap-2.5 px-3.5 h-10 rounded-lg text-[13.5px] font-medium transition-colors",
         primary
-          ? { background: "oklch(56% 0.30 335)", color: "#fff" }
-          : { border: "1.5px solid oklch(88% 0 0)", color: "oklch(25% 0 0)" }
-      }
+          ? "bg-[var(--panel-accent)] text-white hover:opacity-90"
+          : "border border-[var(--panel-border)] text-[var(--panel-ink)] hover:border-[var(--panel-border-strong)] hover:bg-[var(--panel-surface-hover)]",
+      ].join(" ")}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+      <Icon className={["w-4 h-4 shrink-0", primary ? "" : "text-[var(--panel-ink-muted)]"].join(" ")} strokeWidth={1.75} />
       {label}
     </Link>
   );

@@ -26,7 +26,7 @@ export default function Edge({ onNext, onBack }: Props) {
       </h2>
       <p className="text-sm leading-relaxed" style={{ color: "var(--brand-ink-2)" }}>
         Dlaczego klient ma kupić u Ciebie, nie u konkurencji? Małe partie, autorskie składy,
-        gwarancja — wybierz to, co naprawdę robisz inaczej.
+        gwarancja: wybierz to, co naprawdę robisz inaczej.
       </p>
 
       <textarea

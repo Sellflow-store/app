@@ -332,7 +332,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
               />
 
               {error && (
-                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "oklch(97% 0.01 20)", color: "oklch(45% 0.20 20)" }}>
+                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)" }}>
                   {error}
                 </p>
               )}
@@ -432,7 +432,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
                 )}
 
                 {error && (
-                  <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "oklch(97% 0.01 20)", color: "oklch(45% 0.20 20)" }}>
+                  <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)" }}>
                     {error}
                   </p>
                 )}
