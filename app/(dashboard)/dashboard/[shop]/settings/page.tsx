@@ -17,12 +17,15 @@ export default async function SettingsPage({
   const access = await getShopAccess(shopSlug);
   if (!access) notFound();
 
-  const [shop, owner, configs] = await Promise.all([
+  const [shop, configs] = await Promise.all([
     db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
-    db.query.users.findFirst({ where: eq(users.id, access.userId) }),
     db.select().from(shopConfig).where(eq(shopConfig.shopId, access.shopId)),
   ]);
   if (!shop) notFound();
+
+  // Plan, e-mail i ID konta to dane WŁAŚCICIELA sklepu, nie osoby, która
+  // ogląda panel: admin Sellflow wchodzący do cudzego sklepu ma własny plan.
+  const owner = await db.query.users.findFirst({ where: eq(users.id, shop.ownerId) });
 
   const configMap = Object.fromEntries(configs.map((c) => [c.key, c.value]));
 
@@ -53,7 +56,7 @@ export default async function SettingsPage({
     <SettingsPanel
       shopSlug={shop.slug}
       accountEmail={owner?.email ?? ""}
-      userId={access.userId}
+      userId={owner?.id ?? shop.ownerId}
       plan={owner?.plan ?? "free"}
       account={account}
       shopName={shop.name}
