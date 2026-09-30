@@ -138,3 +138,79 @@ export function useCart(shopSlug: string) {
 
   return { items, add, setQty, remove, clear, count, subtotal };
 }
+
+// ── Kod rabatowy przypięty do koszyka ──────────────────────────────────────
+// Żyje obok pozycji koszyka (ten sam sklep, ta sama przeglądarka), więc kod
+// z linku (?kod=…) albo wpisany w koszyku przetrwa przejście do zamówienia,
+// odświeżenie strony i drugą kartę. Serwer i tak sprawdza go przy zamówieniu.
+
+/** Skąd kod się wziął — do pomiaru, które źródło faktycznie działa. */
+export type DiscountSource = "link" | "manual" | "offer_public" | "offer_newsletter";
+
+export interface CartDiscount {
+  code: string;
+  percent: number;
+  source: DiscountSource;
+}
+
+const DISCOUNT_PREFIX = "sf-discount-";
+const discountCache = new Map<string, CartDiscount | null>();
+const discountListeners = new Set<() => void>();
+
+function readDiscount(slug: string): CartDiscount | null {
+  if (typeof window === "undefined") return null;
+  if (discountCache.has(slug)) return discountCache.get(slug)!;
+  let d: CartDiscount | null = null;
+  try {
+    const raw = window.localStorage.getItem(`${DISCOUNT_PREFIX}${slug}`);
+    const parsed = raw ? (JSON.parse(raw) as Partial<CartDiscount>) : null;
+    if (parsed && typeof parsed.code === "string" && typeof parsed.percent === "number") {
+      d = { code: parsed.code, percent: parsed.percent, source: parsed.source ?? "manual" };
+    }
+  } catch {
+    // corrupted entry — no discount
+  }
+  discountCache.set(slug, d);
+  return d;
+}
+
+function writeDiscount(slug: string, d: CartDiscount | null) {
+  discountCache.set(slug, d);
+  try {
+    if (d) window.localStorage.setItem(`${DISCOUNT_PREFIX}${slug}`, JSON.stringify(d));
+    else window.localStorage.removeItem(`${DISCOUNT_PREFIX}${slug}`);
+  } catch {
+    // storage blocked — the code still works in this tab
+  }
+  discountListeners.forEach((notify) => notify());
+}
+
+function subscribeDiscount(notify: () => void) {
+  discountListeners.add(notify);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key?.startsWith(DISCOUNT_PREFIX)) {
+      discountCache.delete(e.key.slice(DISCOUNT_PREFIX.length));
+      notify();
+    }
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    discountListeners.delete(notify);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+export function useCartDiscount(shopSlug: string) {
+  const discount = useSyncExternalStore(
+    subscribeDiscount,
+    () => readDiscount(shopSlug),
+    () => null,
+  );
+  const setDiscount = useCallback((d: CartDiscount | null) => writeDiscount(shopSlug, d), [shopSlug]);
+  return { discount, setDiscount };
+}
+
+/** Kwota rabatu liczona tak samo jak na serwerze (orders/route.ts), co do grosza. */
+export function discountValue(subtotal: number, percent: number): number {
+  return Math.round(subtotal * percent) / 100;
+}

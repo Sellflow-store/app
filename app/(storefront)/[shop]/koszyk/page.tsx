@@ -5,6 +5,7 @@ import TopBar from "@/components/store/TopBar";
 import Navbar from "@/components/store/Navbar";
 import Footer from "@/components/store/Footer";
 import CartView from "@/components/store/CartView";
+import { getCartOffers } from "@/lib/cart-offers";
 
 interface Props {
   params: Promise<{ shop: string }>;
@@ -14,6 +15,7 @@ export default async function CartPage({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) notFound();
+  const offers = await getCartOffers(shop.id);
 
   return (
     <>
@@ -22,7 +24,7 @@ export default async function CartPage({ params }: Props) {
         <TopBar config={shop.home} />
         <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />
         <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-          <CartView shopSlug={shop.slug} freeShippingFrom={shop.delivery.freeShippingFrom} />
+          <CartView shopSlug={shop.slug} freeShippingFrom={shop.delivery.freeShippingFrom} offers={offers} />
         </main>
         <Footer shopSlug={shop.slug} branding={shop.branding} footer={shop.footer} />
       </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { uniqueViolation } from "@/lib/db/errors";
 import { users, shops, shopConfig, products as productsTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { adminEmailAllowlist } from "@/lib/api";
@@ -99,79 +100,88 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ shopSlug: existingShop.slug });
   }
 
-  // Create shop. The unique index still guards against a race between
-  // findFreeSlug and the insert — one retry with a random suffix covers it.
-  let shop: typeof shops.$inferSelect;
-  try {
-    [shop] = await db
-      .insert(shops)
-      .values({ slug: finalSlug, name: shopName.trim(), ownerId: user.id })
-      .returning();
-  } catch (e) {
-    const isUnique = e instanceof Error && /unique|duplicate/i.test(e.message);
-    if (!isUnique) throw e;
-    [shop] = await db
-      .insert(shops)
-      .values({
-        slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
-        name: shopName.trim(),
-        ownerId: user.id,
-      })
-      .returning();
-  }
-
   // Logo z kreatora jedzie w payloadzie jako data URI (użytkownik bywał
-  // niezalogowany, gdy je wybierał). Tutaj mamy już i sesję, i sklep, więc
-  // przekładamy obraz na Blob i do bazy zapisujemy sam URL — inaczej base64
-  // siedziałoby w `shop_config` i doklejało się do HTML każdej podstrony sklepu.
+  // niezalogowany, gdy je wybierał). Tutaj mamy już sesję, więc przekładamy
+  // obraz na Blob i do bazy zapisujemy sam URL — inaczej base64 siedziałoby
+  // w `shop_config` i doklejało się do HTML każdej podstrony sklepu.
   // Gdy storage nie odpowie, zostaje data URI: sklep ma powstać mimo wszystko.
+  // Upload idzie przed zapisem sklepu, bo zapis jest jedną transakcją.
   const rawLogo = bootstrap?.store.logoDataUrl;
   let logoUrl = rawLogo ?? "";
   if (isDataUrl(rawLogo)) {
     logoUrl = isImageDataUrl(rawLogo)
       // Nieudany upload (brak storage, za duży plik) nie może kosztować logo —
       // zostaje base64, czyli zachowanie sprzed tej zmiany.
-      ? (await uploadDataUrl(rawLogo, `shops/${user.id}`, `${shop.slug}-branding-logo`)) ?? rawLogo
+      ? (await uploadDataUrl(rawLogo, `shops/${user.id}`, `${finalSlug}-branding-logo`)) ?? rawLogo
       // Data URI, które nie jest obrazem, w ogóle nie ma czego szukać w brandingu.
       : "";
   }
 
-  // Seed config — branded if a bootstrap payload was sent, neutral defaults otherwise.
-  await db.insert(shopConfig).values(buildConfigRows(shop.id, shopName.trim(), bootstrap, logoUrl));
+  // Shop, its config and seed products are written in one db.batch, which
+  // neon-http runs as a single transaction: a failure leaves nothing behind,
+  // so a retry starts clean instead of finding a bare shop with no config.
+  // The unique indexes settle races: a second shop for the same owner is
+  // refused (the concurrent request's shop is returned), a slug taken in the
+  // meantime gets one retry with a random suffix.
+  const ownerId = user.id;
+  const createShop = async (slugToUse: string) => {
+    const shopId = crypto.randomUUID();
+    const productRows = seedProductRows(shopId, bootstrap);
+    const [inserted] = await db.batch([
+      db.insert(shops).values({ id: shopId, slug: slugToUse, name: shopName.trim(), ownerId }).returning(),
+      db.insert(shopConfig).values(buildConfigRows(shopId, shopName.trim(), bootstrap, logoUrl)),
+      ...(productRows.length ? [db.insert(productsTable).values(productRows)] : []),
+    ]);
+    return inserted[0];
+  };
 
-  // Seed products from the bootstrap payload (if any) so the new dashboard
-  // isn't empty. Names + prices come from the inferred catalog per category.
-  if (bootstrap?.store.products?.length) {
-    // Sklep jest świeży, więc kolizje adresów rozstrzygamy w pamięci — dwa
-    // produkty o tej samej nazwie dostają „-2", „-3" jak wszędzie indziej.
-    const usedSlugs = new Set<string>();
-    const uniqueSlug = (name: string) => {
-      const root = slugify(name) || "produkt";
-      if (!usedSlugs.has(root)) return usedSlugs.add(root), root;
-      for (let i = 2; ; i++) {
-        const candidate = `${root}-${i}`;
-        if (!usedSlugs.has(candidate)) return usedSlugs.add(candidate), candidate;
-      }
-    };
-    const rows = bootstrap.store.products.slice(0, 20).map((p, i) => ({
-      shopId: shop.id,
-      name: p.name,
-      slug: uniqueSlug(p.name),
-      category: bootstrap.store.category,
-      price: p.price,
-      oldPrice: p.originalPrice ?? null,
-      badge: p.badge ?? null,
-      shortDesc: p.description,
-      description: p.description,
-      images: [] as string[],
-      colors: [] as string[],
-      sizes: [] as string[],
-      sortOrder: i,
-    }));
-    await db.insert(productsTable).values(rows);
+  let shop: typeof shops.$inferSelect;
+  try {
+    shop = await createShop(finalSlug);
+  } catch (e) {
+    const constraint = uniqueViolation(e);
+    if (!constraint) throw e;
+    if (constraint === "shops_owner_unique_idx") {
+      const concurrent = await db.query.shops.findFirst({ where: eq(shops.ownerId, user.id) });
+      if (concurrent) return NextResponse.json({ shopSlug: concurrent.slug });
+      throw e;
+    }
+    shop = await createShop(`${finalSlug}-${Math.random().toString(36).slice(2, 6)}`);
   }
 
   return NextResponse.json({ shopSlug: shop.slug }, { status: 201 });
+}
+
+/** Seed products from the bootstrap payload (if any) so the new dashboard
+ *  isn't empty. Names + prices come from the inferred catalog per category. */
+function seedProductRows(shopId: string, bootstrap?: StoreBootstrap) {
+  if (!bootstrap?.store.products?.length) return [];
+  // Sklep jest świeży, więc kolizje adresów rozstrzygamy w pamięci — dwa
+  // produkty o tej samej nazwie dostają „-2", „-3" jak wszędzie indziej.
+  const usedSlugs = new Set<string>();
+  const uniqueSlug = (name: string) => {
+    const root = slugify(name) || "produkt";
+    if (!usedSlugs.has(root)) return usedSlugs.add(root), root;
+    for (let i = 2; ; i++) {
+      const candidate = `${root}-${i}`;
+      if (!usedSlugs.has(candidate)) return usedSlugs.add(candidate), candidate;
+    }
+  };
+  return bootstrap.store.products.slice(0, 20).map((p, i) => ({
+    shopId,
+    name: p.name,
+    slug: uniqueSlug(p.name),
+    category: bootstrap.store.category,
+    price: p.price,
+    oldPrice: p.originalPrice ?? null,
+    badge: p.badge ?? null,
+    shortDesc: p.description,
+    description: p.description,
+    images: [] as string[],
+    colors: [] as string[],
+    sizes: [] as string[],
+    sortOrder: i,
+  }));
 }
 
 function buildConfigRows(
