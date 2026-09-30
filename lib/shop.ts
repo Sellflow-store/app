@@ -197,8 +197,18 @@ export const DEFAULT_COMPLIANCE: ComplianceConfig = {
       "Używamy plików cookie, aby zapewnić najlepsze działanie sklepu oraz — za Twoją zgodą — do analityki i marketingu.",
     policyUrl: "/prywatnosc",
   },
-  omnibus: { enabled: true },
+  omnibus: { enabled: true },  ai: { allowTraining: true },
 };
+
+/** Zapisana konfiguracja zgodności uzupełniona domyślnymi wartościami. */
+export function normalizeCompliance(raw: Partial<ComplianceConfig> | undefined | null): ComplianceConfig {
+  const saved = raw ?? {};
+  return {
+    cookieBanner: { ...DEFAULT_COMPLIANCE.cookieBanner, ...(saved.cookieBanner ?? {}) },
+    omnibus: { ...DEFAULT_COMPLIANCE.omnibus, ...(saved.omnibus ?? {}) },
+    ai: { ...DEFAULT_COMPLIANCE.ai, ...(saved.ai ?? {}) },
+  };
+}
 
 /** The reward code stays on the server: the popup only needs to know one exists. */
 function publicPopup(p: HomeConfig["popup"]): HomeConfig["popup"] {
@@ -324,11 +334,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     ...((configMap.integrations as Partial<IntegrationsConfig>) ?? {}),
   };
 
-  const savedCompliance = (configMap.compliance as Partial<ComplianceConfig>) ?? {};
-  const compliance: ComplianceConfig = {
-    cookieBanner: { ...DEFAULT_COMPLIANCE.cookieBanner, ...(savedCompliance.cookieBanner ?? {}) },
-    omnibus: { ...DEFAULT_COMPLIANCE.omnibus, ...(savedCompliance.omnibus ?? {}) },
-  };
+  const compliance = normalizeCompliance(configMap.compliance as Partial<ComplianceConfig> | undefined);
 
   const account: AccountConfig = {
     ...DEFAULT_ACCOUNT,

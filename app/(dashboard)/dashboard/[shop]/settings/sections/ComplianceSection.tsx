@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, Tag } from "lucide-react";
+import { ShieldCheck, Tag, Bot } from "lucide-react";
 import type { ComplianceConfig } from "@/types/shop";
 import { SectionTitle, Card, Field, TextInput, Toggle, SaveButton, P, type SaveState } from "../ui";
 import { saveConfig } from "./save";
@@ -92,6 +92,19 @@ export default function ComplianceSection({
           Sklep automatycznie zapisuje historię cen każdego produktu i wylicza najniższą cenę z 30 dni.
           Informacja pojawia się na karcie produktu wszędzie tam, gdzie widnieje cena przekreślona.
         </p>
+      </Card>
+
+      <Card title="Boty AI">
+        <div className="flex items-center gap-2 mb-2" style={{ color: P.muted }}>
+          <Bot className="w-4 h-4" strokeWidth={1.75} />
+          <span className="text-xs">Wyszukiwarki AI i asystenci działający na prośbę klientów mają zawsze dostęp do sklepu.</span>
+        </div>
+        <Toggle
+          checked={data.ai.allowTraining}
+          onChange={(v) => setData((d) => ({ ...d, ai: { allowTraining: v } }))}
+          label="Pozwól botom trenującym modele AI czytać sklep"
+          desc="GPTBot, ClaudeBot, Google-Extended i podobne. Obecność w wiedzy modeli to darmowy zasięg dla marki. Wyłącz, jeśli nie chcesz, żeby opisy i zdjęcia trafiały do trenowania."
+        />
       </Card>
     </div>
   );

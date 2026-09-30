@@ -12,6 +12,7 @@ import AddToCartButton from "@/components/store/AddToCartButton";
 import InquiryCta from "@/components/store/InquiryCta";
 import { toSafeHtml, stripHtml } from "@/lib/sanitize";
 import { absoluteUrl, jsonLdProps, shopOrigin } from "@/lib/seo";
+import { faqPageLd, returnPolicyLd, shippingDetailsLd } from "@/lib/agent-commerce";
 import type { StorefrontProduct } from "@/types/shop";
 
 interface Props {
@@ -66,6 +67,10 @@ export default async function ProductPage({ params }: Props) {
   };
   if (product.category) productLd.category = product.category;
   if (!product.priceOnRequest) {
+    // Dostawa i zwroty z konfiguracji sklepu: to pierwsze kryteria, po których
+    // agent AI i Google odsiewają oferty („darmowa dostawa”, „zwrot 14 dni”).
+    const shipping =
+      product.type === "physical" ? shippingDetailsLd(shop.delivery, shop.legal, parseFloat(product.price)) : [];
     productLd.offers = {
       "@type": "Offer",
       url,
@@ -76,8 +81,12 @@ export default async function ProductPage({ params }: Props) {
         product.stock != null && product.stock <= 0
           ? "https://schema.org/OutOfStock"
           : "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: shop.branding.shopName },
+      hasMerchantReturnPolicy: returnPolicyLd(product, shop.legal),
+      ...(shipping.length > 0 ? { shippingDetails: shipping } : {}),
     };
   }
+  const productFaqLd = faqPageLd(product.faq ?? []);
 
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -96,6 +105,7 @@ export default async function ProductPage({ params }: Props) {
       <div className="min-h-screen bg-paper">
         <script {...jsonLdProps(productLd)} />
         <script {...jsonLdProps(breadcrumbLd)} />
+        {productFaqLd && <script {...jsonLdProps(productFaqLd)} />}
         <BrandTheme branding={shop.branding} />
         <TopBar config={shop.home} />
         <Navbar shopSlug={shop.slug} branding={shop.branding} menuItems={shop.menu.items} />

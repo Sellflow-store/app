@@ -3,14 +3,16 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { shops, shopConfig } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE } from "@/lib/shop";
+import { DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE, normalizeCompliance } from "@/lib/shop";
 import type { IntegrationsConfig, ComplianceConfig, BrandingConfig } from "@/types/shop";
 import TrackVisit from "@/components/store/TrackVisit";
 import StorefrontScripts from "@/components/store/StorefrontScripts";
 import { StoreBaseProvider } from "@/components/store/StoreBaseContext";
 import { storefrontBase } from "@/lib/storefront-base";
+import { logAiBotVisit } from "@/lib/ai-bot-log";
 
 async function loadShopMeta(slug: string): Promise<{
+  id: string;
   integrations: IntegrationsConfig;
   compliance: ComplianceConfig;
   branding: Partial<BrandingConfig>;
@@ -23,13 +25,10 @@ async function loadShopMeta(slug: string): Promise<{
       .from(shopConfig)
       .where(eq(shopConfig.shopId, shop.id));
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-    const savedCompliance = (map.compliance as Partial<ComplianceConfig>) ?? {};
     return {
+      id: shop.id,
       integrations: { ...DEFAULT_INTEGRATIONS, ...((map.integrations as Partial<IntegrationsConfig>) ?? {}) },
-      compliance: {
-        cookieBanner: { ...DEFAULT_COMPLIANCE.cookieBanner, ...(savedCompliance.cookieBanner ?? {}) },
-        omnibus: { ...DEFAULT_COMPLIANCE.omnibus, ...(savedCompliance.omnibus ?? {}) },
-      },
+      compliance: normalizeCompliance(map.compliance as Partial<ComplianceConfig> | undefined),
       branding: {
         shopName: shop.name,
         ...((map.branding as Partial<BrandingConfig>) ?? {}),
@@ -86,6 +85,7 @@ export default async function ShopLayout({
 }) {
   const { shop } = await params;
   const [data, base] = await Promise.all([loadShopMeta(shop), storefrontBase(shop)]);
+  if (data) await logAiBotVisit(data.id);
   return (
     <StoreBaseProvider base={base}>
       {children}

@@ -5,6 +5,7 @@ import { getShopAccess } from "@/lib/api";
 import { TrendingUp, TrendingDown, ShoppingBag } from "lucide-react";
 import RangePicker from "./RangePicker";
 import { formatPln } from "@/lib/money";
+import { AI_BOTS, type AiBotPurpose } from "@/lib/agent-commerce";
 import {
   SOURCE_LABELS,
   AI_LABELS,
@@ -153,7 +154,11 @@ export default async function AnalyticsPage({
   // ── Split into current vs previous window ──────────────────────────────────
   const curOrders = periodOrders.filter((o) => o.createdAt.getTime() >= curStart);
   const prevOrders = periodOrders.filter((o) => o.createdAt.getTime() < curStart);
-  const curVisits = periodVisits.filter((v) => v.createdAt.getTime() >= curStart);
+  // Wiersze "ai_bot" to wizyty crawlerów AI (lib/ai-bot-log.ts): liczymy je
+  // osobno, a ruch ludzi i źródła wejść pozostają bez botów.
+  const curAll = periodVisits.filter((v) => v.createdAt.getTime() >= curStart);
+  const curVisits = curAll.filter((v) => v.source !== "ai_bot");
+  const botVisits = curAll.filter((v) => v.source === "ai_bot");
 
   const gmv = (arr: typeof curOrders) => arr.reduce((s, o) => s + parseFloat(o.total), 0);
   const grossCur = gmv(curOrders);
@@ -220,6 +225,20 @@ export default async function AnalyticsPage({
     const key = (v.aiSource ?? "other") as AiSource;
     aiByAssistant.set(key, (aiByAssistant.get(key) ?? 0) + 1);
   }
+
+  // ── AI crawlers ────────────────────────────────────────────────────────────
+  const botsByToken = new Map<string, number>();
+  const botsByPurpose: Record<AiBotPurpose, number> = { search: 0, user: 0, training: 0 };
+  const botPaths = new Map<string, number>();
+  for (const v of botVisits) {
+    const token = v.referrerHost ?? "inny";
+    botsByToken.set(token, (botsByToken.get(token) ?? 0) + 1);
+    const bot = AI_BOTS.find((b) => b.token === token);
+    if (bot) botsByPurpose[bot.purpose] += 1;
+    botPaths.set(v.path, (botPaths.get(v.path) ?? 0) + 1);
+  }
+  const topBots = [...botsByToken.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const topBotPaths = [...botPaths.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   // ── Traffic sources ────────────────────────────────────────────────────────
   const sourceCounts = new Map<TrafficSource, number>();
@@ -402,6 +421,66 @@ export default async function AnalyticsPage({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* AI crawlers */}
+      <div className="rounded-xl overflow-hidden mb-6" style={card}>
+        <div className="flex items-center justify-between px-5 h-12" style={{ borderBottom: `1px solid ${RULE}` }}>
+          <h2 className="text-[15px] font-semibold" style={{ fontFamily: "var(--font-display)", color: INK }}>
+            Boty AI w sklepie
+          </h2>
+          <span className="text-[11px] tabular-nums" style={{ color: MUTE }}>
+            {botVisits.length} {botVisits.length === 1 ? "pobranie" : "pobrań"} stron
+          </span>
+        </div>
+        {botVisits.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-center" style={{ color: MUTE }}>
+            W tym okresie żaden bot AI nie pobrał stron sklepu. Pierwsze wizyty pojawiają się zwykle
+            w ciągu kilku dni od publikacji sklepu i mapy witryny.
+          </p>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-0">
+            <div className="px-5 py-4 space-y-3" style={{ borderRight: `1px solid ${RULE}` }}>
+              {([
+                ["search", "Wyszukiwarki AI", "sklep trafia do odpowiedzi ChatGPT, Claude, Perplexity"],
+                ["user", "Na prośbę użytkownika", "ktoś właśnie zapytał asystenta o Twój sklep lub produkt"],
+                ["training", "Trening modeli", "treści trafiają do wiedzy modeli"],
+              ] as [AiBotPurpose, string, string][]).map(([key, label, hint]) => (
+                <div key={key}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[13px] font-medium" style={{ color: "var(--panel-ink)" }}>{label}</span>
+                    <span className="text-[15px] font-semibold tabular-nums" style={{ color: INK }}>{botsByPurpose[key]}</span>
+                  </div>
+                  <p className="text-[11.5px]" style={{ color: MUTE }}>{hint}</p>
+                </div>
+              ))}
+            </div>
+            <div className="px-5 py-4" style={{ borderRight: `1px solid ${RULE}` }}>
+              <p className="text-[11.5px] font-semibold mb-2" style={{ color: MUTE }}>Najaktywniejsze boty</p>
+              {topBots.map(([token, n]) => {
+                const bot = AI_BOTS.find((b) => b.token === token);
+                return (
+                  <div key={token} className="flex items-center justify-between gap-3 py-1 text-[13px]">
+                    <span className="truncate" style={{ color: "var(--panel-ink)" }}>
+                      {token}
+                      {bot && <span className="ml-1.5 text-[11.5px]" style={{ color: MUTE }}>{bot.vendor}</span>}
+                    </span>
+                    <span className="tabular-nums shrink-0" style={{ color: MUTE }}>{n}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-[11.5px] font-semibold mb-2" style={{ color: MUTE }}>Najczęściej pobierane strony</p>
+              {topBotPaths.map(([path, n]) => (
+                <div key={path} className="flex items-center justify-between gap-3 py-1 text-[13px]">
+                  <span className="truncate font-mono text-[12px]" style={{ color: "var(--panel-ink)" }}>{path}</span>
+                  <span className="tabular-nums shrink-0" style={{ color: MUTE }}>{n}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Top products + traffic sources */}
