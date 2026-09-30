@@ -1,25 +1,38 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { shops, products } from "@/lib/db/schema";
-import { desc, eq, ilike, or, count, sql } from "drizzle-orm";
+import { shops } from "@/lib/db/schema";
+import { and, desc, ilike, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { ArrowUpRight, Search } from "lucide-react";
 
 interface PageProps {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; widok?: string }>;
 }
 
 /**
- * Every shop on the platform, newest first. Search filters by slug or name
- * (case-insensitive). Each row is a link to /ops/shops/[slug] for detail +
- * the "act as owner" path that uses the admin role bypass in getShopAccess.
+ * Every shop on the platform, newest first, split into two tabs: live shops
+ * (anything not soft-deleted, incl. suspended/disabled) and deleted ones
+ * (?widok=usuniete). Search filters by slug or name (case-insensitive)
+ * within the current tab. Each row is a link to /ops/shops/[slug] for
+ * detail + the "act as owner" path that uses the admin role bypass in
+ * getShopAccess.
  */
 export default async function OpsShopsPage({ searchParams }: PageProps) {
-  const { q = "" } = await searchParams;
+  const { q = "", widok } = await searchParams;
   const term = q.trim();
+  const showDeleted = widok === "usuniete";
 
-  const where = term
+  const match = term
     ? or(ilike(shops.slug, `%${term}%`), ilike(shops.name, `%${term}%`))
     : undefined;
+  const where = and(showDeleted ? isNotNull(shops.deletedAt) : isNull(shops.deletedAt), match);
+
+  const [tabCounts] = await db
+    .select({
+      live: sql<number>`COUNT(*) FILTER (WHERE ${shops.deletedAt} IS NULL)::int`,
+      deleted: sql<number>`COUNT(*) FILTER (WHERE ${shops.deletedAt} IS NOT NULL)::int`,
+    })
+    .from(shops)
+    .where(match);
 
   const rows = await db
     .select({
@@ -51,12 +64,19 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
           className="text-3xl font-bold tracking-tight"
           style={{ fontFamily: "var(--font-display)", color: "var(--brand-ink)" }}
         >
-          Sklepy ({rows.length})
+          Sklepy ({tabCounts.live})
         </h1>
       </header>
 
+      {/* ── Tabs ────────────────────────────────────────────────── */}
+      <nav className="flex gap-1" aria-label="Widok listy sklepów">
+        <TabLink href={tabHref(null, term)} active={!showDeleted} label="Aktywne" count={tabCounts.live} />
+        <TabLink href={tabHref("usuniete", term)} active={showDeleted} label="Usunięte" count={tabCounts.deleted} />
+      </nav>
+
       {/* ── Search ──────────────────────────────────────────────── */}
       <form method="GET" className="relative max-w-md">
+        {showDeleted && <input type="hidden" name="widok" value="usuniete" />}
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
           style={{ color: "var(--brand-ink-2)" }}
@@ -84,7 +104,11 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
       >
         {rows.length === 0 ? (
           <p className="px-5 py-10 text-sm text-center" style={{ color: "var(--brand-ink-2)" }}>
-            {term ? "Brak wyników." : "Jeszcze nikt nie założył sklepu."}
+            {term
+              ? "Brak wyników."
+              : showDeleted
+                ? "Brak usuniętych sklepów."
+                : "Jeszcze nikt nie założył sklepu."}
           </p>
         ) : (
           <table className="w-full text-sm">
@@ -173,6 +197,47 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
         )}
       </div>
     </div>
+  );
+}
+
+function tabHref(widok: string | null, term: string) {
+  const params = new URLSearchParams();
+  if (widok) params.set("widok", widok);
+  if (term) params.set("q", term);
+  const qs = params.toString();
+  return qs ? `/ops/shops?${qs}` : "/ops/shops";
+}
+
+function TabLink({
+  href,
+  active,
+  label,
+  count,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  count: number;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className="inline-flex items-center gap-2 text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+      style={{
+        background: active ? "var(--brand-paper)" : "transparent",
+        color: active ? "var(--brand-ink)" : "var(--brand-ink-2)",
+        border: `1px solid ${active ? "var(--brand-rule)" : "transparent"}`,
+      }}
+    >
+      {label}
+      <span
+        className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md"
+        style={{ background: "var(--brand-paper-3)", fontFamily: "var(--font-mono)" }}
+      >
+        {count}
+      </span>
+    </Link>
   );
 }
 
