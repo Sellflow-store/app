@@ -32,9 +32,10 @@ const LEGACY_STOREFRONT_SEGMENTS: Record<string, string> = {
 // Returns null for global paths (/api, /sso-callback), which must pass through
 // unprefixed — the shop is keyed by slug inside those paths, not the host.
 function rewriteStorefront(
-  url: NextRequest["nextUrl"],
+  req: NextRequest,
   shopSlug: string,
 ): NextResponse | null {
+  const url = req.nextUrl;
   const p = url.pathname;
   const isGlobalPath = p.startsWith("/api") || /^\/(sso-callback)(\/|$)/.test(p);
   if (isGlobalPath) return null;
@@ -55,7 +56,11 @@ function rewriteStorefront(
   // resolve — don't prefix it twice (/{slug}/{slug}/... would 404).
   const alreadyPrefixed = p === `/${shopSlug}` || p.startsWith(`/${shopSlug}/`);
   rewriteUrl.pathname = alreadyPrefixed ? p : `/${shopSlug}${p}`;
-  return NextResponse.rewrite(rewriteUrl);
+  // Ścieżka, którą widział odwiedzający, dla logu wizyt botów AI
+  // (lib/ai-bot-log.ts). Layout sklepu nie zna ścieżki bez tego nagłówka.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-sf-path", p.slice(0, 512));
+  return NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } });
 }
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
@@ -126,7 +131,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
         return NextResponse.redirect(`https://${verifiedDomain}${p}${url.search}`, 307);
       }
     }
-    const res = rewriteStorefront(url, shopSlug);
+    const res = rewriteStorefront(req, shopSlug);
     if (res) return res;
   }
 
@@ -141,7 +146,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     if (!shopSlug) {
       return new NextResponse("Sklep nie został znaleziony", { status: 404 });
     }
-    const res = rewriteStorefront(url, shopSlug);
+    const res = rewriteStorefront(req, shopSlug);
     if (res) return res;
   }
 

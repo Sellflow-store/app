@@ -1,6 +1,8 @@
 import { getShopBySlug } from "@/lib/shop";
 import { storefrontBase } from "@/lib/storefront-base";
 import { absoluteUrl, shopOrigin } from "@/lib/seo";
+import { aiRobotsSections } from "@/lib/agent-commerce";
+import { logAiBotVisit } from "@/lib/ai-bot-log";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -16,13 +18,18 @@ export async function GET(_req: Request, { params }: Params) {
 
   const [base, origin] = await Promise.all([storefrontBase(shop.slug), shopOrigin()]);
 
+  const disallow = [`${base}/koszyk`, `${base}/zamowienie`, `${base}/szukaj`];
+  await logAiBotVisit(shop.id, `${base}/robots.txt`);
+
+  // Boty AI wymienione z nazwy: bot trzyma się najbardziej szczegółowej grupy,
+  // więc jawny wpis „Allow” działa także wtedy, gdy ktoś kiedyś zaostrzy regułę
+  // ogólną. Boty trenujące modele zależą od ustawienia w Zgodności.
   const body = [
     "User-agent: *",
     "Allow: /",
-    `Disallow: ${base}/koszyk`,
-    `Disallow: ${base}/zamowienie`,
-    `Disallow: ${base}/szukaj`,
+    ...disallow.map((d) => `Disallow: ${d}`),
     "",
+    ...aiRobotsSections(shop.compliance.ai.allowTraining, disallow),
     `Sitemap: ${absoluteUrl(origin, base, "/sitemap.xml")}`,
     "",
   ].join("\n");

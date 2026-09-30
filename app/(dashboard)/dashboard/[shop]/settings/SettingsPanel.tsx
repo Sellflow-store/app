@@ -138,7 +138,11 @@ export default function SettingsPanel(props: Props) {
             <TeamSection ownerEmail={props.accountEmail} />
           </div>
           <div hidden={active !== "integrations"}>
-            <IntegrationsSection shopSlug={props.shopSlug} initial={props.integrations} />
+            <IntegrationsSection
+              shopSlug={props.shopSlug}
+              initial={props.integrations}
+              feedUrl={`${props.customDomain ? `https://${props.customDomain}` : props.storeUrl}/feed.xml`}
+            />
           </div>
           <div hidden={active !== "compliance"}>
             <ComplianceSection shopSlug={props.shopSlug} initial={props.compliance} />

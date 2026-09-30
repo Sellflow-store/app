@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { shops, shopConfig, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
-import { DEFAULT_ACCOUNT, DEFAULT_INTEGRATIONS, DEFAULT_COMPLIANCE, DEFAULT_BRANDING } from "@/lib/shop";
+import { DEFAULT_ACCOUNT, DEFAULT_INTEGRATIONS, DEFAULT_BRANDING, normalizeCompliance } from "@/lib/shop";
 import type { AccountConfig, IntegrationsConfig, ComplianceConfig, BrandingConfig } from "@/types/shop";
 import SettingsPanel from "./SettingsPanel";
 
@@ -44,11 +44,7 @@ export default async function SettingsPage({
     shopName: (configMap.branding as BrandingConfig)?.shopName ?? shop.name,
   };
   const brand = (configMap.brand as Record<string, unknown>) ?? null;
-  const savedCompliance = (configMap.compliance as Partial<ComplianceConfig>) ?? {};
-  const compliance: ComplianceConfig = {
-    cookieBanner: { ...DEFAULT_COMPLIANCE.cookieBanner, ...(savedCompliance.cookieBanner ?? {}) },
-    omnibus: { ...DEFAULT_COMPLIANCE.omnibus, ...(savedCompliance.omnibus ?? {}) },
-  };
+  const compliance = normalizeCompliance(configMap.compliance as Partial<ComplianceConfig> | undefined);
 
   const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store";
 

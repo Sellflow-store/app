@@ -301,6 +301,12 @@ export interface ComplianceConfig {
   omnibus: {
     enabled: boolean; // pokazuj „najniższa cena z 30 dni" przy promocjach
   };
+  /** Dostęp botów AI (robots.txt). Boty wyszukiwarek AI i agenci działający
+   *  na prośbę użytkownika mają wstęp zawsze; tu decyduje się tylko o botach
+   *  zbierających treści do trenowania modeli. */
+  ai: {
+    allowTraining: boolean;
+  };
 }
 
 /** Domyślny rozmiar logo w navbarze — używany, gdy merchant nic nie ustawił. */

@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { getShopBySlug } from "@/lib/shop";
 import { storefrontBase } from "@/lib/storefront-base";
 import { absoluteUrl, shopOrigin } from "@/lib/seo";
+import { logAiBotVisit } from "@/lib/ai-bot-log";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -36,6 +37,7 @@ export async function GET(_req: Request, { params }: Params) {
   if (!shop) return new Response("Not found", { status: 404 });
 
   const [base, origin] = await Promise.all([storefrontBase(shop.slug), shopOrigin()]);
+  await logAiBotVisit(shop.id, `${base}/sitemap.xml`);
 
   const posts = await db
     .select({ slug: blogPosts.slug, updatedAt: blogPosts.updatedAt })

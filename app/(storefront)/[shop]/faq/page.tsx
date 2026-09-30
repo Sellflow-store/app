@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getShopBySlug } from "@/lib/shop";
 import StorefrontShell from "@/components/store/StorefrontShell";
+import { faqPageLd } from "@/lib/agent-commerce";
+import { jsonLdProps } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ shop: string }>;
@@ -12,10 +14,12 @@ export default async function FaqPage({ params }: Props) {
   if (!shop) notFound();
 
   const items = shop.faq.items.filter((i) => i.q.trim());
+  const faqLd = faqPageLd(items);
 
   return (
     <StorefrontShell shop={shop}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        {faqLd && <script {...jsonLdProps(faqLd)} />}
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink mb-8">
           Najczęstsze pytania
         </h1>
