@@ -4,19 +4,19 @@ import { ShoppingBag, Sparkles } from "lucide-react";
 import { SectionTitle, LockedCard, P } from "../ui";
 import { PLANS } from "@/lib/plans";
 
-// Opis planu dla merchanta. Pro to dziś program beta dla pierwszych sklepów:
-// pełny zakres funkcji w cenie ustalanej indywidualnie (rozliczanej poza
-// panelem), więc kwoty tu nie pokazujemy.
+// Opis planu dla merchanta. Płatne plany (Starter, Pro) to dziś program beta
+// dla pierwszych sklepów: cena ustalana indywidualnie i rozliczana poza
+// panelem, więc kwoty tu nie pokazujemy.
 const PLAN_COPY: Record<keyof typeof PLANS, string> = {
   free: "Bezpłatny plan na start: do 10 produktów w sklepie.",
-  starter: "Do 100 produktów w sklepie.",
+  starter: "Do 100 produktów w sklepie, w cenie dla pierwszych sklepów na Sellflow.",
   pro: "Pełny zakres funkcji bez limitu produktów, w cenie dla pierwszych sklepów na Sellflow.",
 };
 
 export default function PlanSection({ currentPlan }: { currentPlan: string }) {
   const planId = (currentPlan in PLANS ? currentPlan : "free") as keyof typeof PLANS;
   const plan = PLANS[planId];
-  const isBetaPro = planId === "pro";
+  const isBeta = planId !== "free";
 
   return (
     <div>
@@ -32,7 +32,7 @@ export default function PlanSection({ currentPlan }: { currentPlan: string }) {
           <div>
             <p className="text-base font-semibold flex items-center gap-2" style={{ color: P.ink, fontFamily: "var(--font-display)" }}>
               Plan {plan.label}
-              {isBetaPro && (
+              {isBeta && (
                 <span
                   className="text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
                   style={{ background: P.accentSoft, color: P.accent, fontFamily: "var(--font-body)" }}
@@ -48,7 +48,7 @@ export default function PlanSection({ currentPlan }: { currentPlan: string }) {
         </div>
       </div>
 
-      {isBetaPro ? (
+      {isBeta ? (
         <LockedCard
           icon={<Sparkles className="w-5 h-5" strokeWidth={1.75} />}
           title="Program beta dla pierwszych sklepów"
