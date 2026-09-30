@@ -90,7 +90,9 @@ function StatusBadge({ status }: { status: DomainStatus | null }) {
 
 export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain }: Props) {
   const host = storeUrl.replace(/^https?:\/\//, "");
-  const isPro = plan === "pro";
+  // Domena podpięta wcześniej (np. przed zmianą planu albo przez nas z ops)
+  // zostaje widoczna i zarządzalna. Kłódka dotyczy tylko podpinania nowej.
+  const isPro = plan === "pro" || !!initialDomain;
 
   const [domain, setDomain] = useState<string | null>(initialDomain);
   const [input, setInput] = useState("");
