@@ -316,15 +316,20 @@
   --color-panel-aqua:          var(--panel-aqua);
 }
 
+/* Strona nigdy nie przewija się w poziomie: element szerszy od ekranu jest
+   przycinany zamiast rozpychać układ na telefonie. clip, a nie hidden, bo
+   hidden robi z body kontener przewijania i psuje przyklejone (sticky) menu. */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: clip;
   }
   html {
     @apply font-sans;
+    overflow-x: clip;
   }
 }
 /* ── Lookbook: pas kadrów płynący w lewo ──────────────────────────────────────
