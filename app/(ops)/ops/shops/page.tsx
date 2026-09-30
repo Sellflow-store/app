@@ -1,58 +1,37 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
-import { shops } from "@/lib/db/schema";
-import { and, desc, ilike, isNotNull, isNull, or, sql } from "drizzle-orm";
-import { ArrowUpRight, Search } from "lucide-react";
+import { ArrowUpRight, Download, Search } from "lucide-react";
+import {
+  OPS_PLANS,
+  countOpsShops,
+  loadOpsShops,
+  opsShopStatus,
+  parseOpsShopFilter,
+  type OpsShopFilter,
+  type OpsShopSort,
+} from "@/lib/ops-shops";
+import RestoreButton from "./RestoreButton";
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; widok?: string }>;
+  searchParams: Promise<{ q?: string; widok?: string; plan?: string; sort?: string }>;
 }
 
+const pln = (v: number) => `${v.toFixed(2).replace(".", ",")} zł`;
+const day = (d: Date | null) => (d ? d.toLocaleDateString("pl-PL") : "—");
+
 /**
- * Every shop on the platform, newest first, split into two tabs: live shops
- * (anything not soft-deleted, incl. suspended/disabled) and deleted ones
- * (?widok=usuniete). Search filters by slug or name (case-insensitive)
- * within the current tab. Each row is a link to /ops/shops/[slug] for
- * detail + the "act as owner" path that uses the admin role bypass in
- * getShopAccess.
+ * Every shop on the platform, split into two tabs: live shops (anything not
+ * soft-deleted, incl. suspended/disabled) and deleted ones (?widok=usuniete).
+ * Search matches slug, name or owner e-mail; plan filter and sortable columns
+ * (GMV 30 dni, ostatnie zamówienie, produkty, aktywność właściciela) work
+ * within the current tab. The same filter drives the CSV export. Each row
+ * links to /ops/shops/[slug] for detail + the "act as owner" path.
  */
 export default async function OpsShopsPage({ searchParams }: PageProps) {
-  const { q = "", widok } = await searchParams;
-  const term = q.trim();
-  const showDeleted = widok === "usuniete";
-
-  const match = term
-    ? or(ilike(shops.slug, `%${term}%`), ilike(shops.name, `%${term}%`))
-    : undefined;
-  const where = and(showDeleted ? isNotNull(shops.deletedAt) : isNull(shops.deletedAt), match);
-
-  const [tabCounts] = await db
-    .select({
-      live: sql<number>`COUNT(*) FILTER (WHERE ${shops.deletedAt} IS NULL)::int`,
-      deleted: sql<number>`COUNT(*) FILTER (WHERE ${shops.deletedAt} IS NOT NULL)::int`,
-    })
-    .from(shops)
-    .where(match);
-
-  const rows = await db
-    .select({
-      id: shops.id,
-      slug: shops.slug,
-      name: shops.name,
-      active: shops.active,
-      suspended: shops.suspended,
-      deletedAt: shops.deletedAt,
-      createdAt: shops.createdAt,
-      ownerEmail: sql<string>`(SELECT email FROM users WHERE id = ${shops.ownerId})`,
-      ownerPlan: sql<string>`(SELECT plan FROM users WHERE id = ${shops.ownerId})`,
-      productCount: sql<number>`(SELECT COUNT(*)::int FROM products WHERE shop_id = ${shops.id})`,
-    })
-    .from(shops)
-    .where(where)
-    .orderBy(desc(shops.createdAt));
+  const f = parseOpsShopFilter(await searchParams);
+  const [rows, tabCounts] = await Promise.all([loadOpsShops(f), countOpsShops(f)]);
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-7xl">
       <header>
         <p
           className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-2"
@@ -70,43 +49,80 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
 
       {/* ── Tabs ────────────────────────────────────────────────── */}
       <nav className="flex gap-1" aria-label="Widok listy sklepów">
-        <TabLink href={tabHref(null, term)} active={!showDeleted} label="Aktywne" count={tabCounts.live} />
-        <TabLink href={tabHref("usuniete", term)} active={showDeleted} label="Usunięte" count={tabCounts.deleted} />
+        <TabLink href={listHref(f, { deleted: false })} active={!f.deleted} label="Aktywne" count={tabCounts.live} />
+        <TabLink href={listHref(f, { deleted: true })} active={f.deleted} label="Usunięte" count={tabCounts.deleted} />
       </nav>
 
-      {/* ── Search ──────────────────────────────────────────────── */}
-      <form method="GET" className="relative max-w-md">
-        {showDeleted && <input type="hidden" name="widok" value="usuniete" />}
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-          style={{ color: "var(--brand-ink-2)" }}
-          strokeWidth={1.75}
-        />
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Szukaj po nazwie lub adresie..."
-          className="w-full text-sm rounded-xl focus:outline-none transition-colors"
+      {/* ── Filters ─────────────────────────────────────────────── */}
+      <form method="GET" className="flex flex-wrap items-center gap-3">
+        {f.deleted && <input type="hidden" name="widok" value="usuniete" />}
+        {f.sort !== "created" && <input type="hidden" name="sort" value={f.sort} />}
+        <div className="relative flex-1 min-w-[240px] max-w-md">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+            style={{ color: "var(--brand-ink-2)" }}
+            strokeWidth={1.75}
+          />
+          <input
+            name="q"
+            defaultValue={f.term}
+            placeholder="Szukaj po nazwie, adresie lub e-mailu..."
+            className="w-full text-sm rounded-xl focus:outline-none transition-colors"
+            style={{
+              padding: "10px 14px 10px 36px",
+              background: "var(--brand-paper)",
+              color: "var(--brand-ink)",
+              border: "1.5px solid var(--brand-rule)",
+              fontFamily: "var(--font-body)",
+            }}
+          />
+        </div>
+        <select
+          name="plan"
+          defaultValue={f.plan ?? ""}
+          aria-label="Plan"
+          className="text-sm rounded-xl focus:outline-none"
           style={{
-            padding: "10px 14px 10px 36px",
+            padding: "10px 12px",
             background: "var(--brand-paper)",
             color: "var(--brand-ink)",
             border: "1.5px solid var(--brand-rule)",
-            fontFamily: "var(--font-body)",
           }}
-        />
+        >
+          <option value="">Wszystkie plany</option>
+          {OPS_PLANS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="text-sm font-medium rounded-xl px-4 py-2.5"
+          style={{ background: "var(--brand-ink)", color: "var(--brand-on-ink)" }}
+        >
+          Filtruj
+        </button>
+        <a
+          href={exportHref(f)}
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium rounded-xl px-4 py-2.5"
+          style={{ border: "1.5px solid var(--brand-rule)", color: "var(--brand-ink)" }}
+        >
+          <Download className="w-4 h-4" strokeWidth={1.75} />
+          Eksport CSV
+        </a>
       </form>
 
       {/* ── Table ───────────────────────────────────────────────── */}
       <div
-        className="rounded-2xl overflow-hidden"
+        className="rounded-2xl overflow-x-auto"
         style={{ background: "var(--brand-paper)", border: "1px solid var(--brand-rule)" }}
       >
         {rows.length === 0 ? (
           <p className="px-5 py-10 text-sm text-center" style={{ color: "var(--brand-ink-2)" }}>
-            {term
+            {f.term || f.plan
               ? "Brak wyników."
-              : showDeleted
+              : f.deleted
                 ? "Brak usuniętych sklepów."
                 : "Jeszcze nikt nie założył sklepu."}
           </p>
@@ -122,76 +138,84 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
                 <Th>Sklep</Th>
                 <Th>Właściciel</Th>
                 <Th>Plan</Th>
-                <Th>Produkty</Th>
+                <SortTh f={f} sort="products">Produkty</SortTh>
+                <SortTh f={f} sort="gmv">GMV 30 dni</SortTh>
+                <SortTh f={f} sort="last_order">Ostatnie zam.</SortTh>
+                <SortTh f={f} sort="active">Aktywność właśc.</SortTh>
                 <Th>Status</Th>
-                <Th>Utworzono</Th>
+                <SortTh f={f} sort="created">Utworzono</SortTh>
                 <Th aria-label="Akcje" />
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr
-                  key={r.id}
-                  style={{ borderBottom: "1px solid var(--brand-rule)" }}
-                  className="transition-colors hover:bg-[var(--brand-paper-2)]"
-                >
-                  <Td>
-                    <Link
-                      href={`/ops/shops/${r.slug}`}
-                      className="font-semibold hover:underline"
-                      style={{ color: "var(--brand-ink)" }}
-                    >
-                      {r.name}
-                    </Link>
-                    <div
-                      className="text-[11px] mt-0.5"
-                      style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}
-                    >
-                      {r.slug}
-                    </div>
-                  </Td>
-                  <Td>
-                    <span style={{ color: "var(--brand-ink-2)" }}>{r.ownerEmail}</span>
-                  </Td>
-                  <Td>
-                    <PlanPill plan={r.ownerPlan} />
-                  </Td>
-                  <Td>
-                    <span className="tabular-nums" style={{ color: "var(--brand-ink-2)" }}>
-                      {r.productCount}
-                    </span>
-                  </Td>
-                  <Td>
-                    {r.deletedAt ? (
-                      <StatusPill label="Usunięty" color="muted" />
-                    ) : r.suspended ? (
-                      <StatusPill label="Zawieszony" color="muted" />
-                    ) : r.active ? (
-                      <StatusPill label="Aktywny" color="success" />
-                    ) : (
-                      <StatusPill label="Wyłączony" color="muted" />
-                    )}
-                  </Td>
-                  <Td>
-                    <span
-                      className="text-[11px]"
-                      style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}
-                    >
-                      {new Date(r.createdAt).toLocaleDateString("pl-PL")}
-                    </span>
-                  </Td>
-                  <Td>
-                    <Link
-                      href={`/ops/shops/${r.slug}`}
-                      className="inline-flex items-center"
-                      style={{ color: "var(--brand-ink-2)" }}
-                      aria-label={`Szczegóły ${r.name}`}
-                    >
-                      <ArrowUpRight className="w-4 h-4" strokeWidth={1.75} />
-                    </Link>
-                  </Td>
-                </tr>
-              ))}
+              {rows.map((r) => {
+                const status = opsShopStatus(r);
+                return (
+                  <tr
+                    key={r.id}
+                    style={{ borderBottom: "1px solid var(--brand-rule)" }}
+                    className="transition-colors hover:bg-[var(--brand-paper-2)]"
+                  >
+                    <Td>
+                      <Link
+                        href={`/ops/shops/${r.slug}`}
+                        className="font-semibold hover:underline"
+                        style={{ color: "var(--brand-ink)" }}
+                      >
+                        {r.name}
+                      </Link>
+                      <div
+                        className="text-[11px] mt-0.5"
+                        style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}
+                      >
+                        {r.slug}
+                      </div>
+                    </Td>
+                    <Td>
+                      <span style={{ color: "var(--brand-ink-2)" }}>{r.ownerEmail}</span>
+                    </Td>
+                    <Td>
+                      <PlanPill plan={r.ownerPlan} />
+                    </Td>
+                    <Td>
+                      <Num>{r.productCount}</Num>
+                    </Td>
+                    <Td>
+                      <Num>{r.gmv30 > 0 ? pln(r.gmv30) : "—"}</Num>
+                      {r.orders30 > 0 && (
+                        <div className="text-[11px]" style={{ color: "var(--brand-ink-2)" }}>
+                          {r.orders30} zam.
+                        </div>
+                      )}
+                    </Td>
+                    <Td>
+                      <Mono>{day(r.lastOrderAt)}</Mono>
+                    </Td>
+                    <Td>
+                      <Mono>{day(r.ownerActiveAt)}</Mono>
+                    </Td>
+                    <Td>
+                      <StatusPill label={status} color={status === "Aktywny" ? "success" : "muted"} />
+                    </Td>
+                    <Td>
+                      <Mono>{day(r.createdAt)}</Mono>
+                    </Td>
+                    <Td>
+                      <div className="flex items-center justify-end gap-3">
+                        {r.deletedAt && <RestoreButton slug={r.slug} shopName={r.name} />}
+                        <Link
+                          href={`/ops/shops/${r.slug}`}
+                          className="inline-flex items-center"
+                          style={{ color: "var(--brand-ink-2)" }}
+                          aria-label={`Szczegóły ${r.name}`}
+                        >
+                          <ArrowUpRight className="w-4 h-4" strokeWidth={1.75} />
+                        </Link>
+                      </div>
+                    </Td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -200,12 +224,24 @@ export default async function OpsShopsPage({ searchParams }: PageProps) {
   );
 }
 
-function tabHref(widok: string | null, term: string) {
+function listParams(f: OpsShopFilter, over: Partial<OpsShopFilter> = {}) {
+  const v = { ...f, ...over };
   const params = new URLSearchParams();
-  if (widok) params.set("widok", widok);
-  if (term) params.set("q", term);
-  const qs = params.toString();
+  if (v.deleted) params.set("widok", "usuniete");
+  if (v.term) params.set("q", v.term);
+  if (v.plan) params.set("plan", v.plan);
+  if (v.sort !== "created") params.set("sort", v.sort);
+  return params.toString();
+}
+
+function listHref(f: OpsShopFilter, over: Partial<OpsShopFilter> = {}) {
+  const qs = listParams(f, over);
   return qs ? `/ops/shops?${qs}` : "/ops/shops";
+}
+
+function exportHref(f: OpsShopFilter) {
+  const qs = listParams(f);
+  return qs ? `/api/ops/shops/export?${qs}` : "/api/ops/shops/export";
 }
 
 function TabLink({
@@ -241,20 +277,52 @@ function TabLink({
   );
 }
 
+const thClass = "text-left text-[10px] font-semibold uppercase tracking-[0.14em] px-4 py-3 whitespace-nowrap";
+const thStyle = { color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" };
+
 function Th({ children, ...rest }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th
-      className="text-left text-[10px] font-semibold uppercase tracking-[0.14em] px-5 py-3"
-      style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}
-      {...rest}
-    >
+    <th className={thClass} style={thStyle} {...rest}>
       {children}
     </th>
   );
 }
 
+/** Nagłówek sortujący: kliknięcie ustawia sortowanie malejąco po kolumnie. */
+function SortTh({ f, sort, children }: { f: OpsShopFilter; sort: OpsShopSort; children: React.ReactNode }) {
+  const active = f.sort === sort;
+  return (
+    <th className={thClass} style={thStyle} aria-sort={active ? "descending" : undefined}>
+      <Link
+        href={listHref(f, { sort })}
+        className="hover:underline"
+        style={{ color: active ? "var(--brand-ink)" : undefined }}
+      >
+        {children}
+        {active && " ↓"}
+      </Link>
+    </th>
+  );
+}
+
 function Td({ children }: { children?: React.ReactNode }) {
-  return <td className="px-5 py-3 align-middle">{children}</td>;
+  return <td className="px-4 py-3 align-middle whitespace-nowrap">{children}</td>;
+}
+
+function Num({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="tabular-nums" style={{ color: "var(--brand-ink-2)" }}>
+      {children}
+    </span>
+  );
+}
+
+function Mono({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[11px]" style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
+      {children}
+    </span>
+  );
 }
 
 function PlanPill({ plan }: { plan: string }) {

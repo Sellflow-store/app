@@ -7,14 +7,8 @@ import { getShopAccess } from "@/lib/api";
 import { STATUS_STYLES } from "@/lib/order-status";
 import { formatPln } from "@/lib/money";
 import { tpayEnabled } from "@/lib/tpay-status";
-import { materialFromSpecs, normalizeAttributes, readinessGaps, readinessScore, type ReadinessGap } from "@/lib/product-attributes";
-import type {
-  BrandingConfig, CheckoutConfig, LegalConfig, AboutConfig, AccountConfig, LegalDataConfig,
-} from "@/types/shop";
-import {
-  DEFAULT_ABOUT, DEFAULT_ACCOUNT, DEFAULT_CHECKOUT, normalizeDeliveryConfig,
-} from "@/lib/shop";
-import { missingLegalFields, normalizeLegalData, resolveLegalFields } from "@/lib/legal";
+import { catalogReadiness, shopSetupDone } from "@/lib/shop-setup";
+import type { BrandingConfig } from "@/types/shop";
 import {
   Package, Palette, Truck, CreditCard, FileText, Info,
   Plus, ClipboardList, Home as HomeIcon, Eye, ArrowRight, Check,
@@ -84,55 +78,12 @@ export default async function DashboardHome({
     ]);
 
   // ── Gotowość katalogu dla Google i AI ────────────────────────────────────
-  const gapCounts = new Map<ReadinessGap["key"], { label: string; count: number; weight: number }>();
-  let readyCount = 0;
-  for (const p of productData) {
-    const attrs = normalizeAttributes(p.attributes);
-    const input = {
-      type: (p.type as "physical" | "digital" | "service") ?? "physical",
-      priceOnRequest: p.priceOnRequest,
-      images: (p.images as string[]) ?? [],
-      shortDesc: p.shortDesc,
-      description: p.description,
-      category: p.category,
-      weightGrams: p.weightGrams,
-      attributes: { ...attrs, material: attrs.material ?? materialFromSpecs(p.specs as { key: string; value: string }[]) },
-    };
-    if (readinessScore(input) >= 85) readyCount++;
-    for (const g of readinessGaps(input)) {
-      const e = gapCounts.get(g.key) ?? { label: g.label, count: 0, weight: g.weight };
-      e.count++;
-      gapCounts.set(g.key, e);
-    }
-  }
-  const topGaps = [...gapCounts.values()].sort((a, b) => b.count * b.weight - a.count * a.weight).slice(0, 3);
+  const { readyCount, topGaps } = catalogReadiness(productData);
 
   const configMap = Object.fromEntries(configRows.map((c) => [c.key, c.value]));
   const branding = configMap.branding as Partial<BrandingConfig> | undefined;
-  const checkout = configMap.checkout as Partial<CheckoutConfig> | undefined;
-  const terms = configMap.terms as Partial<LegalConfig> | undefined;
-  const about = configMap.about as Partial<AboutConfig> | undefined;
-
   const shopName = branding?.shopName || shop?.name || shopSlug;
-
-  const savedAccount = (configMap.account as Partial<AccountConfig>) ?? {};
-  const legalComplete =
-    missingLegalFields(
-      resolveLegalFields({
-        legal: normalizeLegalData(configMap.legal as Partial<LegalDataConfig> | undefined),
-        account: {
-          ...DEFAULT_ACCOUNT,
-          ...savedAccount,
-          company: { ...DEFAULT_ACCOUNT.company, ...(savedAccount.company ?? {}) },
-        },
-        about: { ...DEFAULT_ABOUT, ...(about ?? {}) },
-        branding: branding as never,
-        checkout: { ...DEFAULT_CHECKOUT, ...(checkout ?? {}) },
-        delivery: normalizeDeliveryConfig(configMap.delivery as never),
-        shopName,
-        shopUrl: "",
-      })
-    ).length === 0;
+  const done = shopSetupDone({ configMap, productCount, onlinePayments, shopName });
 
   // ── Setup checklist ──────────────────────────────────────────────────────
   // Kolejność = kolejność, w jakiej sklep zaczyna zarabiać: bez produktu,
@@ -144,46 +95,42 @@ export default async function DashboardHome({
       desc: "Nazwa, cena i zdjęcie wystarczą. Resztę uzupełnisz później.",
       cta: "Dodaj produkt",
       href: `${base}/products/new`,
-      done: productCount > 0,
+      done: done.product,
     },
     {
       label: "Ustaw płatności",
       desc: "Podłącz Tpay (BLIK, karty) albo włącz przelew lub pobranie.",
       cta: "Ustaw płatności",
       href: `${base}/payments`,
-      done:
-        onlinePayments ||
-        (!!checkout && ((checkout.transferEnabled ? !!checkout.bankAccount : false) || !!checkout.codEnabled)),
+      done: done.payments,
     },
     {
       label: "Ustaw dostawę",
       desc: "Wybierz, jak wysyłasz, i ile to kosztuje klienta.",
       cta: "Ustaw dostawę",
       href: `${base}/delivery`,
-      done: !!configMap.delivery,
+      done: done.delivery,
     },
     {
       label: "Uzupełnij dane do dokumentów",
       desc: "Regulamin i polityka prywatności złożą się same z danych Twojej firmy.",
       cta: "Uzupełnij dane",
       href: `${base}/legal`,
-      // Dokumenty składają się same, więc „gotowe" nie znaczy „ktoś wkleił
-      // tekst", tylko „nie zostały w nich luki po brakujących danych".
-      done: terms?.mode === "custom" ? !!terms.content?.trim() : legalComplete,
+      done: done.legal,
     },
     {
       label: "Wgraj logo",
       desc: "Pojawi się w menu sklepu, w mailach i na karcie przeglądarki.",
       cta: "Wgraj logo",
       href: `${base}/branding`,
-      done: !!branding?.logoUrl,
+      done: done.logo,
     },
     {
       label: "Napisz kilka zdań o marce",
       desc: "Strona „O nas” i kontakt. Klienci sprawdzają ją przed pierwszym zakupem.",
       cta: "Uzupełnij „O nas”",
       href: `${base}/about`,
-      done: !!(about?.content?.trim() || about?.email?.trim()),
+      done: done.about,
     },
   ];
   const doneCount = steps.filter((s) => s.done).length;

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { shops, users, orders, products } from "@/lib/db/schema";
 import { desc, count, gte, ne, and, sum, eq, isNull, sql } from "drizzle-orm";
+import { loadAttentionItems, type AttentionSeverity } from "@/lib/ops-attention";
+import { checkEnv, checkSchema } from "@/lib/ops-system";
 
 const pln = (v: string | number | null) =>
   `${(typeof v === "string" ? parseFloat(v) : v ?? 0).toFixed(2).replace(".", ",")} zł`;
@@ -30,6 +32,8 @@ export default async function OpsOverviewPage() {
     topShops,
     deadShops,
     latestShops,
+    attention,
+    schemaReport,
   ] = await Promise.all([
     db.select({ total: count(), active: count(shops.active) }).from(shops).where(live),
     db.select({ total: count() }).from(shops).where(and(live, gte(shops.createdAt, d7))),
@@ -70,7 +74,11 @@ export default async function OpsOverviewPage() {
       limit: 5,
       with: { owner: { columns: { email: true, name: true } } },
     }),
+    loadAttentionItems(),
+    checkSchema(),
   ]);
+  const systemProblems =
+    schemaReport.issues.length + checkEnv().filter((v) => v.required && !v.set).length;
 
   const stats = [
     {
@@ -111,6 +119,62 @@ export default async function OpsOverviewPage() {
           Co dzieje się w platformie
         </h1>
       </header>
+
+      {/* ── System alert ────────────────────────────────────────── */}
+      {systemProblems > 0 && (
+        <Link
+          href="/ops/system"
+          className="flex items-center justify-between gap-4 rounded-2xl px-5 py-4 text-sm font-medium"
+          style={{
+            background: "var(--panel-danger-soft)",
+            border: "1px solid var(--panel-danger-border)",
+            color: "var(--panel-danger-ink)",
+          }}
+        >
+          <span>
+            Stan systemu: {systemProblems}{" "}
+            {systemProblems === 1 ? "problem" : "problemy"} z bazą albo konfiguracją. Część funkcji może nie
+            działać.
+          </span>
+          <span className="shrink-0">Sprawdź →</span>
+        </Link>
+      )}
+
+      {/* ── Needs attention ─────────────────────────────────────── */}
+      <Panel title="Wymaga uwagi" hint={attention.length ? `${attention.length}` : "wszystko gra"}>
+        {attention.length === 0 ? (
+          <Empty>Żaden sklep nie potrzebuje teraz reakcji zespołu.</Empty>
+        ) : (
+          <ul>
+            {attention.map((a) => (
+              <li
+                key={`${a.kind}:${a.shopSlug}`}
+                className="flex items-start gap-3 px-5 py-3"
+                style={{ borderTop: "1px solid var(--brand-rule)" }}
+              >
+                <span
+                  aria-label={SEVERITY_LABEL[a.severity]}
+                  title={SEVERITY_LABEL[a.severity]}
+                  className="mt-1.5 w-2 h-2 rounded-full shrink-0"
+                  style={{ background: SEVERITY_COLOR[a.severity] }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm" style={{ color: "var(--brand-ink)" }}>
+                    <Link href={`/ops/shops/${a.shopSlug}`} className="font-semibold hover:underline">
+                      {a.shopName}
+                    </Link>
+                    <span style={{ color: "var(--brand-ink-2)" }}> · </span>
+                    {a.title}
+                  </p>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--brand-ink-2)" }}>
+                    {a.detail}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
 
       {/* ── Stat tiles ──────────────────────────────────────────── */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -276,6 +340,18 @@ export default async function OpsOverviewPage() {
     </div>
   );
 }
+
+const SEVERITY_LABEL: Record<AttentionSeverity, string> = {
+  high: "Pilne",
+  medium: "Do sprawdzenia",
+  low: "Do kontaktu",
+};
+
+const SEVERITY_COLOR: Record<AttentionSeverity, string> = {
+  high: "var(--panel-danger)",
+  medium: "var(--brand-warning)",
+  low: "var(--brand-ink-2)",
+};
 
 /* ── small atoms ───────────────────────────────────────────────── */
 
