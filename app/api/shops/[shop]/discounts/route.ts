@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { uniqueViolation } from "@/lib/db/errors";
 import { discountCodes } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
@@ -65,8 +66,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       .returning();
     return NextResponse.json(created, { status: 201 });
   } catch (e) {
-    const isUnique = e instanceof Error && /unique|duplicate/i.test(e.message);
-    if (isUnique) {
+    if (uniqueViolation(e)) {
       return NextResponse.json({ error: "Taki kod już istnieje w Twoim sklepie." }, { status: 409 });
     }
     throw e;

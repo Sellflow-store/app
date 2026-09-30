@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Landmark, HandCoins, CreditCard, Check, Copy, Tag, X } from "lucide-react";
-import { useCart, formatPln, lineKey } from "@/lib/cart";
+import { ChevronLeft, Landmark, HandCoins, CreditCard, Check, Copy } from "lucide-react";
+import { useCart, useCartDiscount, discountValue, formatPln, lineKey } from "@/lib/cart";
+import { trackCheckoutEvent } from "@/lib/checkout-events";
 import { useStoreBase } from "./StoreBaseContext";
-import type { DeliveryMethod } from "@/types/shop";
+import DiscountBox from "./DiscountBox";
+import type { CartOffers, DeliveryMethod } from "@/types/shop";
 import { requiresPickupPoint } from "@/types/shop";
 import PickupPointPicker, { type PickedPoint } from "./PickupPointPicker";
 
@@ -16,6 +18,7 @@ interface Props {
   transferEnabled: boolean;
   codEnabled: boolean;
   codFee: string;
+  offers: CartOffers | null;
   /** Sklep ma podpięte i włączone konto Tpay. */
   onlineEnabled: boolean;
 }
@@ -56,10 +59,21 @@ export default function CheckoutForm({
   transferEnabled,
   codEnabled,
   codFee,
+  offers,
   onlineEnabled,
 }: Props) {
   const { items, subtotal, clear } = useCart(shopSlug);
+  const { discount, setDiscount } = useCartDiscount(shopSlug);
   const base = useStoreBase();
+
+  // Top of the checkout funnel (lib/checkout-events): orders placed are
+  // counted from the orders table, so views vs orders gives the conversion.
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (viewTracked.current) return;
+    viewTracked.current = true;
+    trackCheckoutEvent(shopSlug, "checkout_view");
+  }, [shopSlug]);
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -73,10 +87,6 @@ export default function CheckoutForm({
   const [payment, setPayment] = useState<PaymentChoice>(
     onlineEnabled ? "online" : transferEnabled ? "transfer" : "cod"
   );
-  const [discountInput, setDiscountInput] = useState("");
-  const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
-  const [discountError, setDiscountError] = useState<string | null>(null);
-  const [checkingCode, setCheckingCode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
@@ -257,31 +267,8 @@ export default function CheckoutForm({
   const shippingFree = !isNaN(freeFrom) && freeFrom > 0 && subtotal >= freeFrom;
   const shippingCost = hasPhysical && method ? (shippingFree ? 0 : parseFloat(method.price)) : 0;
   const codFeeValue = effPayment === "cod" ? parseFloat(codFee) || 0 : 0;
-  const discountAmount = discount ? (subtotal * discount.percent) / 100 : 0;
+  const discountAmount = discount ? discountValue(subtotal, discount.percent) : 0;
   const total = subtotal - discountAmount + shippingCost + codFeeValue;
-
-  async function applyDiscount() {
-    const code = discountInput.trim().toUpperCase();
-    if (!code) return;
-    setCheckingCode(true);
-    setDiscountError(null);
-    try {
-      const res = await fetch(
-        `/api/shops/${shopSlug}/discounts/validate?code=${encodeURIComponent(code)}`
-      );
-      const data = await res.json();
-      if (data.valid) {
-        setDiscount({ code: data.code, percent: data.discountPercent });
-        setDiscountInput("");
-      } else {
-        setDiscountError(data.reason ?? "Niepoprawny kod.");
-      }
-    } catch {
-      setDiscountError("Nie udało się sprawdzić kodu.");
-    } finally {
-      setCheckingCode(false);
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -313,8 +300,9 @@ export default function CheckoutForm({
       }
       const confirmation = data as Confirmation;
       clear();
+      setDiscount(null);
       // Płatność online: od razu na stronę Tpay. Koszyk czyścimy wcześniej, bo
-      // zamówienie już istnieje — powrót przyciskiem „wstecz" nie może go
+      // zamówienie już istnieje, a powrót przyciskiem „wstecz” nie może go
       // złożyć drugi raz.
       if (confirmation.paymentUrl) {
         setRedirecting(true);
@@ -560,56 +548,6 @@ export default function CheckoutForm({
             ))}
           </ul>
 
-          {/* Discount code */}
-          <div className="border-t border-rule pt-4 mb-4">
-            {discount ? (
-              <div className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink">
-                  <Tag className="w-3.5 h-3.5" strokeWidth={1.5} />
-                  {discount.code} (−{discount.percent}%)
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setDiscount(null)}
-                  aria-label="Usuń kod rabatowy"
-                  className="p-1 text-ink-2/60 hover:text-ink transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex gap-2">
-                  <input
-                    value={discountInput}
-                    onChange={(e) => setDiscountInput(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        applyDiscount();
-                      }
-                    }}
-                    placeholder="Kod rabatowy"
-                    className="flex-1 min-w-0 border border-rule rounded-input px-3 py-2 text-xs text-ink bg-paper placeholder:text-ink-2/50 outline-none focus:border-ink transition-colors uppercase"
-                  />
-                  <button
-                    type="button"
-                    onClick={applyDiscount}
-                    disabled={checkingCode || !discountInput.trim()}
-                    className="text-xs font-semibold px-3.5 py-2 rounded-input border border-rule text-ink hover:border-ink transition-colors disabled:opacity-50 shrink-0"
-                  >
-                    {checkingCode ? "…" : "Zastosuj"}
-                  </button>
-                </div>
-                {discountError && (
-                  <p className="text-[11px] text-red-600 mt-1.5" role="alert">
-                    {discountError}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-
           <dl className="space-y-2 border-t border-rule pt-4 text-sm">
             <div className="flex justify-between">
               <dt className="text-ink-2 font-light">Produkty</dt>
@@ -640,6 +578,13 @@ export default function CheckoutForm({
               <dd className="text-ink font-bold text-lg tabular-nums">{formatPln(total)}</dd>
             </div>
           </dl>
+
+          {/* Kod rabatowy: zwinięty pod sumą, ale NAD przyciskiem. „Zamawiam i
+              płacę” od razu składa zamówienie, więc kod pod nim przepadałby
+              każdej, która zauważy go za późno. */}
+          <div className="border-t border-rule pt-4 mt-4">
+            <DiscountBox shopSlug={shopSlug} offers={offers} placement="checkout" />
+          </div>
 
           {error && (
             <p className="text-xs text-red-600 mt-4" role="alert">

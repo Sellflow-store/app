@@ -8,7 +8,9 @@ import { neon } from "@neondatabase/serverless";
  *
  * Only shops that are live are matched — self-enabled, not operator-suspended,
  * not soft-deleted — so a parked or disabled domain resolves to null and the
- * caller can 404 instead of leaking a hidden storefront.
+ * caller can 404 instead of leaking a hidden storefront. The domain must also
+ * be verified (DNS + TXT ownership, lib/domain-ownership): an unverified claim
+ * is just text a merchant typed and must not route anyone's domain to a shop.
  *
  * Returns null on any miss or transient error; the caller treats null as
  * "unknown domain". Phase 1 pays one DB round-trip per custom-domain request;
@@ -22,6 +24,7 @@ export async function resolveCustomDomainSlug(host: string): Promise<string | nu
     const rows = (await sql`
       SELECT slug FROM shops
       WHERE custom_domain = ${host}
+        AND custom_domain_verified = true
         AND active = true
         AND suspended = false
         AND deleted_at IS NULL
