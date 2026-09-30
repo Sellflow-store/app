@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { shops, users, orders, products } from "@/lib/db/schema";
-import { desc, count, gte, ne, and, sum, eq, sql } from "drizzle-orm";
+import { desc, count, gte, ne, and, sum, eq, isNull, sql } from "drizzle-orm";
 
 const pln = (v: string | number | null) =>
   `${(typeof v === "string" ? parseFloat(v) : v ?? 0).toFixed(2).replace(".", ",")} zł`;
@@ -16,6 +16,8 @@ export default async function OpsOverviewPage() {
   const d7 = new Date(now - 7 * 24 * 3600 * 1000);
   const d30 = new Date(now - 30 * 24 * 3600 * 1000);
   const notCancelled = ne(orders.status, "cancelled");
+  // Soft-deleted shops live only in the "Usunięte" tab of /ops/shops.
+  const live = isNull(shops.deletedAt);
 
   const [
     shopCounts,
@@ -29,9 +31,9 @@ export default async function OpsOverviewPage() {
     deadShops,
     latestShops,
   ] = await Promise.all([
-    db.select({ total: count(), active: count(shops.active) }).from(shops),
-    db.select({ total: count() }).from(shops).where(gte(shops.createdAt, d7)),
-    db.select({ total: count() }).from(shops).where(gte(shops.createdAt, d30)),
+    db.select({ total: count(), active: count(shops.active) }).from(shops).where(live),
+    db.select({ total: count() }).from(shops).where(and(live, gte(shops.createdAt, d7))),
+    db.select({ total: count() }).from(shops).where(and(live, gte(shops.createdAt, d30))),
     db.select({ total: count() }).from(users),
     db.select({ total: count() }).from(products),
     db.select({ total: count(), gmv: sum(orders.total) }).from(orders).where(notCancelled),
@@ -57,11 +59,13 @@ export default async function OpsOverviewPage() {
       .select({ id: shops.id, name: shops.name, slug: shops.slug, createdAt: shops.createdAt })
       .from(shops)
       .leftJoin(products, eq(products.shopId, shops.id))
+      .where(live)
       .groupBy(shops.id)
       .having(sql`count(${products.id}) = 0`)
       .orderBy(desc(shops.createdAt))
       .limit(8),
     db.query.shops.findMany({
+      where: live,
       orderBy: [desc(shops.createdAt)],
       limit: 5,
       with: { owner: { columns: { email: true, name: true } } },
