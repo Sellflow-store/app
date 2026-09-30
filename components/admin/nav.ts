@@ -61,7 +61,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: "checkout",
     title: "Płatności i wysyłka",
     items: [
-      { slug: "payments",   label: "Płatności (Tpay, przelew, pobranie)", icon: CreditCard, hint: "Jak klienci płacą: Tpay (BLIK, karty), przelew, pobranie", keywords: ["tpay", "blik", "karta", "przelew", "pobranie", "konto bankowe", "vat"] },
+      { slug: "payments",   label: "Płatności", icon: CreditCard, hint: "Jak klienci płacą: Tpay (BLIK, karty), przelew, pobranie", keywords: ["tpay", "blik", "karta", "przelew", "pobranie", "konto bankowe", "vat"] },
       { slug: "delivery",   label: "Dostawa",    icon: Truck,        hint: "Metody i ceny wysyłki, darmowa dostawa", keywords: ["wysyłka", "kurier", "paczkomat", "inpost", "odbiór osobisty"] },
       { slug: "furgonetka", label: "Furgonetka", icon: PackageCheck, hint: "Automatyczne etykiety i nadawanie paczek", keywords: ["etykieta", "kurier", "nadanie"] },
     ],
