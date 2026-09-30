@@ -6,6 +6,7 @@ import { getShopAccess } from "@/lib/api";
 import { planLimits } from "@/lib/plans";
 import { recordPrice } from "@/lib/price-history";
 import { findFreeProductSlug } from "@/lib/slug";
+import { normalizeAttributes } from "@/lib/product-attributes";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     sortOrder?: number;
     type?: string;
     fulfillment?: Record<string, unknown>;
+    attributes?: Record<string, unknown>;
   };
 
   // Produkt na zamówienie nie ma ceny do podania — reszta musi ją mieć.
@@ -104,6 +106,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       dimensions: body.dimensions ?? {},
       type: body.type ?? "physical",
       fulfillment: body.fulfillment ?? {},
+      attributes: normalizeAttributes(body.attributes),
       sortOrder: body.sortOrder ?? 0,
     })
     .returning();

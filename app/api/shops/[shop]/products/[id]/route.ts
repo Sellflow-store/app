@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { recordPrice } from "@/lib/price-history";
 import { findFreeProductSlug } from "@/lib/slug";
+import { normalizeAttributes } from "@/lib/product-attributes";
 
 type Params = { params: Promise<{ shop: string; id: string }> };
 
@@ -35,6 +36,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     sortOrder: number;
     type: string;
     fulfillment: Record<string, unknown>;
+    attributes: Record<string, unknown>;
   }>;
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -47,6 +49,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   for (const f of fields) {
     if (body[f] !== undefined) updates[f] = body[f];
   }
+  if (body.attributes !== undefined) updates.attributes = normalizeAttributes(body.attributes);
 
   // Adres zmienia się TYLKO wtedy, gdy merchant świadomie go wpisze. Zmiana
   // nazwy go nie rusza — inaczej każda korekta literówki zrywałaby linki

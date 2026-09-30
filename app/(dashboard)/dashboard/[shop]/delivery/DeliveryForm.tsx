@@ -89,7 +89,8 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
         setValidationError(`Niepoprawna cena przy metodzie „${m.label}”.`);
         return;
       }
-      normalized.push({ ...m, label: m.label.trim(), price });
+      const transit = (m.transitDays ?? "").replace(/[^\d–-]/g, "").slice(0, 7);
+      normalized.push({ ...m, label: m.label.trim(), price, transitDays: transit || undefined });
     }
     if (normalized.length === 0) {
       setValidationError("Dodaj przynajmniej jedną metodę dostawy.");
@@ -262,6 +263,31 @@ export default function DeliveryForm({ shopSlug, initialConfig }: Props) {
                   </p>
                 </div>
               </div>
+
+              {m.kind !== "pickup" && (
+                <div className="grid grid-cols-[auto_1fr] gap-3 items-center mt-2 pl-[3rem]">
+                  <label
+                    className="text-xs font-medium shrink-0"
+                    style={{ color: "var(--panel-ink-muted)" }}
+                    htmlFor={`transit-${m.id}`}
+                  >
+                    Doręczenie
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id={`transit-${m.id}`}
+                      value={m.transitDays ?? ""}
+                      onChange={(e) => updateMethod(i, { transitDays: e.target.value })}
+                      placeholder="1–2"
+                      style={{ ...inputStyle, maxWidth: "6rem" }}
+                      {...focusProps}
+                    />
+                    <span className="text-[11px]" style={{ color: "var(--panel-ink-muted)" }}>
+                      dni robocze od nadania. Google i asystenci AI podają klientom datę dostawy.
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

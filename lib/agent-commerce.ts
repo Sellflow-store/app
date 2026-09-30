@@ -86,9 +86,10 @@ export function parseDayRange(raw: string | null | undefined): { min: number; ma
   return { min, max };
 }
 
-// Czas przewozu kurierem i do paczkomatu w Polsce: typowo 1–2 dni robocze.
-// Sklep nie podaje go osobno, a bez niego agent nie policzy „dostawy do piątku”.
-const TRANSIT_DAYS = { min: 1, max: 2 };
+// Czas przewozu, gdy sprzedawca nie podał go przy metodzie dostawy: kurier
+// i paczkomat w Polsce to typowo 1–2 dni robocze. Bez tej wartości agent
+// nie policzy „dostawy do piątku”.
+const DEFAULT_TRANSIT = "1–2";
 
 function money(value: number) {
   return { "@type": "MonetaryAmount", value: value.toFixed(2), currency: "PLN" };
@@ -118,7 +119,10 @@ export function shippingDetailsLd(
       deliveryTime: {
         "@type": "ShippingDeliveryTime",
         handlingTime: { "@type": "QuantitativeValue", minValue: handling.min, maxValue: handling.max, unitCode: "DAY" },
-        transitTime: { "@type": "QuantitativeValue", minValue: TRANSIT_DAYS.min, maxValue: TRANSIT_DAYS.max, unitCode: "DAY" },
+        transitTime: (() => {
+          const t = parseDayRange(m.transitDays?.trim() || DEFAULT_TRANSIT);
+          return { "@type": "QuantitativeValue", minValue: t.min, maxValue: t.max, unitCode: "DAY" };
+        })(),
       },
     }));
 }
@@ -215,8 +219,12 @@ export function productFeedXml(input: FeedInput): string {
         `<g:price>${(onSale ? old : price).toFixed(2)} PLN</g:price>`,
         ...(onSale ? [`<g:sale_price>${price.toFixed(2)} PLN</g:sale_price>`] : []),
         `<g:brand>${xml(input.shopName)}</g:brand>`,
-        // Brak EAN: Merchant Center wymaga wtedy jawnego „identifier_exists = no”.
-        `<g:identifier_exists>no</g:identifier_exists>`,
+        // EAN albo kod producenta łączą ofertę z katalogiem Google. Bez nich
+        // Merchant Center wymaga jawnego „identifier_exists = no”.
+        ...(p.attributes.gtin ? [`<g:gtin>${xml(p.attributes.gtin)}</g:gtin>`] : []),
+        ...(p.attributes.mpn ? [`<g:mpn>${xml(p.attributes.mpn)}</g:mpn>`] : []),
+        ...(!p.attributes.gtin && !p.attributes.mpn ? [`<g:identifier_exists>no</g:identifier_exists>`] : []),
+        ...(p.attributes.material ? [`<g:material>${xml(p.attributes.material.slice(0, 200))}</g:material>`] : []),
         `<g:condition>new</g:condition>`,
         ...(p.category ? [`<g:product_type>${xml(p.category)}</g:product_type>`] : []),
         ...(p.colors.length ? [`<g:color>${xml(p.colors.slice(0, 3).join("/"))}</g:color>`] : []),

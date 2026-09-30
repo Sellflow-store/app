@@ -148,6 +148,9 @@ export const products = pgTable(
     //   digital  → { kind: "file"|"link"|"license", fileUrl?, url?, licenseKeys?, instructions? }
     //   service  → { duration?, mode?: "online"|"onsite"|"both", details? }
     fulfillment: jsonb("fulfillment").default({}),
+    // Atrybuty dla wyszukiwarek produktowych i agentów AI (lib/product-attributes):
+    // { gtin?, mpn?, material? }. JSON, żeby kolejne pola nie wymagały migracji.
+    attributes: jsonb("attributes").notNull().default({}),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Trash2, Plus, X, ImageIcon, Package, Download, Briefcase } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Plus, X, ImageIcon, Package, Download, Briefcase, Sparkles } from "lucide-react";
 import Link from "next/link";
 import ImageUpload from "@/components/admin/ImageUpload";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import { htmlIsEmpty } from "@/lib/sanitize";
+import { isValidGtin, readinessGaps, readinessScore } from "@/lib/product-attributes";
 
 export interface ProductSpec {
   key: string;
@@ -38,6 +39,10 @@ export interface ProductFormData {
   width: string;   // cm
   height: string;  // cm
   specs: ProductSpec[];
+  // Dane dla Google i agentów AI (products.attributes)
+  gtin: string;
+  mpn: string;
+  material: string;
   type: ProductType;
   // digital
   digitalKind: DigitalKind;
@@ -70,6 +75,9 @@ const EMPTY: ProductFormData = {
   width: "",
   height: "",
   specs: [],
+  gtin: "",
+  mpn: "",
+  material: "",
   type: "physical",
   digitalKind: "file",
   digitalFileUrl: "",
@@ -143,11 +151,13 @@ interface Props {
   shopSlug: string;
   productId?: string;
   initial?: ProductFormData;
+  /** Na platformie jest klucz do modelu AI: pokaż przycisk propozycji. */
+  aiEnabled?: boolean;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export default function ProductForm({ shopSlug, productId, initial }: Props) {
+export default function ProductForm({ shopSlug, productId, initial, aiEnabled = false }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<ProductFormData>(initial ?? EMPTY);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -260,6 +270,12 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
       };
     }
 
+    const gtin = form.gtin.replace(/\s/g, "");
+    if (gtin && !isValidGtin(gtin)) {
+      setValidationError("Niepoprawny EAN. Sprawdź, czy to 8, 12, 13 lub 14 cyfr z kodu kreskowego.");
+      return;
+    }
+
     const payload = {
       name: form.name.trim(),
       // Puste pole przy edycji = zostaw dotychczasowy adres nietknięty.
@@ -293,6 +309,11 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         .filter((s) => s.key || s.value),
       type: form.type,
       fulfillment,
+      attributes: {
+        gtin: form.gtin.replace(/\s/g, "") || undefined,
+        mpn: form.mpn.trim() || undefined,
+        material: form.material.trim() || undefined,
+      },
     };
 
     try {
@@ -696,6 +717,8 @@ export default function ProductForm({ shopSlug, productId, initial }: Props) {
         </SectionCard>
       )}
 
+      <AgentDataCard form={form} patch={patch} shopSlug={shopSlug} aiEnabled={aiEnabled} />
+
       {/* Parameters (specs) */}
       <SectionCard title="Parametry">
         {form.specs.length > 0 && (
@@ -948,4 +971,226 @@ function parseSizes(raw: string): string[] {
     if (size && size.length <= 24 && !out.includes(size)) out.push(size);
   }
   return out;
+}
+
+/**
+ * Pola, po których filtrują Google i asystenci AI, razem z oceną kompletności
+ * produktu. Ocena liczy się na żywo z formularza, więc sprzedawca widzi, co
+ * zmienia każde uzupełnione pole.
+ */
+interface Suggestion {
+  material: string;
+  category: string;
+  shortDesc: string;
+}
+
+function AgentDataCard({
+  form,
+  patch,
+  shopSlug,
+  aiEnabled,
+}: {
+  form: ProductFormData;
+  patch: (u: Partial<ProductFormData>) => void;
+  shopSlug: string;
+  aiEnabled: boolean;
+}) {
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
+
+  async function ask() {
+    setAsking(true);
+    setAskError(null);
+    setSuggestion(null);
+    try {
+      const res = await fetch(`/api/shops/${shopSlug}/products/suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description,
+          shortDesc: form.shortDesc,
+          category: form.category,
+          image: form.images[0] ?? null,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setAskError(data?.error ?? "Nie udało się przygotować propozycji.");
+        return;
+      }
+      setSuggestion(data as Suggestion);
+    } catch {
+      setAskError("Brak połączenia. Spróbuj ponownie.");
+    } finally {
+      setAsking(false);
+    }
+  }
+
+  // Tylko pola, w których propozycja coś wnosi względem tego, co już jest.
+  const rows = suggestion
+    ? ([
+        ["material", "Materiał", suggestion.material, form.material],
+        ["category", "Kategoria", suggestion.category, form.category],
+        ["shortDesc", "Krótki opis", suggestion.shortDesc, form.shortDesc],
+      ] as const).filter(([key, , value, current]) => value && value !== current && (key !== "material" || form.type === "physical"))
+    : [];
+
+  const input = {
+    type: form.type,
+    priceOnRequest: form.priceOnRequest,
+    images: form.images,
+    shortDesc: form.shortDesc,
+    description: form.description,
+    category: form.category,
+    weightGrams: form.weight ? Number(form.weight) : null,
+    attributes: {
+      gtin: form.gtin.trim() || undefined,
+      mpn: form.mpn.trim() || undefined,
+      material: form.material.trim() || undefined,
+    },
+  };
+  const score = readinessScore(input);
+  const gaps = readinessGaps(input);
+  const tone = score >= 85 ? "var(--panel-success)" : score >= 60 ? "var(--panel-warning)" : "var(--panel-danger)";
+  const gtinInvalid = form.gtin.trim() !== "" && !isValidGtin(form.gtin.replace(/\s/g, ""));
+
+  return (
+    <SectionCard title="Dane dla Google i AI">
+      <div className="flex items-start gap-4 mb-5 p-3.5 rounded-lg bg-[var(--panel-surface-2)]">
+        <div className="shrink-0 text-center">
+          <p className="text-[22px] font-semibold tabular-nums leading-none" style={{ color: tone, fontFamily: "var(--font-display)" }}>
+            {score}%
+          </p>
+          <p className="text-[11px] mt-1 text-[var(--panel-ink-muted)]">gotowości</p>
+        </div>
+        <div className="flex-1 min-w-0">
+          {gaps.length === 0 ? (
+            <p className="text-[13px] text-[var(--panel-ink)]">
+              Komplet. Produkt ma wszystko, czego potrzebują Google i asystenci AI, żeby go polecić.
+            </p>
+          ) : (
+            <>
+              <p className="text-[12.5px] font-medium mb-1 text-[var(--panel-ink)]">Uzupełnij, żeby AI mogło polecić ten produkt:</p>
+              <ul className="space-y-0.5">
+                {gaps.slice(0, 4).map((g) => (
+                  <li key={g.key} className="text-[12px] text-[var(--panel-ink-muted)]">
+                    <span className="font-medium text-[var(--panel-ink)]">{g.label}</span>: {g.why}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Asystent AI: bez klucza API na platformie przycisk jest widoczny,
+          ale wyszarzony z oznaczeniem „wkrótce”, żeby sprzedawca wiedział,
+          że ta pomoc nadchodzi. */}
+      {(
+        <div className="mb-5">
+          <button
+            type="button"
+            onClick={aiEnabled ? ask : undefined}
+            disabled={!aiEnabled || asking || !form.name.trim()}
+            aria-disabled={!aiEnabled}
+            title={aiEnabled ? undefined : "Asystent AI będzie dostępny wkrótce"}
+            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold border border-[var(--panel-border-strong)] text-[var(--panel-ink)] hover:bg-[var(--panel-surface-hover)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+          >
+            <Sparkles className="w-4 h-4 text-[var(--panel-primary)]" strokeWidth={1.75} />
+            {asking ? "Analizuję opis i zdjęcie…" : "Zaproponuj z AI"}
+            {!aiEnabled && (
+              <span className="ml-1 text-[10.5px] font-semibold uppercase tracking-[0.06em] px-1.5 py-px rounded-md bg-[var(--panel-surface-2)] text-[var(--panel-ink-muted)] border border-[var(--panel-border)]">
+                wkrótce
+              </span>
+            )}
+          </button>
+          <p className="text-[11px] mt-1.5 text-[var(--panel-ink-faint)]">
+            {aiEnabled
+              ? "AI czyta nazwę, opis i pierwsze zdjęcie. Nic nie zmieni się bez Twojego kliknięcia."
+              : "Wkrótce AI zaproponuje materiał, kategorię i krótki opis na podstawie opisu i zdjęcia."}
+          </p>
+          {askError && <p className="text-[12px] mt-2 text-[var(--panel-danger-ink)]">{askError}</p>}
+          {suggestion && rows.length === 0 && (
+            <p className="text-[12px] mt-2 text-[var(--panel-ink-muted)]">AI nie ma nic do dodania: pola są już uzupełnione.</p>
+          )}
+          {rows.length > 0 && (
+            <div className="mt-3 rounded-lg border border-[var(--panel-border)] divide-y divide-[var(--panel-border)]">
+              {rows.map(([key, label, value]) => (
+                <div key={key} className="flex items-start gap-3 px-3.5 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11.5px] font-medium text-[var(--panel-ink-muted)]">{label}</p>
+                    <p className="text-[13px] text-[var(--panel-ink)]">{value}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => patch({ [key]: value } as Partial<ProductFormData>)}
+                    className="shrink-0 text-[12.5px] font-semibold px-2.5 h-8 rounded-md text-[var(--panel-primary)] hover:bg-[var(--panel-primary-soft)]"
+                  >
+                    Użyj
+                  </button>
+                </div>
+              ))}
+              {rows.length > 1 && (
+                <div className="px-3.5 py-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => patch(Object.fromEntries(rows.map(([k, , v]) => [k, v])) as Partial<ProductFormData>)}
+                    className="text-[12.5px] font-semibold px-2.5 h-8 rounded-md text-[var(--panel-primary)] hover:bg-[var(--panel-primary-soft)]"
+                  >
+                    Użyj wszystkich
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {form.type === "physical" && (
+        <>
+          <Field label="Materiał / skład" id="pf-material">
+            <input
+              id="pf-material"
+              value={form.material}
+              onChange={(e) => patch({ material: e.target.value })}
+              placeholder="np. 100% jedwab, len 70% i bawełna 30%"
+              style={inputStyle}
+              {...focusProps}
+            />
+          </Field>
+          <div className="grid sm:grid-cols-2 gap-x-4">
+            <Field label="EAN (kod kreskowy)" id="pf-gtin">
+              <input
+                id="pf-gtin"
+                value={form.gtin}
+                onChange={(e) => patch({ gtin: e.target.value })}
+                placeholder="np. 5901234123457"
+                inputMode="numeric"
+                style={{ ...inputStyle, borderColor: gtinInvalid ? "var(--panel-danger)" : undefined }}
+                {...focusProps}
+              />
+              {gtinInvalid && (
+                <p className="text-[11px] mt-1 text-[var(--panel-danger-ink)]">Ten numer nie przechodzi kontroli EAN.</p>
+              )}
+            </Field>
+            <Field label="Kod producenta (MPN)" id="pf-mpn">
+              <input
+                id="pf-mpn"
+                value={form.mpn}
+                onChange={(e) => patch({ mpn: e.target.value })}
+                placeholder="gdy produkt nie ma EAN"
+                style={inputStyle}
+                {...focusProps}
+              />
+            </Field>
+          </div>
+          <p className="text-[11px] text-[var(--panel-ink-faint)]">
+            Wyroby własne i rękodzieło zwykle nie mają EAN. Wtedy zostaw oba pola puste, a sklep zgłosi to Google poprawnie.
+          </p>
+        </>
+      )}
+    </SectionCard>
+  );
 }

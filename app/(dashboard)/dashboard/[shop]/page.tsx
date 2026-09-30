@@ -7,6 +7,7 @@ import { getShopAccess } from "@/lib/api";
 import { STATUS_STYLES } from "@/lib/order-status";
 import { formatPln } from "@/lib/money";
 import { tpayEnabled } from "@/lib/tpay-status";
+import { materialFromSpecs, normalizeAttributes, readinessGaps, readinessScore, type ReadinessGap } from "@/lib/product-attributes";
 import type {
   BrandingConfig, CheckoutConfig, LegalConfig, AboutConfig, AccountConfig, LegalDataConfig,
 } from "@/types/shop";
@@ -34,7 +35,7 @@ export default async function DashboardHome({
   const d30 = new Date(Date.now() - 30 * 24 * 3600 * 1000);
   const notCancelled = ne(orders.status, "cancelled");
 
-  const [shop, configRows, [{ products: productCount }], agg30, recent, [{ toShip }], [{ unpaid }], onlinePayments] =
+  const [shop, configRows, [{ products: productCount }], agg30, recent, [{ toShip }], [{ unpaid }], onlinePayments, productData] =
     await Promise.all([
       db.query.shops.findFirst({ where: eq(shops.id, access.shopId) }),
       db.select().from(shopConfig).where(eq(shopConfig.shopId, access.shopId)),
@@ -66,7 +67,45 @@ export default async function DashboardHome({
         .from(orders)
         .where(and(eq(orders.shopId, access.shopId), eq(orders.paymentStatus, "unpaid"), notCancelled)),
       tpayEnabled(access.shopId),
+      db
+        .select({
+          type: products.type,
+          priceOnRequest: products.priceOnRequest,
+          images: products.images,
+          shortDesc: products.shortDesc,
+          description: products.description,
+          category: products.category,
+          weightGrams: products.weightGrams,
+          attributes: products.attributes,
+          specs: products.specs,
+        })
+        .from(products)
+        .where(and(eq(products.shopId, access.shopId), eq(products.visible, true))),
     ]);
+
+  // ── Gotowość katalogu dla Google i AI ────────────────────────────────────
+  const gapCounts = new Map<ReadinessGap["key"], { label: string; count: number; weight: number }>();
+  let readyCount = 0;
+  for (const p of productData) {
+    const attrs = normalizeAttributes(p.attributes);
+    const input = {
+      type: (p.type as "physical" | "digital" | "service") ?? "physical",
+      priceOnRequest: p.priceOnRequest,
+      images: (p.images as string[]) ?? [],
+      shortDesc: p.shortDesc,
+      description: p.description,
+      category: p.category,
+      weightGrams: p.weightGrams,
+      attributes: { ...attrs, material: attrs.material ?? materialFromSpecs(p.specs as { key: string; value: string }[]) },
+    };
+    if (readinessScore(input) >= 85) readyCount++;
+    for (const g of readinessGaps(input)) {
+      const e = gapCounts.get(g.key) ?? { label: g.label, count: 0, weight: g.weight };
+      e.count++;
+      gapCounts.set(g.key, e);
+    }
+  }
+  const topGaps = [...gapCounts.values()].sort((a, b) => b.count * b.weight - a.count * a.weight).slice(0, 3);
 
   const configMap = Object.fromEntries(configRows.map((c) => [c.key, c.value]));
   const branding = configMap.branding as Partial<BrandingConfig> | undefined;
@@ -284,6 +323,36 @@ export default async function DashboardHome({
         ))}
       </div>
 
+      {/* Gotowość katalogu dla Google i AI: pokazujemy, gdy są produkty
+          i coś jest do poprawy, z liczbą produktów przy każdej luce. */}
+      {productData.length > 0 && topGaps.length > 0 && (
+        <Link
+          href={`${base}/products`}
+          className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-xl p-5 mb-6 border border-[var(--panel-border)] bg-[var(--panel-surface)] hover:border-[var(--panel-border-strong)] transition-colors"
+        >
+          <div className="shrink-0">
+            <p className="text-[12.5px] font-medium text-[var(--panel-ink-muted)]">Gotowość dla Google i AI</p>
+            <p className="text-[26px] font-semibold tabular-nums leading-none mt-1.5 text-[var(--panel-ink)]" style={{ fontFamily: "var(--font-display)" }}>
+              {readyCount}<span className="text-[15px] font-medium text-[var(--panel-ink-muted)]"> z {productData.length}</span>
+            </p>
+            <p className="text-[12px] mt-1 text-[var(--panel-ink-faint)]">produktów z kompletem danych</p>
+          </div>
+          <ul className="flex-1 min-w-0 space-y-1 sm:border-l sm:pl-5 border-[var(--panel-border)]">
+            {topGaps.map((g) => (
+              <li key={g.label} className="text-[13px] text-[var(--panel-ink)]">
+                <span className="font-semibold tabular-nums">{g.count}</span>{" "}
+                <span className="text-[var(--panel-ink-muted)]">{productsWord(g.count)} bez pola</span>{" "}
+                <span className="font-medium">{g.label.toLowerCase()}</span>
+              </li>
+            ))}
+          </ul>
+          <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--panel-primary)] shrink-0">
+            Uzupełnij
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.75} />
+          </span>
+        </Link>
+      )}
+
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-6 items-start">
         {/* Recent orders */}
         <div className="rounded-xl overflow-hidden border border-[var(--panel-border)] bg-[var(--panel-surface)]">
@@ -345,6 +414,12 @@ export default async function DashboardHome({
       </div>
     </div>
   );
+}
+
+function productsWord(n: number): string {
+  if (n === 1) return "produkt";
+  const few = n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14);
+  return few ? "produkty" : "produktów";
 }
 
 function stepsLeftLabel(n: number): string {

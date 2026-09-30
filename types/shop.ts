@@ -1,3 +1,4 @@
+import type { ProductAttributes } from "@/lib/product-attributes";
 // ─── Shop config value types (stored as JSONB in shop_config table) ───────────
 
 export interface TopBarConfig {
@@ -144,6 +145,8 @@ export interface DeliveryMethod {
   price: string; // "12.99"
   enabled: boolean;
   kind: DeliveryMethodKind;
+  /** Czas doręczenia po nadaniu, w dniach roboczych, np. "1–2". Puste = 1–2. */
+  transitDays?: string;
 }
 
 /** Metody paczkomatowe wymagają wskazania konkretnego punktu w checkoucie. */
@@ -451,6 +454,8 @@ export interface StorefrontProduct {
   sortOrder: number;
   type: ProductType;
   fulfillment: ProductFulfillment;
+  /** EAN, kod producenta, materiał (lib/product-attributes). */
+  attributes: ProductAttributes;
 }
 
 export type ProductType = "physical" | "digital" | "service";

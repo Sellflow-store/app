@@ -16,6 +16,22 @@ export interface Product {
   stock?: number | null;
   image?: string;
   type?: "physical" | "digital" | "service";
+  /** Gotowość danych dla Google i AI, 0–100 (lib/product-attributes). */
+  aiScore?: number;
+  /** Najważniejsza brakująca rzecz, do podpowiedzi. */
+  aiGap?: string;
+}
+
+/** Ocena kompletności danych dla Google i asystentów AI. */
+function AiScore({ score, gap }: { score?: number; gap?: string }) {
+  if (score == null) return <span className="text-[var(--panel-ink-faint)]">—</span>;
+  const color = score >= 85 ? "var(--panel-success)" : score >= 60 ? "var(--panel-warning)" : "var(--panel-danger)";
+  return (
+    <span className="flex items-center gap-2 text-[var(--panel-ink)] tabular-nums" title={gap ? `Brakuje: ${gap}` : "Komplet danych"}>
+      <span aria-hidden className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+      {score}%
+    </span>
+  );
 }
 
 const CHIP = "text-[11.5px] font-medium px-1.5 py-px rounded-md border shrink-0";
@@ -54,7 +70,7 @@ function Thumb({ image }: { image?: string }) {
   );
 }
 
-const COLS = "grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)_120px_140px_120px_44px]";
+const COLS = "grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)_120px_140px_90px_120px_44px]";
 
 interface Props {
   shopSlug: string;
@@ -185,6 +201,7 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
                 <span role="columnheader">Kategoria</span>
                 <span role="columnheader" className="text-right">Cena</span>
                 <span role="columnheader">Stan</span>
+                <span role="columnheader" title="Kompletność danych dla Google i asystentów AI">Gotowość AI</span>
                 <span role="columnheader">Sklep</span>
                 <span role="columnheader" className="sr-only">Edytuj</span>
               </div>
@@ -219,6 +236,8 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
                   <span className="text-right font-semibold tabular-nums text-[var(--panel-ink)]">{price(product)}</span>
 
                   <span className="text-[13px]"><Stock stock={product.stock} /></span>
+
+                  <span className="text-[13px]"><AiScore score={product.aiScore} gap={product.aiGap} /></span>
 
                   <VisibilityButton product={product} />
 

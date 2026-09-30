@@ -36,6 +36,7 @@ import {
   DEFAULT_LOGO_HEIGHT,
   DEFAULT_LOGO_MAX_WIDTH,
 } from "@/types/shop";
+import { materialFromSpecs, normalizeAttributes } from "@/lib/product-attributes";
 
 export const DEFAULT_BRANDING: BrandingConfig = {
   shopName: "Mój sklep",
@@ -427,6 +428,11 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     sortOrder: p.sortOrder,
     type: (p.type as StorefrontProduct["type"]) ?? "physical",
     fulfillment: publicFulfillment(p.fulfillment),
+    attributes: (() => {
+      const attrs = normalizeAttributes(p.attributes);
+      const material = attrs.material ?? materialFromSpecs(p.specs as { key: string; value: string }[]);
+      return material ? { ...attrs, material } : attrs;
+    })(),
   }));
 
   return {
