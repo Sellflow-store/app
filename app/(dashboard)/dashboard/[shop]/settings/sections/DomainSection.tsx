@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Globe, Lock, Check, Copy, RefreshCw, Trash2, CircleAlert, Clock } from "lucide-react";
 import { SectionTitle, Card, Field, TextInput, SaveButton, LockedCard, P, type SaveState } from "../ui";
+import { planAllowsCustomDomain } from "@/lib/plans";
 
 interface DnsRecord {
   type: "A" | "CNAME";
@@ -92,7 +93,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
   const host = storeUrl.replace(/^https?:\/\//, "");
   // Domena podpięta wcześniej (np. przed zmianą planu albo przez nas z ops)
   // zostaje widoczna i zarządzalna. Kłódka dotyczy tylko podpinania nowej.
-  const isPro = plan === "pro" || !!initialDomain;
+  const canUseDomain = planAllowsCustomDomain(plan) || !!initialDomain;
 
   const [domain, setDomain] = useState<string | null>(initialDomain);
   const [input, setInput] = useState("");
@@ -121,7 +122,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
   // Pull live status once on mount when a domain is already connected. Fetches
   // inline (not via loadStatus) so no setState runs synchronously in the effect.
   useEffect(() => {
-    if (!initialDomain || !isPro) return;
+    if (!initialDomain || !canUseDomain) return;
     let cancelled = false;
     (async () => {
       const res = await fetch(`/api/shops/${shopSlug}/domain`);
@@ -135,7 +136,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
     return () => {
       cancelled = true;
     };
-  }, [initialDomain, isPro, shopSlug]);
+  }, [initialDomain, canUseDomain, shopSlug]);
 
   async function connect() {
     const value = input.trim();
@@ -201,10 +202,10 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
         </div>
       </Card>
 
-      {!isPro ? (
+      {!canUseDomain ? (
         <LockedCard
           icon={<Lock className="w-5 h-5" strokeWidth={1.75} />}
-          title="Dostępne w planie Pro"
+          title="Dostępne w planach Starter i Pro"
           cta={
             <button disabled className="text-sm font-semibold px-4 py-2.5 rounded-full opacity-60 cursor-not-allowed"
               style={{ background: P.ink, color: P.bg }}>
@@ -212,7 +213,7 @@ export default function DomainSection({ shopSlug, plan, storeUrl, initialDomain 
             </button>
           }
         >
-          Własna domena (.pl / .com) jest częścią planu Pro i wyższych. Na obecnym planie Twój sklep
+          Własna domena (.pl / .com) jest częścią planów Starter i Pro. Na obecnym planie Twój sklep
           działa pod stałym adresem <strong>{host}</strong>.
         </LockedCard>
       ) : !domain ? (

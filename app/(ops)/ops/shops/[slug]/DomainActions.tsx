@@ -150,7 +150,7 @@ export default function DomainActions({ slug, initialDomain }: Props) {
           <div className="flex items-end gap-2">
             <label className="flex-1">
               <span className="block text-xs font-medium mb-1.5" style={{ color: "var(--brand-ink-2)" }}>
-                Podłącz domenę do tego sklepu (admin — bez wymogu planu Pro)
+                Podłącz domenę do tego sklepu (admin, bez wymogu planu)
               </span>
               <input
                 value={input}

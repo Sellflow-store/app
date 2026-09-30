@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { shops, users } from "@/lib/db/schema";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { planAllowsCustomDomain } from "@/lib/plans";
 import {
   addDomainToProject,
   removeDomainFromProject,
@@ -56,19 +57,19 @@ export async function GET(_req: NextRequest, { params }: Params) {
   });
 }
 
-/** Attach a custom domain to this shop (Pro-only). */
+/** Attach a custom domain to this shop (Starter and above). */
 export async function PUT(req: NextRequest, { params }: Params) {
   const { shop: shopSlug } = await params;
   const access = await getShopAccess(shopSlug);
   if (!access) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Plan gate — the shop owner must be on Pro. Ops/admins bypass so support can
+  // Plan gate: the shop owner must be on Starter or Pro. Ops/admins bypass so support can
   // configure a domain on a merchant's behalf.
   if (!access.asAdmin) {
     const owner = await db.query.users.findFirst({ where: eq(users.id, access.userId) });
-    if ((owner?.plan ?? "free") !== "pro") {
+    if (!planAllowsCustomDomain(owner?.plan)) {
       return NextResponse.json(
-        { error: "Własna domena jest dostępna w planie Pro." },
+        { error: "Własna domena jest dostępna w planach Starter i Pro." },
         { status: 403 },
       );
     }

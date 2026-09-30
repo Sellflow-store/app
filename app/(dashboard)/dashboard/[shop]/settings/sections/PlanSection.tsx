@@ -9,7 +9,7 @@ import { PLANS } from "@/lib/plans";
 // panelem, więc kwoty tu nie pokazujemy.
 const PLAN_COPY: Record<keyof typeof PLANS, string> = {
   free: "Bezpłatny plan na start: do 10 produktów w sklepie.",
-  starter: "Do 100 produktów w sklepie, w cenie dla pierwszych sklepów na Sellflow.",
+  starter: "Do 100 produktów i własna domena, w cenie dla pierwszych sklepów na Sellflow.",
   pro: "Pełny zakres funkcji bez limitu produktów, w cenie dla pierwszych sklepów na Sellflow.",
 };
 
