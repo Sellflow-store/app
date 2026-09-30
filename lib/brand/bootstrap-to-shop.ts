@@ -52,6 +52,7 @@ export function bootstrapToShopContext(payload: StoreBootstrap): ShopContext {
     sortOrder: i,
     type: "physical",
     fulfillment: {},
+    attributes: {},
   }));
 
   return {

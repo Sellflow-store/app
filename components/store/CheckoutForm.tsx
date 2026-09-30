@@ -351,16 +351,16 @@ export default function CheckoutForm({
             <div className="space-y-4">
               <div>
                 <FieldLabel htmlFor="co-email">E-mail *</FieldLabel>
-                <input id="co-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="jan@przyklad.pl" />
+                <input id="co-email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="jan@przyklad.pl" />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <FieldLabel htmlFor="co-name">Imię i nazwisko *</FieldLabel>
-                  <input id="co-name" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Jan Kowalski" />
+                  <input id="co-name" name="name" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Jan Kowalski" />
                 </div>
                 <div>
                   <FieldLabel htmlFor="co-phone">Telefon{hasPhysical ? " *" : ""}</FieldLabel>
-                  <input id="co-phone" type="tel" required={hasPhysical} value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="600 000 000" />
+                  <input id="co-phone" name="tel" type="tel" autoComplete="tel" required={hasPhysical} value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="600 000 000" />
                   {hasPhysical && (
                     <p className="text-xs mt-1 opacity-60">Kurier i paczkomat wysyłają na ten numer powiadomienia o paczce.</p>
                   )}
@@ -380,16 +380,16 @@ export default function CheckoutForm({
                 <FieldLabel htmlFor="co-street">
                   Ulica i numer {streetRequired ? "*" : "(opcjonalnie)"}
                 </FieldLabel>
-                <input id="co-street" required={streetRequired} value={street} onChange={(e) => setStreet(e.target.value)} className={inputClass} placeholder="ul. Kwiatowa 7/2" />
+                <input id="co-street" name="street-address" autoComplete="street-address" required={streetRequired} value={street} onChange={(e) => setStreet(e.target.value)} className={inputClass} placeholder="ul. Kwiatowa 7/2" />
               </div>
               <div className="grid grid-cols-[8rem_1fr] gap-4">
                 <div>
                   <FieldLabel htmlFor="co-zip">Kod *</FieldLabel>
-                  <input id="co-zip" required value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} placeholder="00-001" />
+                  <input id="co-zip" name="postal-code" autoComplete="postal-code" inputMode="numeric" required value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} placeholder="00-001" />
                 </div>
                 <div>
                   <FieldLabel htmlFor="co-city">Miasto *</FieldLabel>
-                  <input id="co-city" required value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} placeholder="Warszawa" />
+                  <input id="co-city" name="city" autoComplete="address-level2" required value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} placeholder="Warszawa" />
                 </div>
               </div>
             </div>

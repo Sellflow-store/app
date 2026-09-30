@@ -66,6 +66,13 @@ export default async function ProductPage({ params }: Props) {
     brand: { "@type": "Brand", name: shop.branding.shopName },
   };
   if (product.category) productLd.category = product.category;
+  // Atrybuty, po których filtrują agenci i Google: EAN, kod producenta, skład.
+  const attrs = product.attributes ?? {};
+  if (attrs.gtin) productLd.gtin = attrs.gtin;
+  if (attrs.mpn) productLd.mpn = attrs.mpn;
+  if (attrs.material) productLd.material = attrs.material;
+  if (product.colors.length > 0) productLd.color = product.colors.join(", ");
+  if (product.sizes.length > 0) productLd.size = product.sizes.join(", ");
   if (!product.priceOnRequest) {
     // Dostawa i zwroty z konfiguracji sklepu: to pierwsze kryteria, po których
     // agent AI i Google odsiewają oferty („darmowa dostawa”, „zwrot 14 dni”).
@@ -87,6 +94,12 @@ export default async function ProductPage({ params }: Props) {
     };
   }
   const productFaqLd = faqPageLd(product.faq ?? []);
+  const hasSpec = (re: RegExp) => product.specs.some((sp) => re.test(sp.key ?? ""));
+  const specRows = [
+    ...(attrs.material && !hasSpec(/^(materia[łl]|sk[łl]ad|tkanina|surowiec)/i) ? [{ key: "Materiał", value: attrs.material }] : []),
+    ...product.specs,
+    ...(attrs.gtin && !hasSpec(/^(ean|gtin)/i) ? [{ key: "EAN", value: attrs.gtin }] : []),
+  ];
 
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -267,14 +280,16 @@ export default async function ProductPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Specs */}
-              {product.specs.length > 0 && (
+              {/* Specs: atrybuty z panelu (materiał, EAN) doklejone na górze,
+                  o ile sprzedawca nie wpisał ich już jako parametru. Dane
+                  strukturalne muszą mieć pokrycie w widocznej treści. */}
+              {specRows.length > 0 && (
                 <div className="mt-8 pt-8 border-t border-rule">
                   <h2 className="text-sm font-semibold tracking-wide text-ink mb-3">
                     Specyfikacja
                   </h2>
                   <dl className="space-y-2">
-                    {product.specs.map((s, i) => (
+                    {specRows.map((s, i) => (
                       <div key={i} className="flex justify-between gap-4 text-sm">
                         <dt className="text-ink-2/70 font-light">{s.key}</dt>
                         <dd className="text-ink font-medium text-right">{s.value}</dd>

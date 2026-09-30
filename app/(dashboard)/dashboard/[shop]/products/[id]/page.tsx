@@ -1,3 +1,5 @@
+import { materialFromSpecs, normalizeAttributes } from "@/lib/product-attributes";
+import { productAssistConfigured } from "@/lib/ai-product-assist";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
@@ -36,6 +38,7 @@ export default async function EditProductPage({
     height?: number | null;
   };
 
+  const attrs = normalizeAttributes(product.attributes);
   const initial: ProductFormData = {
     name: product.name,
     slug: product.slug,
@@ -55,6 +58,10 @@ export default async function EditProductPage({
     height: dim.height != null ? String(dim.height) : "",
     sizes: ((product.sizes as string[]) ?? []).join(", "),
     specs: (product.specs as { key: string; value: string }[]) ?? [],
+    gtin: attrs.gtin ?? "",
+    mpn: attrs.mpn ?? "",
+    // Materiał wpisany kiedyś jako parametr trafia od razu do nowego pola.
+    material: attrs.material ?? materialFromSpecs(product.specs as { key: string; value: string }[]) ?? "",
     type: (product.type as ProductType) ?? "physical",
     digitalKind: (f.kind as DigitalKind) ?? "file",
     digitalFileUrl: (f.fileUrl as string) ?? "",
@@ -66,5 +73,5 @@ export default async function EditProductPage({
     serviceDetails: (f.details as string) ?? "",
   };
 
-  return <ProductForm shopSlug={shop} productId={product.id} initial={initial} />;
+  return <ProductForm shopSlug={shop} productId={product.id} initial={initial} aiEnabled={productAssistConfigured()} />;
 }
