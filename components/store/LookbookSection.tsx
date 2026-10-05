@@ -33,10 +33,13 @@ export default async function LookbookSection({ config, shopSlug }: Props) {
   // Siatka po cztery kadry w rzędzie. Nic się nie rusza samo — przy kadrach
   // filmowych to jedyny ruch na sekcji zostaje w samych filmach, a nie w układzie
   // pod nimi. Osiem kadrów daje dwa rzędy na desktopie i cztery na telefonie.
+  // Liczba, która dzieli się przez trzy, a nie przez cztery (6, 9), idzie po
+  // trzy w rzędzie — inaczej ostatni rząd zostałby w połowie pusty.
   if (layout === "grid") {
+    const cols = items.length % 4 !== 0 && items.length % 3 === 0 ? "sm:grid-cols-3" : "sm:grid-cols-4";
     return (
       <section aria-label="Lookbook" className="bg-paper px-4 sm:px-6 lg:px-10 py-10 lg:py-16">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-w-[1600px] mx-auto">
+        <div className={`grid grid-cols-2 ${cols} gap-3 sm:gap-4 lg:gap-6 max-w-[1600px] mx-auto`}>
           {items.map((item, i) => (
             <Frame key={i} item={item} base={base} aspect="aspect-[3/4]" speed={speed} />
           ))}
