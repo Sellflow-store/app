@@ -14,7 +14,7 @@ function safeRedirect(raw: string | null, fallback: string): string {
 }
 
 type Mode  = "login" | "register";
-type Phase = "form" | "verifying" | "loading";
+type Phase = "form" | "verifying" | "loading" | "reset-request" | "reset-verify";
 
 function clerkMsg(err: unknown): string {
   const e = err as { errors?: { longMessage?: string; message?: string }[] };
@@ -111,6 +111,11 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
   const [code, setCode]         = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError]       = useState("");
+  // Password reset keeps its own busy flag: phase "loading" would swap the
+  // reset screen back to the main form while a request is in flight.
+  const [newPassword, setNewPassword] = useState("");
+  const [resetBusy, setResetBusy]     = useState(false);
+  const [resetNotice, setResetNotice] = useState("");
 
   const isLogin   = mode === "login";
   const isLoading = phase === "loading";
@@ -205,6 +210,89 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
     } catch (err) {
       setError(clerkMsg(err));
       setPhase("verifying");
+    }
+  }
+
+  // ── Password reset ───────────────────────────────────────────────────────────
+  // In-component (no /forgot-password route): on app.<domain> proxy.ts 308s any
+  // slug-shaped path outside RESERVED_SLUGS to a shop subdomain.
+  function startReset() {
+    setError("");
+    setResetNotice("");
+    setCode("");
+    setNewPassword("");
+    setPhase("reset-request");
+  }
+
+  function backToLogin() {
+    setError("");
+    setResetNotice("");
+    setCode("");
+    setNewPassword("");
+    setPhase("form");
+  }
+
+  async function sendResetCode(): Promise<boolean> {
+    if (!siLoaded) return false;
+    setResetBusy(true);
+    setError("");
+    setResetNotice("");
+    try {
+      await signIn!.create({ strategy: "reset_password_email_code", identifier: email });
+      return true;
+    } catch (err) {
+      const c = clerkCode(err);
+      if (c === "form_identifier_not_found") {
+        setError("Nie znaleźliśmy konta z tym adresem e-mail.");
+      } else if (c === "strategy_for_user_invalid") {
+        setError("To konto loguje się przez Google. Użyj przycisku „Kontynuuj z Google” na ekranie logowania.");
+      } else {
+        setError(clerkMsg(err));
+      }
+      return false;
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
+  async function handleResetRequest(e: React.FormEvent) {
+    e.preventDefault();
+    if (await sendResetCode()) setPhase("reset-verify");
+  }
+
+  async function handleResendResetCode() {
+    setCode("");
+    if (await sendResetCode()) setResetNotice(`Wysłaliśmy nowy kod na ${email}.`);
+  }
+
+  async function handleResetVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!siLoaded) return;
+    setResetBusy(true);
+    setError("");
+    setResetNotice("");
+    try {
+      // A retry after a rejected new password must not re-submit the already
+      // consumed code, so skip straight to resetPassword in that state.
+      let result = signIn!;
+      if (result.status !== "needs_new_password") {
+        result = await result.attemptFirstFactor({ strategy: "reset_password_email_code", code });
+      }
+      if (result.status === "needs_new_password") {
+        result = await result.resetPassword({ password: newPassword, signOutOfOtherSessions: true });
+      }
+      if (result.status === "complete") {
+        await setSignInActive!({ session: result.createdSessionId });
+        router.push(afterLogin);
+        return;
+      }
+      // e.g. needs_second_factor — same dead end as in handleLogin, but say so
+      // instead of leaving the user on a spinner.
+      setError("Nie udało się dokończyć zmiany hasła: logowanie wymaga dodatkowego kroku, którego ta forma nie obsługuje. Skontaktuj się z nami.");
+    } catch (err) {
+      setError(clerkMsg(err));
+    } finally {
+      setResetBusy(false);
     }
   }
 
@@ -353,8 +441,135 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
             </form>
           )}
 
+          {/* Password reset — step 1: request a code */}
+          {phase === "reset-request" && (
+            <form onSubmit={handleResetRequest} className="space-y-5">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: "oklch(56% 0.30 335 / 0.1)" }}>
+                <Mail className="w-7 h-7" style={{ color: "oklch(56% 0.30 335)" }} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+                  Zresetuj hasło
+                </h2>
+                <p className="text-sm mt-1" style={{ color: "oklch(40% 0.06 240)" }}>
+                  Podaj adres e-mail konta. Wyślemy na niego 6-cyfrowy kod.
+                </p>
+              </div>
+
+              <Field label="Adres e-mail" type="email" value={email} onChange={setEmail}
+                placeholder="marta@twojsklep.pl" autoComplete="email" disabled={resetBusy} />
+
+              {error && (
+                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)" }}>
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={resetBusy || !email}
+                className="w-full flex items-center justify-center gap-2 text-sm font-semibold transition-all disabled:opacity-60"
+                style={{ padding: "14px 22px", borderRadius: "999px", background: "oklch(56% 0.30 335)", color: "#fff" }}
+              >
+                {resetBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Wyślij kod <ArrowRight className="w-4 h-4" strokeWidth={2} /></>}
+              </button>
+
+              <button type="button" onClick={backToLogin}
+                className="w-full text-xs text-center" style={{ color: "oklch(40% 0.06 240)" }}>
+                ← Wróć do logowania
+              </button>
+            </form>
+          )}
+
+          {/* Password reset — step 2: code + new password */}
+          {phase === "reset-verify" && (
+            <form onSubmit={handleResetVerify} className="space-y-5">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: "oklch(56% 0.30 335 / 0.1)" }}>
+                <Mail className="w-7 h-7" style={{ color: "oklch(56% 0.30 335)" }} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+                  Ustaw nowe hasło
+                </h2>
+                <p className="text-sm mt-1" style={{ color: "oklch(40% 0.06 240)" }}>
+                  Wysłaliśmy 6-cyfrowy kod na <strong>{email}</strong>
+                </p>
+              </div>
+
+              <Field
+                label="Kod z e-maila"
+                value={code}
+                onChange={setCode}
+                placeholder="123456"
+                autoComplete="one-time-code"
+                disabled={resetBusy}
+              />
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold" style={{ color: "oklch(11% 0.10 275)" }}>Nowe hasło</label>
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min. 8 znaków"
+                    autoComplete="new-password"
+                    required
+                    disabled={resetBusy}
+                    className="w-full pr-10 text-sm focus:outline-none transition-all disabled:opacity-50"
+                    style={{
+                      padding: "12px 44px 12px 14px",
+                      border: "1.5px solid oklch(91% 0.020 230)",
+                      borderRadius: "12px",
+                      background: "#fff",
+                      color: "oklch(11% 0.10 275)",
+                      fontFamily: "var(--font-body)",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
+                    onBlur={(e) =>  (e.target.style.borderColor = "oklch(91% 0.020 230)")}
+                  />
+                  <button type="button" onClick={() => setShowPass((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "oklch(40% 0.06 240)" }}>
+                    {showPass ? <EyeOff className="w-4 h-4" strokeWidth={1.5} /> : <Eye className="w-4 h-4" strokeWidth={1.5} />}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)" }}>
+                  {error}
+                </p>
+              )}
+              {resetNotice && (
+                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }}>
+                  {resetNotice}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={resetBusy || code.length < 6 || !newPassword}
+                className="w-full flex items-center justify-center gap-2 text-sm font-semibold transition-all disabled:opacity-60"
+                style={{ padding: "14px 22px", borderRadius: "999px", background: "oklch(56% 0.30 335)", color: "#fff" }}
+              >
+                {resetBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Ustaw nowe hasło <ArrowRight className="w-4 h-4" strokeWidth={2} /></>}
+              </button>
+
+              <div className="flex items-center justify-between">
+                <button type="button" onClick={backToLogin} disabled={resetBusy}
+                  className="text-xs" style={{ color: "oklch(40% 0.06 240)" }}>
+                  ← Wróć do logowania
+                </button>
+                <button type="button" onClick={handleResendResetCode} disabled={resetBusy}
+                  className="text-xs font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>
+                  Wyślij kod ponownie
+                </button>
+              </div>
+            </form>
+          )}
+
           {/* Main form */}
-          {phase !== "verifying" && (
+          {(phase === "form" || phase === "loading") && (
             <>
               {/* Tab switcher */}
               <div className="flex rounded-xl p-1 mb-8" style={{ background: "oklch(97% 0.008 250)" }}>
@@ -425,7 +640,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
 
                 {isLogin && (
                   <div className="text-right">
-                    <button type="button" className="text-xs font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>
+                    <button type="button" onClick={startReset} className="text-xs font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>
                       Nie pamiętam hasła
                     </button>
                   </div>
