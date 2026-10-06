@@ -271,3 +271,113 @@ export function productFeedXml(input: FeedInput): string {
     ``,
   ].join("\n");
 }
+
+// ─── Feed produktowy (ChatGPT / OpenAI) ──────────────────────────────────────
+
+/** Pole TSV: tabulator i nowa linia rozbiłyby wiersz, więc zamieniamy je na spację. */
+function tsv(s: string | number | boolean): string {
+  return String(s).replace(/[\t\r\n]+/g, " ").trim();
+}
+
+export interface OpenAiFeedInput extends FeedInput {
+  /** Adres strony sklepu, np. pageUrl("/regulamin"). */
+  pageUrl: (path: string) => string;
+}
+
+/**
+ * Feed w specyfikacji produktowej OpenAI (ChatGPT Shopping i Ads Manager),
+ * jako TSV w UTF-8. OpenAI nie pobiera pliku z adresu jak Merchant Center:
+ * plik wgrywa się w Ads Manager albo wysyła na ich SFTP, dlatego ten sam
+ * adres służy w panelu do pobrania aktualnej wersji.
+ *
+ * Zakres produktów i warianty jak w feedzie Google. `is_eligible_checkout`
+ * jest wyłączone, bo sklep nie obsługuje zakupu wewnątrz ChatGPT (ACP):
+ * klient przechodzi na kartę produktu.
+ */
+export function productFeedOpenAiTsv(input: OpenAiFeedInput): string {
+  const columns = [
+    "is_eligible_search",
+    "is_eligible_checkout",
+    "item_id",
+    "group_id",
+    "title",
+    "description",
+    "url",
+    "brand",
+    "image_url",
+    "additional_image_urls",
+    "price",
+    "sale_price",
+    "availability",
+    "condition",
+    "gtin",
+    "mpn",
+    "product_category",
+    "material",
+    "color",
+    "size",
+    "seller_name",
+    "seller_url",
+    "seller_privacy_policy",
+    "seller_tos",
+    "return_policy",
+    "return_deadline_in_days",
+    "store_country",
+    "target_countries",
+  ] as const;
+  type Row = Partial<Record<(typeof columns)[number], string | number | boolean>>;
+
+  const sellerName = input.legal.companyName.trim() || input.shopName;
+  const shop: Row = {
+    is_eligible_search: true,
+    is_eligible_checkout: false,
+    seller_name: sellerName,
+    seller_url: input.homeUrl,
+    seller_privacy_policy: input.pageUrl("/prywatnosc"),
+    seller_tos: input.pageUrl("/regulamin"),
+    return_policy: input.pageUrl("/zwroty"),
+    store_country: "PL",
+    target_countries: "PL",
+  };
+
+  const rows: Row[] = input.products
+    .filter((p) => p.type === "physical" && !p.priceOnRequest && p.images.length > 0 && parseFloat(p.price) > 0)
+    .flatMap((p) => {
+      const price = parseFloat(p.price);
+      const old = p.oldPrice ? parseFloat(p.oldPrice) : NaN;
+      const onSale = Number.isFinite(old) && old > price;
+      const inStock = p.stock == null || p.stock > 0;
+      const description = (p.shortDesc?.trim() || input.plainText(p.description) || p.name).slice(0, 5000);
+      const base: Row = {
+        ...shop,
+        title: p.name.slice(0, 150),
+        description,
+        url: input.productUrl(p.slug),
+        brand: input.shopName,
+        image_url: input.absoluteImage(p.images[0]),
+        additional_image_urls: p.images.slice(1, 11).map(input.absoluteImage).join(","),
+        price: `${(onSale ? old : price).toFixed(2)} PLN`,
+        sale_price: onSale ? `${price.toFixed(2)} PLN` : "",
+        availability: inStock ? "in_stock" : "out_of_stock",
+        condition: "new",
+        gtin: p.attributes.gtin ?? "",
+        mpn: p.attributes.mpn ?? "",
+        product_category: p.category ?? "",
+        material: p.attributes.material?.slice(0, 200) ?? "",
+        color: p.colors.slice(0, 3).join("/"),
+        // Ten sam wyjątek co w zasadach zwrotu dla danych strukturalnych.
+        return_deadline_in_days: input.legal.personalizedProducts ? 0 : 14,
+      };
+      if (p.sizes.length > 1) {
+        return p.sizes.slice(0, 30).map((size) => ({
+          ...base,
+          item_id: `${p.id}-${size}`.slice(0, 100),
+          group_id: p.id,
+          size,
+        }));
+      }
+      return [{ ...base, item_id: p.id, group_id: p.id, size: p.sizes[0] ?? "" }];
+    });
+
+  return [columns.join("\t"), ...rows.map((r) => columns.map((c) => tsv(r[c] ?? "")).join("\t")), ""].join("\n");
+}

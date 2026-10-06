@@ -141,7 +141,7 @@ export default function SettingsPanel(props: Props) {
             <IntegrationsSection
               shopSlug={props.shopSlug}
               initial={props.integrations}
-              feedUrl={`${props.customDomain ? `https://${props.customDomain}` : props.storeUrl}/feed.xml`}
+              storeUrl={props.customDomain ? `https://${props.customDomain}` : props.storeUrl}
             />
           </div>
           <div hidden={active !== "compliance"}>

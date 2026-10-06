@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Info, Copy, Check, Rss } from "lucide-react";
+import { Info, Copy, Check, Rss, Download } from "lucide-react";
 import type { IntegrationsConfig } from "@/types/shop";
 import { SectionTitle, Card, Field, TextInput, SaveButton, P, type SaveState } from "../ui";
 import { saveConfig } from "./save";
@@ -22,24 +22,14 @@ const FIELDS: {
 export default function IntegrationsSection({
   shopSlug,
   initial,
-  feedUrl,
+  storeUrl,
 }: {
   shopSlug: string;
   initial: IntegrationsConfig;
-  feedUrl: string;
+  /** Adres sklepu (własna domena albo adres w Sellflow), bez końcowego „/”. */
+  storeUrl: string;
 }) {
   const [data, setData] = useState<IntegrationsConfig>(initial);
-  const [copied, setCopied] = useState(false);
-
-  async function copyFeed() {
-    try {
-      await navigator.clipboard.writeText(feedUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Schowek zablokowany: adres i tak widać w polu obok.
-    }
-  }
   const [state, setState] = useState<SaveState>("idle");
 
   function set(key: keyof IntegrationsConfig, value: string) {
@@ -83,33 +73,64 @@ export default function IntegrationsSection({
       </Card>
 
       <Card title="Feed produktowy (Google, AI Mode, Gemini)">
-        <div className="flex items-center gap-2 mb-2" style={{ color: P.muted }}>
-          <Rss className="w-4 h-4" strokeWidth={1.75} />
-          <span className="text-xs">Aktualizuje się sam przy każdej zmianie produktów.</span>
-        </div>
-        <div className="flex items-stretch gap-2 mb-3">
-          <code
-            className="flex-1 min-w-0 truncate text-[12.5px] px-3 py-2 rounded-lg"
-            style={{ background: P.surface2, border: `1px solid ${P.border}`, color: P.ink }}
-          >
-            {feedUrl}
-          </code>
-          <button
-            type="button"
-            onClick={copyFeed}
-            className="inline-flex items-center gap-1.5 px-3 rounded-lg text-[13px] font-medium shrink-0"
-            style={{ border: `1px solid ${P.border}`, color: P.ink }}
-          >
-            {copied ? <Check className="w-3.5 h-3.5" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.75} />}
-            {copied ? "Skopiowano" : "Kopiuj"}
-          </button>
-        </div>
+        <FeedUrl url={`${storeUrl}/feed.xml`} />
         <ol className="text-xs leading-relaxed space-y-1 list-decimal pl-4" style={{ color: P.muted }}>
           <li>Załóż konto w Google Merchant Center i potwierdź witrynę kodem z pola powyżej.</li>
           <li>W Merchant Center wybierz Produkty → Dodaj produkty → Plik z adresu URL i wklej ten adres.</li>
           <li>Ustaw pobieranie codziennie. Produkty pojawią się w bezpłatnych wynikach Google, w AI Mode i w Gemini.</li>
         </ol>
       </Card>
+
+      <Card title="Feed produktowy (ChatGPT)">
+        <FeedUrl url={`${storeUrl}/feed-openai.tsv`} download />
+        <ol className="text-xs leading-relaxed space-y-1 list-decimal pl-4" style={{ color: P.muted }}>
+          <li>Plik jest w specyfikacji produktowej OpenAI (TSV). Zawiera ceny, dostępność, warianty rozmiarów, regulamin i zasady zwrotu.</li>
+          <li>OpenAI nie pobiera feedu z adresu tak jak Google. Pobierz plik i wgraj go w ChatGPT Ads Manager przy tworzeniu feedu albo wyślij na SFTP z danymi z Ads Managera.</li>
+          <li>Wgrywaj aktualną wersję po każdej zmianie cen lub stanów, co najmniej raz dziennie. Zakup odbywa się w sklepie: ChatGPT kieruje klienta na kartę produktu.</li>
+        </ol>
+      </Card>
     </div>
+  );
+}
+
+function FeedUrl({ url, download }: { url: string; download?: boolean }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Schowek zablokowany: adres i tak widać w polu obok.
+    }
+  }
+
+  const button = "inline-flex items-center gap-1.5 px-3 rounded-lg text-[13px] font-medium shrink-0";
+  return (
+    <>
+      <div className="flex items-center gap-2 mb-2" style={{ color: P.muted }}>
+        <Rss className="w-4 h-4" strokeWidth={1.75} />
+        <span className="text-xs">Aktualizuje się sam przy każdej zmianie produktów.</span>
+      </div>
+      <div className="flex items-stretch gap-2 mb-3">
+        <code
+          className="flex-1 min-w-0 truncate text-[12.5px] px-3 py-2 rounded-lg"
+          style={{ background: P.surface2, border: `1px solid ${P.border}`, color: P.ink }}
+        >
+          {url}
+        </code>
+        <button type="button" onClick={copy} className={button} style={{ border: `1px solid ${P.border}`, color: P.ink }}>
+          {copied ? <Check className="w-3.5 h-3.5" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.75} />}
+          {copied ? "Skopiowano" : "Kopiuj"}
+        </button>
+        {download && (
+          <a href={`${url}?download`} className={button} style={{ border: `1px solid ${P.border}`, color: P.ink }}>
+            <Download className="w-3.5 h-3.5" strokeWidth={1.75} />
+            Pobierz
+          </a>
+        )}
+      </div>
+    </>
   );
 }
