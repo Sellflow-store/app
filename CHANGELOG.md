@@ -1033,7 +1033,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - W Ustawieniach → Integracje jest druga karta z adresem feedu, kopiowaniem i pobraniem pliku, bo OpenAI nie pobiera feedu z URL (wymaga wgrania przez Ads Manager albo SFTP).
 - Generowanie feedu jest w `lib/agent-commerce.ts`.
 
-### 0.13.8 · 06.10.2026
+### 0.13.8 · 06.10.2026 · PR #34
 **Numer wersji w panelu, roadmapa i ta lista zmian**
 - W panelu sklepu, na dole menu bocznego pod „Podgląd sklepu”, widać numer wersji „Sellflow v0.13.8”. Po najechaniu kursorem pokazuje się skrót commitu wdrożenia (na Vercelu).
 - Numer pochodzi z jednego miejsca, `package.json`, i trafia do builda przez `env` w `next.config.ts` razem ze skrótem `VERCEL_GIT_COMMIT_SHA`. Do kodu przeglądarki nie trafia cały `package.json`.

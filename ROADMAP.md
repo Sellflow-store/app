@@ -269,7 +269,7 @@ Sklep czytelny dla ChatGPT, Gemini i Perplexity: dane strukturalne, feedy, regu�
 | 0.13.5 | 05.10 | Reset hasła z „Nie pamiętam hasła” | #31 |
 | 0.13.6 | 05.10 | Lookbook HAGI: układ sześciu kadrów, siatka 3 kolumny | #32 |
 | 0.13.7 | 06.10 | Feed produktowy dla ChatGPT (specyfikacja OpenAI) obok feedu Google | #33 |
-| 0.13.8 | 06.10 | Numer wersji w panelu, ta roadmapa (historia od stycznia) | |
+| 0.13.8 | 06.10 | Numer wersji w panelu, ta roadmapa (historia od stycznia) | #34 |
 
 ## Co dalej (propozycja do decyzji)
 
