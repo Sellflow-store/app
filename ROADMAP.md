@@ -2,6 +2,8 @@
 
 Aktualna wersja: **0.13.8**. Widać ją w panelu sklepu, na dole menu bocznego. Najedź na numer, żeby zobaczyć commit wdrożenia.
 
+Ten plik to przegląd. Szczegółowy opis każdej wersji (co się zmieniło, jak działa, dlaczego) jest w [CHANGELOG.md](CHANGELOG.md).
+
 ## Zasady numeracji
 
 Format `0.ETAP.ZMIANA`.
@@ -10,7 +12,7 @@ Format `0.ETAP.ZMIANA`.
 - **ZMIANA** (trzecia liczba) rośnie z każdym zmergowanym PR do `main`, w tym poprawki. Nowy etap zaczyna od `.0`.
 - **0.0** to etap przed kodem produktu (koncepcja, walidacja, landing). Jego numery oznaczają kamienie milowe, a nie commity.
 - **1.0.0** to publiczny start: sklep zakłada się sam, bez naszej pomocy, a płatne plany działają. Do tego czasu zostajemy na `0.x`.
-- Numer bumpuje się w tym samym PR co zmiana: `npm version 0.X.Y --no-git-tag-version` i dopisanie wiersza w tym pliku.
+- Numer bumpuje się w tym samym PR co zmiana: `npm version 0.X.Y --no-git-tag-version`, wiersz w tym pliku i szczegółowy wpis w [CHANGELOG.md](CHANGELOG.md).
 
 Wersje do 0.13.7 nadane wstecz. Od 0.1 każdy commit na `main` repozytorium `app` dostał jeden numer w kolejności dat, z pominięciem commitów merge i pustych „redeploy”. Strona marketingowa (`www`) rozwija się osobno i nie ma numerów, poza startem landingu w 0.0.
 
