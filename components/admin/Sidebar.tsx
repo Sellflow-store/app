@@ -134,6 +134,12 @@ export default function Sidebar({ shopSlug, mobileOpen, onClose }: SidebarProps)
             <Eye className="w-4 h-4 text-[var(--panel-sidebar-muted)]" strokeWidth={1.75} />
             Podgląd sklepu
           </Link>
+          <p
+            className="px-2.5 pt-2 text-[11px] tabular-nums text-[var(--panel-sidebar-muted)]"
+            title={process.env.APP_COMMIT ? `Commit ${process.env.APP_COMMIT}` : undefined}
+          >
+            Sellflow v{process.env.APP_VERSION}
+          </p>
         </div>
       </aside>
     </>
