@@ -1069,7 +1069,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 **Zdjęcia produktu: przyciski na kafelku nie nakładają się**
 - Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.
 
-### 0.14.7 · 09.10.2026
+### 0.14.7 · 09.10.2026 · PR #40
 **Logowanie i rejestracja: komunikaty po polsku, wymagania hasła, kod z 6 cyfr (SEL-23, SEL-24, SEL-33)**
 - Błędy z Clerka (zły lub wygasły kod, zajęty e-mail, za krótkie albo wyciekłe hasło, za dużo prób, CAPTCHA) są po polsku. Formularz rozpoznaje je po kodzie błędu, a nieznany kod daje ogólny polski komunikat zamiast angielskiego tekstu Clerka. Menu konta (`UserButton`) zostaje po angielsku, bo wymaga osobnej decyzji o pakiecie `@clerk/localizations`.
 - Pod hasłem przy rejestracji i przy ustawianiu nowego hasła jest lista wymagań, odhaczana podczas pisania. Reguły pochodzą z ustawień Clerka (`validatePassword`), więc zmiana polityki haseł w Clerk Dashboard pojawi się w formularzu bez zmian w kodzie. Zanim Clerk się załaduje, lista ma tylko „co najmniej 8 znaków”.
