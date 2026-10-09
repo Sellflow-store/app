@@ -706,9 +706,11 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
                   </>
                 ) : (
                   <>Zakładając konto, akceptujesz nasz{" "}
-                    <a href="/terms" className="font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>regulamin</a>{" "}
+                    {/* Platform documents live on www: a relative /terms on app.<domain>
+                        is a slug-shaped path that proxy.ts 308s to a shop subdomain. */}
+                    <a href="https://sell-flow.store/terms.html" target="_blank" rel="noopener noreferrer" className="font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>regulamin</a>{" "}
                     i{" "}
-                    <a href="/privacy" className="font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>politykę prywatności</a>.
+                    <a href="https://sell-flow.store/privacy-policy.html" target="_blank" rel="noopener noreferrer" className="font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>politykę prywatności</a>.
                   </>
                 )}
               </p>
