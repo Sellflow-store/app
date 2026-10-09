@@ -1,16 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-<<<<<<< HEAD
 import Link from "next/link";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { LogOut } from "lucide-react";
 import { OnboardingProvider, useOnboarding } from "./state";
 import { PENDING_SAVE_KEY, SAVE_BOUNCE_KEY } from "@/lib/brand/types";
-=======
-import { useAuth } from "@clerk/nextjs";
-import { OnboardingProvider } from "./state";
->>>>>>> origin/dabekkacper32/sel-30-onboarding-kreator-nowego-konta-wypelniony-danymi
 import Welcome from "./steps/Welcome";
 import Sells from "./steps/Sells";
 import Name from "./steps/Name";
@@ -28,11 +23,6 @@ const ORDER: StepId[] = ["welcome", "sells", "name", "logo", "problem", "edge", 
 interface Props { firstName: string; userId: string | null }
 
 export default function Wizard({ firstName, userId }: Props) {
-<<<<<<< HEAD
-  return (
-    <OnboardingProvider>
-      <Shell firstName={firstName} signedIn={!!userId} />
-=======
   // The server prop covers SSR and the first client render; once Clerk loads,
   // its live state wins — a page restored by Back after signing out still
   // carries the previous account's id.
@@ -43,8 +33,7 @@ export default function Wizard({ firstName, userId }: Props) {
     // provider, so the in-memory draft is re-checked against the new owner
     // instead of being re-saved under it.
     <OnboardingProvider key={owner ?? "guest"} userId={owner}>
-      <Shell firstName={firstName} />
->>>>>>> origin/dabekkacper32/sel-30-onboarding-kreator-nowego-konta-wypelniony-danymi
+      <Shell firstName={firstName} signedIn={!!owner} />
     </OnboardingProvider>
   );
 }
