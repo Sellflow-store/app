@@ -1064,3 +1064,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 **Polityka prywatności: dane do faktury**
 - Generowana polityka prywatności wymienia dane do faktury VAT na firmę (nazwa firmy, NIP, adres), cel „wystawienie faktury na wniosek Klienta” oraz informację, że podanie danych jest dobrowolne, a Sklep może uzupełnić je z rejestru podatników VAT po NIP.
 - Dotyczy sklepów z dokumentami generowanymi automatycznie. Sklepy, które przejęły treść na własność (tryb „edytuj ręcznie”), muszą dopisać to same.
+
+### 0.14.3 · 09.10.2026
+**Zdjęcia produktu: przyciski na kafelku nie nakładają się**
+- Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.

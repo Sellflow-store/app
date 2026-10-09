@@ -27,7 +27,7 @@ const inputStyle = {
 };
 
 const iconBtn =
-  "flex items-center justify-center w-7 h-7 rounded-md transition-colors disabled:opacity-30 bg-[var(--panel-surface)]/90 text-[var(--panel-ink)] hover:bg-[var(--panel-surface)] backdrop-blur-sm border border-[var(--panel-border)]";
+  "flex items-center justify-center w-8 h-8 shrink-0 rounded-md transition-colors disabled:opacity-30 bg-[var(--panel-surface)]/90 text-[var(--panel-ink)] hover:bg-[var(--panel-surface)] backdrop-blur-sm border border-[var(--panel-border)]";
 
 /**
  * Zdjęcia produktu: kolejność (przeciąganie albo strzałki), zdjęcie główne
@@ -84,7 +84,7 @@ export default function ProductImages({ images, imageMeta, productName, onChange
   return (
     <div>
       {images.length > 0 ? (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-3 mb-4">
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3 mb-4">
           {images.map((url, i) => {
             const meta = imageMeta[url];
             return (
@@ -147,7 +147,7 @@ export default function ProductImages({ images, imageMeta, productName, onChange
                   </button>
                 </div>
 
-                <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1">
+                <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-wrap items-center justify-between gap-1">
                   <span className="flex items-center gap-1">
                     <button
                       type="button"
