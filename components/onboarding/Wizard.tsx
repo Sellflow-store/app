@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutButton, useAuth } from "@clerk/nextjs";
 import { LogOut } from "lucide-react";
 import { OnboardingProvider, useOnboarding } from "./state";
 import Welcome from "./steps/Welcome";
@@ -31,6 +31,17 @@ export default function Wizard({ firstName, userId }: Props) {
 
 function Shell({ firstName, signedIn }: { firstName: string; signedIn: boolean }) {
   const { reset } = useOnboarding();
+  // The server prop covers SSR and the first client render; once Clerk loads,
+  // its live state wins (e.g. a page restored by Back after signing out).
+  const { isLoaded, isSignedIn } = useAuth();
+  const showSignOut = isLoaded ? !!isSignedIn : signedIn;
+  const handleSignOut = () => {
+    reset();
+    try {
+      sessionStorage.removeItem("sellflow_pending_onboarding");
+      sessionStorage.removeItem("sellflow_save_auth_bounced");
+    } catch {}
+  };
   const [step, setStep] = useState<StepId>("welcome");
   const index = ORDER.indexOf(step);
   const progressPct = useMemo(() => {
@@ -94,13 +105,14 @@ function Shell({ firstName, signedIn }: { firstName: string; signedIn: boolean }
             </div>
           )}
           {/* A signed-in user without a shop is sent back here from every route,
-              so the wizard is the only place they can sign out. The draft is
-              cleared first so the next person on this browser starts empty. */}
-          {signedIn ? (
+              so the wizard is the only place they can sign out. The draft and
+              the pending save are cleared first so the next person on this
+              browser starts empty. */}
+          {showSignOut ? (
             <SignOutButton redirectUrl="/login">
               <button
                 type="button"
-                onClick={reset}
+                onClick={handleSignOut}
                 className="inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium hover:underline"
                 style={{ color: "var(--brand-ink-2)" }}
               >
