@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useOnboarding } from "./state";
 import { buildBootstrap, encodeBootstrap, slugifyName } from "@/lib/brand/bootstrap";
-import type { StoreBootstrap } from "@/lib/brand/types";
+import { PENDING_SAVE_KEY, SAVE_BOUNCE_KEY, STORAGE_KEY, type StoreBootstrap } from "@/lib/brand/types";
 import MiniPreview from "./MiniPreview";
 
 /**
@@ -65,9 +65,10 @@ export default function LivePreview() {
         // 401: anonymous visitor — stash payload, send them to register.
         // /onboarding/save picks the payload back up after sign-up + auto-finalizes.
         if (res.status === 401) {
-          const pending = { shopName, slug: dbSlug, bootstrap: payload };
+          // savedAt: /onboarding/save asks before using a stash older than its TTL.
+          const pending = { shopName, slug: dbSlug, bootstrap: payload, savedAt: Date.now() };
           try {
-            sessionStorage.setItem("sellflow_pending_onboarding", JSON.stringify(pending));
+            sessionStorage.setItem(PENDING_SAVE_KEY, JSON.stringify(pending));
           } catch {
             // Payload za duży dla sessionStorage (np. duże logo) — zapisz bez logo,
             // żeby rejestracja → finalizacja nadal zadziałały. Logo można dodać
@@ -80,7 +81,7 @@ export default function LivePreview() {
                   store: { ...pending.bootstrap.store, logoDataUrl: null },
                 },
               };
-              sessionStorage.setItem("sellflow_pending_onboarding", JSON.stringify(slim));
+              sessionStorage.setItem(PENDING_SAVE_KEY, JSON.stringify(slim));
             } catch {
               /* nawet slim się nie zmieścił — trudno, i tak przekierowujemy */
             }
@@ -91,6 +92,14 @@ export default function LivePreview() {
         setError(data.error ?? "Nie udało się zapisać sklepu.");
         return;
       }
+      // The shop exists now — drop the draft so the next account on this
+      // browser starts from an empty wizard. Storage only, no reset(): emptying
+      // the state would repaint the preview as a default shop before navigation.
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(PENDING_SAVE_KEY);
+        sessionStorage.removeItem(SAVE_BOUNCE_KEY);
+      } catch {}
       router.push(`/dashboard/${data.shopSlug}`);
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");

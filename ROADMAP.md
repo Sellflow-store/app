@@ -1,6 +1,6 @@
 # Sellflow: wersje i roadmapa
 
-Aktualna wersja: **0.14.3**. Widać ją w panelu sklepu, na dole menu bocznego. Najedź na numer, żeby zobaczyć commit wdrożenia.
+Aktualna wersja: **0.14.6**. Widać ją w panelu sklepu, na dole menu bocznego. Najedź na numer, żeby zobaczyć commit wdrożenia.
 
 Ten plik to przegląd. Szczegółowy opis każdej wersji (co się zmieniło, jak działa, dlaczego) jest w [CHANGELOG.md](CHANGELOG.md).
 

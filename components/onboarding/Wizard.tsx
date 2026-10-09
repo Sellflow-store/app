@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { OnboardingProvider } from "./state";
 import Welcome from "./steps/Welcome";
 import Sells from "./steps/Sells";
@@ -16,11 +17,19 @@ type StepId =
 
 const ORDER: StepId[] = ["welcome", "sells", "name", "logo", "problem", "edge", "brand", "preview"];
 
-interface Props { firstName: string }
+interface Props { firstName: string; userId: string | null }
 
-export default function Wizard({ firstName }: Props) {
+export default function Wizard({ firstName, userId }: Props) {
+  // The server prop covers SSR and the first client render; once Clerk loads,
+  // its live state wins — a page restored by Back after signing out still
+  // carries the previous account's id.
+  const { isLoaded, userId: liveUserId } = useAuth();
+  const owner = isLoaded ? (liveUserId ?? null) : userId;
   return (
-    <OnboardingProvider>
+    // Keyed by account: a sign-in/out without a full reload remounts the
+    // provider, so the in-memory draft is re-checked against the new owner
+    // instead of being re-saved under it.
+    <OnboardingProvider key={owner ?? "guest"} userId={owner}>
       <Shell firstName={firstName} />
     </OnboardingProvider>
   );
