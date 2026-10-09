@@ -1059,3 +1059,8 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Edytor wpisu ma sekcję „SEO: wynik w Google” (tytuł, opis, główna i dodatkowe frazy, podgląd Google, lista kontrolna) oraz opis zdjęcia głównego (alt).
 - Sklep używa ich w `<title>`, opisie, Open Graph (wpis jako `article`, zdjęcie z alt) i dodaje dane strukturalne `BlogPosting` oraz adres kanoniczny.
 - Bez migracji: dane leżą w `shop_config` pod kluczem `blogSeo` (mapa id wpisu → SEO) i są usuwane razem z wpisem.
+
+### 0.14.2 · 09.10.2026
+**Polityka prywatności: dane do faktury**
+- Generowana polityka prywatności wymienia dane do faktury VAT na firmę (nazwa firmy, NIP, adres), cel „wystawienie faktury na wniosek Klienta” oraz informację, że podanie danych jest dobrowolne, a Sklep może uzupełnić je z rejestru podatników VAT po NIP.
+- Dotyczy sklepów z dokumentami generowanymi automatycznie. Sklepy, które przejęły treść na własność (tryb „edytuj ręcznie”), muszą dopisać to same.

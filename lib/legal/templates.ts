@@ -343,11 +343,13 @@ export function buildPrivacy(v: LegalVars): string {
             "dane identyfikacyjne (imię, nazwisko, firma),",
             "dane kontaktowe (e-mail, telefon),",
             "dane adresowe (adres dostawy i rozliczeń),",
+            "dane do faktury VAT na firmę (nazwa firmy, NIP, adres siedziby) — jeżeli Klient poprosi o fakturę,",
             "dane transakcyjne (zamówienia, płatności),",
             "dane techniczne (adres IP, cookies, dane urządzenia),",
             "dane dotyczące aktywności w Sklepie.",
           ],
         },
+        "Podanie danych do faktury jest dobrowolne, ale niezbędne do jej wystawienia. Dane te Klient wpisuje w formularzu zamówienia, a Sklep może uzupełnić je z publicznego rejestru podatników VAT na podstawie podanego NIP.",
       ],
     },
     {
@@ -358,6 +360,7 @@ export function buildPrivacy(v: LegalVars): string {
           sub: [
             "realizacji umów sprzedaży (art. 6 ust. 1 lit. b RODO),",
             "obsługi zamówień, płatności i dostaw,",
+            "wystawienia faktury VAT na wniosek Klienta,",
             "realizacji obowiązków prawnych, w tym podatkowych i rachunkowych (art. 6 ust. 1 lit. c RODO),",
             "obsługi reklamacji i zwrotów,",
             "prowadzenia komunikacji z Klientem,",
