@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
-import { Eye, EyeOff, ArrowRight, Mail, Loader2 } from "lucide-react";
+import type { SignInResource } from "@clerk/nextjs/types";
+import { Eye, EyeOff, ArrowRight, Mail, Loader2, Check, Circle } from "lucide-react";
 
 /** Only accept same-origin relative paths to avoid open-redirect abuse. */
 function safeRedirect(raw: string | null, fallback: string): string {
@@ -16,13 +17,59 @@ function safeRedirect(raw: string | null, fallback: string): string {
 type Mode  = "login" | "register";
 type Phase = "form" | "verifying" | "loading" | "reset-request" | "reset-verify";
 
-function clerkMsg(err: unknown): string {
-  const e = err as { errors?: { longMessage?: string; message?: string }[] };
-  return (
-    e?.errors?.[0]?.longMessage ??
-    e?.errors?.[0]?.message ??
-    "Wystąpił błąd. Spróbuj ponownie."
-  );
+// Clerk's own messages are English. Keys follow @clerk/localizations: the error
+// code, `code__paramName` where the field matters, `code__sign_in` where the
+// same code means something else at sign-in.
+const PWNED_AT_SIGN_IN = "To hasło wyciekło z innego serwisu, więc trzeba je zmienić. Kliknij „Nie pamiętam hasła”.";
+const CAPTCHA_FAILED   = "Nie udało się potwierdzić, że nie jesteś botem. Odśwież stronę i spróbuj ponownie. Pomaga też wyłączenie blokowania reklam.";
+const TOO_MANY_TRIES   = "Za dużo prób w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.";
+const CLERK_ERRORS_PL: Record<string, string> = {
+  form_identifier_not_found:                  "Nie znaleźliśmy konta z tym adresem e-mail.",
+  form_identifier_exists__email_address:      "Konto z tym adresem e-mail już istnieje. Przejdź do „Zaloguj się”.",
+  form_param_format_invalid__email_address:   "Wpisz poprawny adres e-mail.",
+  form_email_address_blocked:                 "Tego adresu e-mail nie można użyć. Podaj inny.",
+  form_param_nil:                             "Uzupełnij wszystkie pola.",
+  form_param_max_length_exceeded__first_name: "Imię jest za długie.",
+  form_param_max_length_exceeded__last_name:  "Nazwisko jest za długie.",
+  not_allowed_access:                         "Z tym adresem e-mail nie można założyć konta. Napisz do nas.",
+  strategy_for_user_invalid:                  "To konto loguje się przez Google. Użyj przycisku „Kontynuuj z Google” na ekranie logowania.",
+  form_password_incorrect:                    "Nieprawidłowe hasło. Spróbuj ponownie albo kliknij „Nie pamiętam hasła”.",
+  form_password_or_identifier_incorrect:      "Nieprawidłowy e-mail lub hasło.",
+  form_password_pwned:                        "To hasło wyciekło z innego serwisu, więc nie jest bezpieczne. Wybierz inne.",
+  form_password_pwned__sign_in:               PWNED_AT_SIGN_IN,
+  form_password_compromised:                  PWNED_AT_SIGN_IN,
+  form_password_untrusted:                    PWNED_AT_SIGN_IN,
+  form_password_length_too_short:             "Hasło jest za krótkie. Sprawdź wymagania pod polem hasła.",
+  form_password_size_in_bytes_exceeded:       "Hasło jest za długie.",
+  form_password_not_strong_enough:            "Hasło jest za słabe. Wydłuż je, np. dodając kilka słów.",
+  form_password_matches_identifier:           "Hasło nie może być takie samo jak adres e-mail.",
+  form_new_password_matches_current:          "Nowe hasło musi się różnić od obecnego.",
+  form_code_incorrect:                        "Nieprawidłowy kod. Sprawdź e-mail i wpisz kod jeszcze raz.",
+  verification_expired:                       "Kod wygasł. Kliknij „Wyślij kod ponownie”.",
+  verification_failed:                        "Za dużo nieudanych prób. Kliknij „Wyślij kod ponownie”.",
+  user_locked:                                "Konto jest tymczasowo zablokowane po zbyt wielu nieudanych próbach. Spróbuj ponownie później.",
+  signup_rate_limit_exceeded:                 TOO_MANY_TRIES,
+  captcha_invalid:                            CAPTCHA_FAILED,
+  captcha_missing_token:                      CAPTCHA_FAILED,
+  captcha_unavailable:                        CAPTCHA_FAILED,
+};
+
+function clerkMsg(err: unknown, flow?: "sign_in"): string {
+  const { status, errors } = (err ?? {}) as {
+    status?: number; errors?: { code?: string; meta?: { paramName?: string } }[];
+  };
+  const code = errors?.[0]?.code ?? "";
+  const msg =
+    (flow && CLERK_ERRORS_PL[`${code}__${flow}`]) ||
+    CLERK_ERRORS_PL[`${code}__${errors?.[0]?.meta?.paramName}`] ||
+    CLERK_ERRORS_PL[code];
+  if (msg) return msg;
+  if (status === 429) return TOO_MANY_TRIES;
+  // Server-side password rules (form_password_no_number etc.), which the
+  // requirements list under the field spells out. Login has no such list.
+  if (code.startsWith("form_password_") && !flow) return "Hasło nie spełnia wymagań. Sprawdź listę pod polem hasła.";
+  if (code) console.warn("Clerk error without a Polish message:", code);
+  return "Wystąpił błąd. Spróbuj ponownie.";
 }
 
 function clerkCode(err: unknown): string | undefined {
@@ -49,12 +96,14 @@ function SellflowLogo({ white = false }: { white?: boolean }) {
 
 // ── Reusable field ─────────────────────────────────────────────────────────────
 function Field({
-  label, type = "text", value, onChange, placeholder, autoComplete, disabled,
+  label, type = "text", value, onChange, placeholder, autoComplete, disabled, inputMode, hint,
 }: {
   label: string; type?: string; value: string;
   onChange: (v: string) => void; placeholder: string;
   autoComplete?: string; disabled?: boolean;
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"]; hint?: string;
 }) {
+  const hintId = useId();
   return (
     <div className="space-y-1">
       <label className="block text-xs font-semibold" style={{ color: "oklch(11% 0.10 275)" }}>
@@ -66,6 +115,8 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        inputMode={inputMode}
+        aria-describedby={hint ? hintId : undefined}
         required
         disabled={disabled}
         className="w-full text-sm focus:outline-none transition-all disabled:opacity-50"
@@ -80,6 +131,65 @@ function Field({
         onFocus={(e) => (e.target.style.borderColor = "oklch(22% 0.24 270)")}
         onBlur={(e) =>  (e.target.style.borderColor = "oklch(91% 0.020 230)")}
       />
+      {hint && (
+        <p id={hintId} className="text-xs" style={{ color: "oklch(40% 0.06 240)" }}>
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Password requirements ──────────────────────────────────────────────────────
+// The policy lives in the Clerk instance. validatePassword() reports which of
+// its rules a password fails without exposing the settings, so validating ""
+// reveals the rules that are switched on. The minimum length isn't exposed
+// either; 8 is Clerk's default.
+const PASSWORD_RULES = [
+  { key: "min_length",           label: "co najmniej 8 znaków" },
+  { key: "require_lowercase",    label: "małą literę" },
+  { key: "require_uppercase",    label: "wielką literę" },
+  { key: "require_numbers",      label: "cyfrę" },
+  { key: "require_special_char", label: "znak specjalny, np. ! ? #" },
+];
+
+type PasswordValidator = Pick<SignInResource, "validatePassword">;
+
+/** Rules `password` fails, or null while Clerk can't validate (not loaded yet). */
+function failedRules(validator: PasswordValidator | undefined, password: string): Set<string> | null {
+  let failed: Set<string> | null = null;
+  validator?.validatePassword(password, {
+    // Always called, synchronously. onValidation is skipped when every rule
+    // passes and Clerk's strength check (zxcvbn) still has to load.
+    onValidationComplexity: () => { failed = new Set(); },
+    onValidation: ({ complexity }) => { failed = new Set(Object.keys(complexity ?? {})); },
+  });
+  return failed;
+}
+
+function PasswordRules({ password, validator }: { password: string; validator?: PasswordValidator }) {
+  // Memoized: with strength checks on, each call also loads and runs zxcvbn,
+  // and the whole form re-renders on every keystroke in any field.
+  const enabled = useMemo(() => failedRules(validator, ""), [validator]);
+  const failed  = useMemo(() => failedRules(validator, password), [validator, password]);
+  const rules = enabled && failed
+    ? PASSWORD_RULES.filter((r) => enabled.has(r.key)).map((r) => ({ ...r, ok: !failed.has(r.key) }))
+    : [{ ...PASSWORD_RULES[0], ok: password.length >= 8 }];
+  return (
+    <div className="pt-1 text-xs" style={{ color: "oklch(40% 0.06 240)" }}>
+      <p>Hasło musi mieć:</p>
+      <ul className="mt-1 space-y-0.5">
+        {rules.map((r) => (
+          <li key={r.key} className="flex items-center gap-1.5"
+              style={r.ok ? { color: "var(--panel-success-ink)" } : undefined}>
+            {r.ok
+              ? <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+              : <Circle className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />}
+            {r.label}
+            {r.ok && <span className="sr-only"> (spełnione)</span>}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -111,14 +221,21 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
   const [code, setCode]         = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError]       = useState("");
-  // Password reset keeps its own busy flag: phase "loading" would swap the
-  // reset screen back to the main form while a request is in flight.
+  // The code screens (email verification, password reset) keep their own busy
+  // flags: phase "loading" would swap them back to the main form while a
+  // request is in flight.
+  const [verifyBusy, setVerifyBusy]     = useState(false);
+  const [verifyNotice, setVerifyNotice] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [resetBusy, setResetBusy]     = useState(false);
   const [resetNotice, setResetNotice] = useState("");
 
   const isLogin   = mode === "login";
   const isLoading = phase === "loading";
+
+  // Digits only, cut to 6, so a pasted "123 456" still fits. Not maxLength,
+  // which would cut that paste to "123 45".
+  const onCodeChange = (v: string) => setCode(v.replace(/\D/g, "").slice(0, 6));
 
   // Already signed in (e.g. bounced here after a server-side 401 while the
   // client still holds a session) — signing in/up again would only produce
@@ -159,7 +276,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
         router.replace(afterLogin);
         return;
       }
-      setError(clerkMsg(err));
+      setError(clerkMsg(err, "sign_in"));
       setPhase("form");
     }
   }
@@ -194,23 +311,46 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
     if (!suLoaded) return;
-    setPhase("loading");
+    setVerifyBusy(true);
     setError("");
+    setVerifyNotice("");
     try {
       const result = await signUp!.attemptEmailAddressVerification({ code });
       if (result.status === "complete") {
         await setSignUpActive!({ session: result.createdSessionId });
         router.push(afterRegister);
-      } else {
-        // e.g. missing_requirements — without this branch the form hung on a
-        // spinner forever, which reads as "registration is broken".
-        setError("Nie udało się dokończyć rejestracji. Spróbuj ponownie lub użyj logowania przez Google.");
-        setPhase("verifying");
+        return; // stay busy until the navigation lands
       }
+      // e.g. missing_requirements — without this branch the form hung on a
+      // spinner forever, which reads as "registration is broken".
+      setError("Nie udało się dokończyć rejestracji. Spróbuj ponownie lub użyj logowania przez Google.");
     } catch (err) {
       setError(clerkMsg(err));
-      setPhase("verifying");
     }
+    setVerifyBusy(false);
+  }
+
+  async function handleResendSignUpCode() {
+    if (!suLoaded) return;
+    setVerifyBusy(true);
+    setError("");
+    setVerifyNotice("");
+    setCode("");
+    try {
+      await signUp!.prepareEmailAddressVerification({ strategy: "email_code" });
+      setVerifyNotice(`Wysłaliśmy nowy kod na ${email}.`);
+    } catch (err) {
+      setError(clerkMsg(err));
+    } finally {
+      setVerifyBusy(false);
+    }
+  }
+
+  function backToRegisterForm() {
+    setError("");
+    setVerifyNotice("");
+    setCode("");
+    setPhase("form");
   }
 
   // ── Password reset ───────────────────────────────────────────────────────────
@@ -241,14 +381,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       await signIn!.create({ strategy: "reset_password_email_code", identifier: email });
       return true;
     } catch (err) {
-      const c = clerkCode(err);
-      if (c === "form_identifier_not_found") {
-        setError("Nie znaleźliśmy konta z tym adresem e-mail.");
-      } else if (c === "strategy_for_user_invalid") {
-        setError("To konto loguje się przez Google. Użyj przycisku „Kontynuuj z Google” na ekranie logowania.");
-      } else {
-        setError(clerkMsg(err));
-      }
+      setError(clerkMsg(err));
       return false;
     } finally {
       setResetBusy(false);
@@ -413,10 +546,12 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
               <Field
                 label="Kod weryfikacyjny"
                 value={code}
-                onChange={setCode}
+                onChange={onCodeChange}
                 placeholder="123456"
                 autoComplete="one-time-code"
-                disabled={isLoading}
+                inputMode="numeric"
+                hint="Kod ma 6 cyfr."
+                disabled={verifyBusy}
               />
 
               {error && (
@@ -424,20 +559,31 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
                   {error}
                 </p>
               )}
+              {verifyNotice && (
+                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }}>
+                  {verifyNotice}
+                </p>
+              )}
 
               <button
                 type="submit"
-                disabled={isLoading || code.length < 6}
+                disabled={verifyBusy || code.length !== 6}
                 className="w-full flex items-center justify-center gap-2 text-sm font-semibold transition-all disabled:opacity-60"
                 style={{ padding: "14px 22px", borderRadius: "999px", background: "oklch(56% 0.30 335)", color: "#fff" }}
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Potwierdź konto <ArrowRight className="w-4 h-4" strokeWidth={2} /></>}
+                {verifyBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Potwierdź konto <ArrowRight className="w-4 h-4" strokeWidth={2} /></>}
               </button>
 
-              <button type="button" onClick={() => { setPhase("form"); setCode(""); setError(""); }}
-                className="w-full text-xs text-center" style={{ color: "oklch(40% 0.06 240)" }}>
-                ← Wróć i zmień e-mail
-              </button>
+              <div className="flex items-center justify-between">
+                <button type="button" onClick={backToRegisterForm} disabled={verifyBusy}
+                  className="text-xs" style={{ color: "oklch(40% 0.06 240)" }}>
+                  ← Wróć i zmień e-mail
+                </button>
+                <button type="button" onClick={handleResendSignUpCode} disabled={verifyBusy}
+                  className="text-xs font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>
+                  Wyślij kod ponownie
+                </button>
+              </div>
             </form>
           )}
 
@@ -499,9 +645,11 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
               <Field
                 label="Kod z e-maila"
                 value={code}
-                onChange={setCode}
+                onChange={onCodeChange}
                 placeholder="123456"
                 autoComplete="one-time-code"
+                inputMode="numeric"
+                hint="Kod ma 6 cyfr."
                 disabled={resetBusy}
               />
 
@@ -533,6 +681,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
                     {showPass ? <EyeOff className="w-4 h-4" strokeWidth={1.5} /> : <Eye className="w-4 h-4" strokeWidth={1.5} />}
                   </button>
                 </div>
+                <PasswordRules password={newPassword} validator={signIn} />
               </div>
 
               {error && (
@@ -548,7 +697,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
 
               <button
                 type="submit"
-                disabled={resetBusy || code.length < 6 || !newPassword}
+                disabled={resetBusy || code.length !== 6 || !newPassword}
                 className="w-full flex items-center justify-center gap-2 text-sm font-semibold transition-all disabled:opacity-60"
                 style={{ padding: "14px 22px", borderRadius: "999px", background: "oklch(56% 0.30 335)", color: "#fff" }}
               >
@@ -636,6 +785,7 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
                       {showPass ? <EyeOff className="w-4 h-4" strokeWidth={1.5} /> : <Eye className="w-4 h-4" strokeWidth={1.5} />}
                     </button>
                   </div>
+                  {!isLogin && <PasswordRules password={password} validator={signUp} />}
                 </div>
 
                 {isLogin && (
