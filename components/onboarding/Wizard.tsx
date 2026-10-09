@@ -16,11 +16,11 @@ type StepId =
 
 const ORDER: StepId[] = ["welcome", "sells", "name", "logo", "problem", "edge", "brand", "preview"];
 
-interface Props { firstName: string }
+interface Props { firstName: string; userId: string | null }
 
-export default function Wizard({ firstName }: Props) {
+export default function Wizard({ firstName, userId }: Props) {
   return (
-    <OnboardingProvider>
+    <OnboardingProvider userId={userId}>
       <Shell firstName={firstName} />
     </OnboardingProvider>
   );

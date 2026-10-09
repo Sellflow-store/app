@@ -16,7 +16,7 @@ import MiniPreview from "./MiniPreview";
  */
 export default function LivePreview() {
   const router = useRouter();
-  const { state, markPreviewSeen } = useOnboarding();
+  const { state, markPreviewSeen, reset } = useOnboarding();
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -65,7 +65,8 @@ export default function LivePreview() {
         // 401: anonymous visitor — stash payload, send them to register.
         // /onboarding/save picks the payload back up after sign-up + auto-finalizes.
         if (res.status === 401) {
-          const pending = { shopName, slug: dbSlug, bootstrap: payload };
+          // savedAt: /onboarding/save ignores a stash older than its TTL.
+          const pending = { shopName, slug: dbSlug, bootstrap: payload, savedAt: Date.now() };
           try {
             sessionStorage.setItem("sellflow_pending_onboarding", JSON.stringify(pending));
           } catch {
@@ -91,6 +92,10 @@ export default function LivePreview() {
         setError(data.error ?? "Nie udało się zapisać sklepu.");
         return;
       }
+      // The shop exists now — drop the draft so the next account on this
+      // browser starts from an empty wizard.
+      reset();
+      try { sessionStorage.removeItem("sellflow_pending_onboarding"); } catch {}
       router.push(`/dashboard/${data.shopSlug}`);
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");

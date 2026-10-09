@@ -7,6 +7,20 @@ import { STORAGE_KEY } from "@/lib/brand/types";
 
 const PENDING_KEY = "sellflow_pending_onboarding";
 const BOUNCE_KEY  = "sellflow_save_auth_bounced";
+// Sign-up takes minutes. An older stash was left by someone who walked away
+// mid-sign-up in this tab — never finalize their shop for whoever registers next.
+const PENDING_TTL_MS = 30 * 60 * 1000;
+
+function readPending(): string | null {
+  const raw = sessionStorage.getItem(PENDING_KEY);
+  if (!raw) return null;
+  try {
+    const savedAt = Number(JSON.parse(raw)?.savedAt);
+    if (Number.isFinite(savedAt) && Date.now() - savedAt < PENDING_TTL_MS) return raw;
+  } catch { /* uszkodzony stash — traktuj jak brak */ }
+  sessionStorage.removeItem(PENDING_KEY);
+  return null;
+}
 
 /**
  * Auto-finalizer for anonymous → signed-up onboarding flow.
@@ -29,7 +43,7 @@ export default function OnboardingSavePage() {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(PENDING_KEY);
+    const raw = readPending();
     if (!raw) { setStatus("missing"); return; }
     setStatus("loading");
 
@@ -79,6 +93,8 @@ export default function OnboardingSavePage() {
 
         sessionStorage.removeItem(BOUNCE_KEY);
         sessionStorage.removeItem(PENDING_KEY);
+        // The shop exists now — the wizard draft must not prefill the next account.
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
         router.replace(`/dashboard/${data.shopSlug}`);
       } catch {
         if (cancelled) return;

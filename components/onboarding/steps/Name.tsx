@@ -193,10 +193,12 @@ export default function Name({ onNext, onBack }: Props) {
         </div>
       )}
 
+      {/* Required: an empty name was silently replaced with the first stock
+          suggestion ("Common"), giving every such shop a common-N address. */}
       <StepFooter
         onBack={onBack}
-        onSkip={() => { patchBusiness({ name: "" }); onNext(); }}
         onNext={() => { patchBusiness({ name: value.trim() }); onNext(); }}
+        nextDisabled={!value.trim()}
       />
     </div>
   );

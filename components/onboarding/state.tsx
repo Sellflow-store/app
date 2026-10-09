@@ -64,12 +64,23 @@ type Ctx = {
 
 const OnboardingCtx = createContext<Ctx | null>(null);
 
-function loadFromStorage(): OnboardingState | null {
+/** owner: the Clerk user id the draft belongs to, or null for an anonymous
+ *  visitor (adopted by the account they then sign up with). Drafts saved
+ *  before this field existed have no owner at all. */
+type StoredDraft = OnboardingState & { owner?: string | null };
+
+function loadFromStorage(userId: string | null): OnboardingState | null {
   if (typeof localStorage === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as OnboardingState;
+    const parsed = JSON.parse(raw) as StoredDraft;
+    // On a shared browser the draft may be another account's, or one saved
+    // before drafts carried an owner — drop it instead of prefilling the wizard.
+    if (parsed.owner === undefined || (parsed.owner !== null && parsed.owner !== userId)) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
     return {
       business: { ...INITIAL_STATE.business, ...(parsed.business ?? {}) },
       brand: {
@@ -86,16 +97,17 @@ function loadFromStorage(): OnboardingState | null {
   }
 }
 
-export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, INITIAL_STATE, (init) => loadFromStorage() ?? init);
+export function OnboardingProvider({ children, userId }: { children: ReactNode; userId: string | null }) {
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE, (init) => loadFromStorage(userId) ?? init);
 
   // Persist on every meaningful state change. Quota errors are non-fatal
   // for a draft — silently swallow.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const draft: StoredDraft = { ...state, owner: userId };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
     } catch {}
-  }, [state]);
+  }, [state, userId]);
 
   const value: Ctx = useMemo(
     () => ({

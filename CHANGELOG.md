@@ -1068,3 +1068,10 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 ### 0.14.3 · 09.10.2026
 **Zdjęcia produktu: przyciski na kafelku nie nakładają się**
 - Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.
+
+### 0.14.6 · 09.10.2026 · SEL-30, SEL-31
+**Kreator: nowe konto nie widzi danych poprzedniej osoby, nazwa sklepu jest wymagana**
+- Szkic kreatora w przeglądarce ma właściciela (id konta Clerk albo gość). Kreator nie wczytuje szkicu innego konta ani szkicu zapisanego przed tą zmianą (bez właściciela), tylko go usuwa. Szkic gościa przejmuje konto, które gość właśnie zakłada.
+- Po utworzeniu sklepu szkic jest czyszczony, zarówno przy zapisie z kreatora, jak i po rejestracji (`/onboarding/save`).
+- Dane sklepu odłożone na czas rejestracji (sessionStorage) mają znacznik czasu. `/onboarding/save` ignoruje je po 30 minutach, żeby nie założyć sklepu z danymi kogoś, kto odszedł od komputera w trakcie rejestracji.
+- Krok „Jak nazywa się Twój sklep?” nie ma już „Pomiń”, a „Dalej” działa dopiero po wpisaniu albo wybraniu nazwy. Wcześniej pusta nazwa była po cichu zamieniana na pierwszą podpowiedź („Common”), więc sklepy dostawały adresy `common-N`. Adres jest sprawdzany na żywo jak dotąd.
