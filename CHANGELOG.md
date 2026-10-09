@@ -1068,3 +1068,27 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 ### 0.14.3 · 09.10.2026
 **Zdjęcia produktu: przyciski na kafelku nie nakładają się**
 - Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.
+
+### 0.14.4 · 09.10.2026 · PR #37
+**Rejestracja: linki do regulaminu i polityki prywatności prowadzą do dokumentów Sellflow (SEL-28)**
+- Pod formularzem rejestracji „regulamin” i „politykę prywatności” otwierają w nowej karcie dokumenty platformy na sell-flow.store (`/terms.html`, `/privacy-policy.html`).
+- Wcześniej linki były względne (`/terms`, `/privacy`). Na app.sell-flow.store proxy traktuje taką ścieżkę jak adres sklepu i przekierowuje na subdomenę, więc pojawiał się ekran „Sklep niedostępny”.
+### 0.14.5 · 09.10.2026 · PR #38
+**Wylogowanie z kreatora, z panelu i z panelu operacyjnego prowadzi do logowania (SEL-29, SEL-32)**
+- Kreator ma w nagłówku „Wyloguj” dla zalogowanych (na telefonie sama ikona) i „Masz konto? Zaloguj się” dla gości. Wcześniej konto bez sklepu nie miało jak wyjść z kreatora, bo każda trasa odsyłała do niego z powrotem. Po wylogowaniu z kreatora szkic i dane odłożone na czas rejestracji są czyszczone, żeby następna osoba na tej przeglądarce zaczynała od pustego formularza. Czyszczenie następuje dopiero, gdy Clerk potwierdzi wylogowanie, więc nieudane wylogowanie nie kasuje szkicu. Do załadowania Clerka przycisk jest nieaktywny. Przycisk bierze stan z Clerka, więc po „Wstecz” po wylogowaniu pokazuje „Zaloguj się”, a nie nieaktualne „Wyloguj”.
+- Po wylogowaniu z panelu sklepu sprzedawca trafia na `/login`, a nie do kreatora (`afterSignOutUrl` w `ClerkProvider`).
+- „Wyloguj” w panelu operacyjnym naprawdę wylogowuje. Wcześniej był to link do `/login`, który zalogowanego odsyłał z powrotem do `/ops`.
+- Strona główna kieruje zalogowanego na `/dashboard`, który wybiera jego sklep albo kreator. Wcześniej strona główna miała własną kopię tego wyszukiwania z `redirect()` wewnątrz `try/catch`, więc przekierowanie do panelu było połykane i sprzedawca szedł przez `/onboarding`.
+### 0.14.6 · 09.10.2026 · PR #39
+**Kreator: nowe konto nie widzi danych poprzedniej osoby, nazwa sklepu jest wymagana (SEL-30, SEL-31)**
+- Szkic kreatora w przeglądarce ma właściciela (id konta Clerk albo gość). Kreator nie wczytuje szkicu innego konta ani szkicu zapisanego przed tą zmianą (bez właściciela), tylko go usuwa. Właściciela kreator bierze z bieżącego stanu Clerka, więc strona przywrócona przez „Wstecz” po wylogowaniu zapisuje szkic jako gościa, a nie pod poprzednim kontem. Zmiana konta bez przeładowania strony wczytuje szkic od nowa, zamiast zapisać stary pod nowym kontem.
+- Szkic gościa jest ważny 30 minut od ostatniej zmiany. Konto przejmuje go tylko wtedy, gdy gość założył je przyciskiem „Zapisz i otwórz sklep” w tej samej karcie. Logowanie z nagłówka kreatora albo osobna rejestracja zaczynają od pustego kreatora, żeby osoba, która siądzie do komputera po gościu, nie dostała jego danych.
+- Po utworzeniu sklepu szkic i dane odłożone na czas rejestracji są czyszczone, zarówno przy zapisie z kreatora, jak i po rejestracji (`/onboarding/save`).
+- Dane sklepu odłożone na czas rejestracji (sessionStorage) mają znacznik czasu. Jeśli od kliknięcia „Zapisz” minęło ponad 30 minut albo dane pochodzą sprzed tej wersji, `/onboarding/save` nie zakłada sklepu od razu, tylko pyta, czy sklep „…” należy do tej osoby. „Nie, zacznij od nowa” usuwa te dane. Kto rejestrował się dłużej, nie traci sklepu, a następna osoba w tej karcie nie dostanie cudzego. Przyjęte dane zostają na czas ponownych prób, a szkic gościa jest odświeżany, więc „Wróć do kreatora” po błędzie nadal go wczytuje.
+- Krok „Jak nazywa się Twój sklep?” nie ma już „Pomiń”, a „Dalej” działa dopiero po wpisaniu albo wybraniu nazwy. Wcześniej pusta nazwa była po cichu zamieniana na pierwszą podpowiedź („Common”), więc sklepy dostawały adresy `common-N`. Nazwa bez liter i cyfr, z których powstaje adres (np. same emoji albo cyrylica), dawałaby wspólny adres `sklep-N`, więc kreator prosi o dodanie liter lub cyfr. Adres jest sprawdzany na żywo jak dotąd.
+### 0.14.7 · 09.10.2026 · PR #40
+**Logowanie i rejestracja: komunikaty po polsku, wymagania hasła, kod z 6 cyfr (SEL-23, SEL-24, SEL-33)**
+- Błędy z Clerka (zły lub wygasły kod, zajęty e-mail, za krótkie albo wyciekłe hasło, za dużo prób, CAPTCHA) są po polsku. Formularz rozpoznaje je po kodzie błędu, a nieznany kod daje ogólny polski komunikat zamiast angielskiego tekstu Clerka. Menu konta (`UserButton`) zostaje po angielsku, bo wymaga osobnej decyzji o pakiecie `@clerk/localizations`.
+- Pod hasłem przy rejestracji i przy ustawianiu nowego hasła jest lista wymagań, odhaczana podczas pisania. Reguły pochodzą z ustawień Clerka (`validatePassword`), więc zmiana polityki haseł w Clerk Dashboard pojawi się w formularzu bez zmian w kodzie. Zanim Clerk się załaduje, lista ma tylko „co najmniej 8 znaków”.
+- Pole kodu z e-maila przyjmuje tylko cyfry, najwyżej 6, ma podpowiedź „Kod ma 6 cyfr.” i otwiera klawiaturę numeryczną na telefonie. Wklejony kod ze spacją („123 456”) też działa. Przycisk jest aktywny tylko przy 6 cyfrach.
+- Ekran kodu po rejestracji zostaje na miejscu podczas sprawdzania kodu (wcześniej na chwilę wracał formularz rejestracji) i ma „Wyślij kod ponownie”, tak jak reset hasła.
