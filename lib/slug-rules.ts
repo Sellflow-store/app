@@ -17,6 +17,15 @@ export const RESERVED_SLUGS = new Set([
   "preview-shop", "sso-callback",
 ]);
 
+// Lowercase, accents stripped, ł → l: the letters a slug is built from.
+function foldForSlug(raw: string): string {
+  return (raw || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ł/g, "l");
+}
+
 /**
  * Shop name (or a raw slug) → a slug that always passes SLUG_RE: Polish
  * letters → ASCII, dash-separated, no dash at either end, 3–44 characters
@@ -25,15 +34,17 @@ export const RESERVED_SLUGS = new Set([
  * invalid slug that strands the new merchant on /onboarding/save.
  */
 export function toShopSlug(raw: string): string {
-  let s = (raw || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/ł/g, "l")
+  let s = foldForSlug(raw)
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 44)
     .replace(/-+$/, "");
   if (s.length < 3) s = s ? `${s}-sklep` : "sklep";
   return s;
+}
+
+/** False when nothing in a name survives into a slug (only emoji, Cyrillic…):
+ *  toShopSlug then falls back to the shared "sklep", i.e. sklep-2, sklep-3… */
+export function nameHasSlugChars(raw: string): boolean {
+  return /[a-z0-9]/.test(foldForSlug(raw));
 }

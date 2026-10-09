@@ -10,7 +10,9 @@ import {
   type ReactNode,
 } from "react";
 import {
+  GUEST_DATA_TTL_MS,
   INITIAL_STATE,
+  PENDING_SAVE_KEY,
   STORAGE_KEY,
   type Brand,
   type Business,
@@ -65,13 +67,9 @@ type Ctx = {
 const OnboardingCtx = createContext<Ctx | null>(null);
 
 /** owner: the Clerk user id the draft belongs to, or null for an anonymous
- *  visitor (adopted by the account they then sign up with). Drafts saved
- *  before this field existed have no owner at all. savedAt: last write. */
+ *  visitor. Drafts saved before this field existed have no owner at all.
+ *  savedAt: last write. */
 type StoredDraft = OnboardingState & { owner?: string | null; savedAt?: number };
-
-// Whoever opens the wizard next adopts a guest draft, so it has to be fresh:
-// an abandoned one would prefill the next person on a shared browser.
-const GUEST_DRAFT_TTL_MS = 30 * 60 * 1000;
 
 function loadFromStorage(userId: string | null): OnboardingState | null {
   if (typeof localStorage === "undefined") return null;
@@ -81,10 +79,14 @@ function loadFromStorage(userId: string | null): OnboardingState | null {
     const parsed = JSON.parse(raw) as StoredDraft;
     // On a shared browser the draft may be another account's, an abandoned
     // guest's, or one saved before drafts carried an owner — drop it instead
-    // of prefilling the wizard.
-    const foreign = parsed.owner === undefined || (parsed.owner !== null && parsed.owner !== userId);
-    const staleGuest = parsed.owner === null && !(Date.now() - Number(parsed.savedAt) < GUEST_DRAFT_TTL_MS);
-    if (foreign || staleGuest) {
+    // of prefilling the wizard. A fresh guest draft stays with the guest, and
+    // goes to an account only when this tab still holds the Save it signed up
+    // from — never to whoever signs in next.
+    const fresh = Date.now() - Number(parsed.savedAt) < GUEST_DATA_TTL_MS;
+    const keep = parsed.owner === null
+      ? fresh && (userId === null || sessionStorage.getItem(PENDING_SAVE_KEY) !== null)
+      : parsed.owner === userId;
+    if (!keep) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }
