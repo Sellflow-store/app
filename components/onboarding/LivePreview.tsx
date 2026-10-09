@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useOnboarding } from "./state";
 import { buildBootstrap, encodeBootstrap, slugifyName } from "@/lib/brand/bootstrap";
-import type { StoreBootstrap } from "@/lib/brand/types";
+import { STORAGE_KEY, type StoreBootstrap } from "@/lib/brand/types";
 import MiniPreview from "./MiniPreview";
 
 /**
@@ -16,7 +16,7 @@ import MiniPreview from "./MiniPreview";
  */
 export default function LivePreview() {
   const router = useRouter();
-  const { state, markPreviewSeen, reset } = useOnboarding();
+  const { state, markPreviewSeen } = useOnboarding();
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -93,9 +93,12 @@ export default function LivePreview() {
         return;
       }
       // The shop exists now — drop the draft so the next account on this
-      // browser starts from an empty wizard.
-      reset();
-      try { sessionStorage.removeItem("sellflow_pending_onboarding"); } catch {}
+      // browser starts from an empty wizard. Storage only, no reset(): emptying
+      // the state would repaint the preview as a default shop before navigation.
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem("sellflow_pending_onboarding");
+      } catch {}
       router.push(`/dashboard/${data.shopSlug}`);
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");

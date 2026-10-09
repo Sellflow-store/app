@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { STORAGE_KEY } from "@/lib/brand/types";
@@ -15,8 +15,10 @@ function readPending(): string | null {
   const raw = sessionStorage.getItem(PENDING_KEY);
   if (!raw) return null;
   try {
-    const savedAt = Number(JSON.parse(raw)?.savedAt);
-    if (Number.isFinite(savedAt) && Date.now() - savedAt < PENDING_TTL_MS) return raw;
+    const savedAt = JSON.parse(raw)?.savedAt;
+    // No savedAt: stashed by the build before this check. Honour it — a
+    // sessionStorage stash cannot outlive its tab anyway.
+    if (savedAt === undefined || Date.now() - Number(savedAt) < PENDING_TTL_MS) return raw;
   } catch { /* uszkodzony stash — traktuj jak brak */ }
   sessionStorage.removeItem(PENDING_KEY);
   return null;
@@ -41,10 +43,14 @@ export default function OnboardingSavePage() {
   // Bumping re-runs the save effect — router.refresh() would NOT re-fire
   // a client effect, so the old retry button silently did nothing.
   const [attempt, setAttempt] = useState(0);
+  // The TTL is checked once, on arrival: "Spróbuj ponownie" retries the
+  // stash this signed-in session already accepted.
+  const pendingRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const raw = readPending();
+    const raw = pendingRef.current ?? readPending();
     if (!raw) { setStatus("missing"); return; }
+    pendingRef.current = raw;
     setStatus("loading");
 
     let cancelled = false;

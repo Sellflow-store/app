@@ -20,7 +20,10 @@ interface Props { firstName: string; userId: string | null }
 
 export default function Wizard({ firstName, userId }: Props) {
   return (
-    <OnboardingProvider userId={userId}>
+    // Keyed by account: a sign-in/out without a full reload (router.refresh)
+    // remounts the provider, so the in-memory draft is re-checked against the
+    // new owner instead of being re-saved under it.
+    <OnboardingProvider key={userId ?? "guest"} userId={userId}>
       <Shell firstName={firstName} />
     </OnboardingProvider>
   );

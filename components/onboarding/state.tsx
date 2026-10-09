@@ -66,8 +66,12 @@ const OnboardingCtx = createContext<Ctx | null>(null);
 
 /** owner: the Clerk user id the draft belongs to, or null for an anonymous
  *  visitor (adopted by the account they then sign up with). Drafts saved
- *  before this field existed have no owner at all. */
-type StoredDraft = OnboardingState & { owner?: string | null };
+ *  before this field existed have no owner at all. savedAt: last write. */
+type StoredDraft = OnboardingState & { owner?: string | null; savedAt?: number };
+
+// Whoever opens the wizard next adopts a guest draft, so it has to be fresh:
+// an abandoned one would prefill the next person on a shared browser.
+const GUEST_DRAFT_TTL_MS = 30 * 60 * 1000;
 
 function loadFromStorage(userId: string | null): OnboardingState | null {
   if (typeof localStorage === "undefined") return null;
@@ -75,9 +79,12 @@ function loadFromStorage(userId: string | null): OnboardingState | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredDraft;
-    // On a shared browser the draft may be another account's, or one saved
-    // before drafts carried an owner — drop it instead of prefilling the wizard.
-    if (parsed.owner === undefined || (parsed.owner !== null && parsed.owner !== userId)) {
+    // On a shared browser the draft may be another account's, an abandoned
+    // guest's, or one saved before drafts carried an owner — drop it instead
+    // of prefilling the wizard.
+    const foreign = parsed.owner === undefined || (parsed.owner !== null && parsed.owner !== userId);
+    const staleGuest = parsed.owner === null && !(Date.now() - Number(parsed.savedAt) < GUEST_DRAFT_TTL_MS);
+    if (foreign || staleGuest) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }
@@ -104,7 +111,7 @@ export function OnboardingProvider({ children, userId }: { children: ReactNode; 
   // for a draft — silently swallow.
   useEffect(() => {
     try {
-      const draft: StoredDraft = { ...state, owner: userId };
+      const draft: StoredDraft = { ...state, owner: userId, savedAt: Date.now() };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
     } catch {}
   }, [state, userId]);
