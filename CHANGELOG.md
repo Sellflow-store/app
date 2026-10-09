@@ -1069,7 +1069,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 **Zdjęcia produktu: przyciski na kafelku nie nakładają się**
 - Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.
 
-### 0.14.4 · 09.10.2026
+### 0.14.4 · 09.10.2026 · PR #37
 **Rejestracja: linki do regulaminu i polityki prywatności prowadzą do dokumentów Sellflow (SEL-28)**
 - Pod formularzem rejestracji „regulamin” i „politykę prywatności” otwierają w nowej karcie dokumenty platformy na sell-flow.store (`/terms.html`, `/privacy-policy.html`).
 - Wcześniej linki były względne (`/terms`, `/privacy`). Na app.sell-flow.store proxy traktuje taką ścieżkę jak adres sklepu i przekierowuje na subdomenę, więc pojawiał się ekran „Sklep niedostępny”.
