@@ -53,6 +53,11 @@ export const INITIAL_STATE: OnboardingState = {
   previewSeen: false,
 }
 
+// A guest draft and the stashed Save payload may be left by whoever used this
+// browser before. Past this age the draft is dropped and /onboarding/save asks
+// before creating the shop.
+export const GUEST_DATA_TTL_MS = 30 * 60 * 1000
+
 // ─── Bootstrap payload (handed off from onboarding to API + storefront) ───
 
 export type BootstrapProduct = {

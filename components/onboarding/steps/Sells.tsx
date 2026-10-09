@@ -26,7 +26,7 @@ export default function Sells({ onNext, onBack }: Props) {
       </h2>
       <p className="text-sm leading-relaxed" style={{ color: "var(--brand-ink-2)" }}>
         Wystarczy krótko, np. „ręcznie robione świece sojowe” albo „kursy o copywritingu B2B”.
-        To jedyne pytanie wymagane na tym etapie. Resztę zaproponuje AI.
+        Oprócz tego pytania wymagana jest tylko nazwa sklepu. Resztę zaproponuje AI.
       </p>
 
       <textarea
