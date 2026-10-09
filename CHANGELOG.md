@@ -1069,7 +1069,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 **Zdjęcia produktu: przyciski na kafelku nie nakładają się**
 - Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.
 
-### 0.14.5 · 09.10.2026
+### 0.14.5 · 09.10.2026 · PR #38
 **Wylogowanie z kreatora, z panelu i z panelu operacyjnego prowadzi do logowania (SEL-29, SEL-32)**
 - Kreator ma w nagłówku „Wyloguj” dla zalogowanych (na telefonie sama ikona) i „Masz konto? Zaloguj się” dla gości. Wcześniej konto bez sklepu nie miało jak wyjść z kreatora, bo każda trasa odsyłała do niego z powrotem. Po wylogowaniu z kreatora szkic i dane odłożone na czas rejestracji są czyszczone, żeby następna osoba na tej przeglądarce zaczynała od pustego formularza. Czyszczenie następuje dopiero, gdy Clerk potwierdzi wylogowanie, więc nieudane wylogowanie nie kasuje szkicu. Do załadowania Clerka przycisk jest nieaktywny. Przycisk bierze stan z Clerka, więc po „Wstecz” po wylogowaniu pokazuje „Zaloguj się”, a nie nieaktualne „Wyloguj”.
 - Po wylogowaniu z panelu sklepu sprzedawca trafia na `/login`, a nie do kreatora (`afterSignOutUrl` w `ClerkProvider`).
