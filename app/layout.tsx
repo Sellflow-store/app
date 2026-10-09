@@ -19,7 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    // After sign-out go to /login, not "/": the root page sends every anonymous
+    // visitor to /onboarding. SignOutButton ignores this default — pass
+    // redirectUrl explicitly there.
+    <ClerkProvider afterSignOutUrl="/login">
       <html lang="pl" className={geist.variable}>
         <body className="min-h-screen antialiased">{children}</body>
       </html>

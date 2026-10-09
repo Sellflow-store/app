@@ -40,6 +40,11 @@ export type Inferred = {
 // draft z suwakami nie da się sensownie zmapować na preset.
 export const STORAGE_KEY = 'sellflow_onboarding_v2'
 
+// sessionStorage: the Save payload an anonymous visitor leaves while signing up
+// (picked up by /onboarding/save) and that page's one-time re-login flag.
+export const PENDING_SAVE_KEY = 'sellflow_pending_onboarding'
+export const SAVE_BOUNCE_KEY = 'sellflow_save_auth_bounced'
+
 export const DEFAULT_PRESET: StylePresetId = 'minimal'
 
 export const INITIAL_STATE: OnboardingState = {
