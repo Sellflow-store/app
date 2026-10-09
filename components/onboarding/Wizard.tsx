@@ -2,9 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { SignOutButton, useAuth } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import { LogOut } from "lucide-react";
 import { OnboardingProvider, useOnboarding } from "./state";
+import { PENDING_SAVE_KEY, SAVE_BOUNCE_KEY } from "@/lib/brand/types";
 import Welcome from "./steps/Welcome";
 import Sells from "./steps/Sells";
 import Name from "./steps/Name";
@@ -35,11 +36,19 @@ function Shell({ firstName, signedIn }: { firstName: string; signedIn: boolean }
   // its live state wins (e.g. a page restored by Back after signing out).
   const { isLoaded, isSignedIn } = useAuth();
   const showSignOut = isLoaded ? !!isSignedIn : signedIn;
-  const handleSignOut = () => {
+  const { signOut } = useClerk();
+  // Clear only once Clerk has signed out: a failed sign-out must not leave a
+  // signed-in user with an emptied draft.
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirectUrl: "/login" });
+    } catch {
+      return;
+    }
     reset();
     try {
-      sessionStorage.removeItem("sellflow_pending_onboarding");
-      sessionStorage.removeItem("sellflow_save_auth_bounced");
+      sessionStorage.removeItem(PENDING_SAVE_KEY);
+      sessionStorage.removeItem(SAVE_BOUNCE_KEY);
     } catch {}
   };
   const [step, setStep] = useState<StepId>("welcome");
@@ -106,20 +115,20 @@ function Shell({ firstName, signedIn }: { firstName: string; signedIn: boolean }
           )}
           {/* A signed-in user without a shop is sent back here from every route,
               so the wizard is the only place they can sign out. The draft and
-              the pending save are cleared first so the next person on this
-              browser starts empty. */}
+              the pending save are cleared after sign-out so the next person on
+              this browser starts empty. Disabled until Clerk loads: before
+              that signOut() is only queued and would resolve at once. */}
           {showSignOut ? (
-            <SignOutButton redirectUrl="/login">
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium hover:underline"
-                style={{ color: "var(--brand-ink-2)" }}
-              >
-                <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
-                <span className="sr-only sm:not-sr-only">Wyloguj</span>
-              </button>
-            </SignOutButton>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={!isLoaded}
+              className="inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ color: "var(--brand-ink-2)" }}
+            >
+              <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
+              <span className="sr-only sm:not-sr-only">Wyloguj</span>
+            </button>
           ) : (
             <Link
               href="/login"
