@@ -1069,7 +1069,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 **Zdjęcia produktu: przyciski na kafelku nie nakładają się**
 - Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.
 
-### 0.14.6 · 09.10.2026
+### 0.14.6 · 09.10.2026 · PR #39
 **Kreator: nowe konto nie widzi danych poprzedniej osoby, nazwa sklepu jest wymagana (SEL-30, SEL-31)**
 - Szkic kreatora w przeglądarce ma właściciela (id konta Clerk albo gość). Kreator nie wczytuje szkicu innego konta ani szkicu zapisanego przed tą zmianą (bez właściciela), tylko go usuwa. Właściciela kreator bierze z bieżącego stanu Clerka, więc strona przywrócona przez „Wstecz” po wylogowaniu zapisuje szkic jako gościa, a nie pod poprzednim kontem. Zmiana konta bez przeładowania strony wczytuje szkic od nowa, zamiast zapisać stary pod nowym kontem.
 - Szkic gościa jest ważny 30 minut od ostatniej zmiany. Konto przejmuje go tylko wtedy, gdy gość założył je przyciskiem „Zapisz i otwórz sklep” w tej samej karcie. Logowanie z nagłówka kreatora albo osobna rejestracja zaczynają od pustego kreatora, żeby osoba, która siądzie do komputera po gościu, nie dostała jego danych.
