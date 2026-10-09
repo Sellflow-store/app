@@ -13,6 +13,7 @@ import { buildTransferQrPayload } from "@/lib/qr-transfer";
 import QRCode from "qrcode";
 import { createTpayTransaction, getTpayCredentials, TPAY_PROVIDER, type TpayCredentials } from "@/lib/tpay";
 import { shopPublicUrl } from "@/lib/legal/data";
+import { normalizeInvoice, type InvoiceData, type InvoiceInput } from "@/lib/invoice";
 import type { AccountConfig } from "@/types/shop";
 import type { DeliveryConfig, CheckoutConfig } from "@/types/shop";
 
@@ -27,6 +28,8 @@ interface OrderRequest {
   paymentMethod: "transfer" | "cod" | "online";
   discountCode?: string | null;
   notes?: string;
+  /** Dane do faktury VAT na firmę. Brak / null = klient nie prosi o fakturę. */
+  invoice?: InvoiceInput | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -69,6 +72,17 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
   if (body.paymentMethod !== "transfer" && body.paymentMethod !== "cod" && body.paymentMethod !== "online") {
     return bad("Niepoprawna metoda płatności.");
+  }
+
+  // ── Faktura na firmę (opcjonalna) ───────────────────────────────────────
+  // Dane sprawdzamy tak samo dla każdego koszyka: faktura nie zależy od tego,
+  // czy coś wysyłamy (produkty cyfrowe i usługi też dostają fakturę).
+  let invoice: InvoiceData | null = null;
+  if (body.invoice != null) {
+    if (typeof body.invoice !== "object" || Array.isArray(body.invoice)) return bad("Faktura: niepoprawne dane.");
+    const parsed = normalizeInvoice(body.invoice);
+    if (!parsed.ok) return bad(parsed.error);
+    invoice = parsed.data;
   }
 
   // ── Recompute prices from DB — client totals are never trusted ──────────
@@ -255,6 +269,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     deliveryMethodKind: method?.kind,
     pickupPointCode: pickupPoint?.code,
     codFee: codFee > 0 ? codFee.toFixed(2) : undefined,
+    invoice: invoice ?? undefined,
   };
 
   // ── Reserve discount + stock, then insert the order ────────────────────
@@ -467,6 +482,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     pickupPoint: pickupPoint
       ? { code: String(pickupPoint.code), address: String(pickupPoint.address) }
       : null,
+    invoice,
   };
 
   // Customer-facing note for non-physical items.

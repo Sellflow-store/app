@@ -1040,3 +1040,16 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - `ROADMAP.md`: zasady numeracji `0.ETAP.ZMIANA`, przegląd etapów od stycznia 2026, propozycja kolejnych etapów do 1.0.0.
 - `CHANGELOG.md`: ten plik, szczegółowy opis każdej wersji.
 - Historia nadana wstecz: od 0.1 każdy commit na `main` repozytorium `app` ma jeden numer w kolejności dat, z pominięciem commitów merge i pustych „redeploy”.
+
+## 0.14 Panel produktu: zdjęcia, SEO, wysyłka, faktura
+
+### 0.14.0 · 09.10.2026
+**Kadrowanie i kolejność zdjęć, SEO produktów i stron, czas wysyłki, faktura na firmę (feedback klientki)**
+- Zdjęcia produktu: edytor kadru (przeciąganie, przybliżenie 1–3×) w ramce 4:5, takiej jak na liście produktów i karcie produktu. Plik nie jest zmieniany, zapisujemy punkt środka i zoom w `products.attributes.imageMeta`, więc feed Google i powiększenie zdjęcia dalej używają oryginału. Opis zdjęcia (alt) w tym samym oknie.
+- Kolejność zdjęć: przeciąganie albo strzałki, przycisk „ustaw jako główne”, zawsze widoczny przycisk usuwania.
+- Kolejność produktów: na liście produktów tryb „Ułóż kolejność” (przeciąganie lub strzałki), zapis przez `PUT /api/shops/[shop]/products/reorder`. Obowiązuje w sklepie w sortowaniu „Polecane”. Nowy produkt trafia na koniec.
+- SEO produktu: tytuł i opis w Google, główna fraza i dodatkowe frazy, podgląd wyniku Google, lista kontrolna. Własny tytuł jest pełnym `<title>`. Frazy nie trafiają do `meta keywords` (Google je ignoruje), ale działają w wyszukiwarce sklepu.
+- SEO stron sklepu: nowa strona panelu „SEO stron” (główna, produkty, O nas, FAQ, Kontakt, Blog, Dostawa, Zwroty), klucz configu `seo`.
+- Czas wysyłki per produkt (dni robocze, od–do): widoczny na karcie produktu, trafia do danych strukturalnych i feedu Google zamiast domyślnego czasu sklepu.
+- Faktura na firmę w checkoucie: pole „Chcę fakturę VAT”, NIP z sumą kontrolną, pobranie danych z rejestru MF (`/api/shops/[shop]/company-lookup`, z limitem), dane w zamówieniu, mailach i panelu (karta „Faktura VAT”, znacznik na liście).
+- Bez migracji bazy: nowe dane siedzą w istniejących kolumnach JSON.

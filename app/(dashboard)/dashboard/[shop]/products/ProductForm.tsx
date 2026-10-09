@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Trash2, Plus, X, ImageIcon, Package, Download, Briefcase, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Plus, X, Package, Download, Briefcase, Sparkles } from "lucide-react";
 import Link from "next/link";
-import ImageUpload from "@/components/admin/ImageUpload";
+import ProductImages from "@/components/admin/ProductImages";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import SeoFields, { EMPTY_SEO, type SeoFormValue } from "@/components/admin/SeoFields";
 import { htmlIsEmpty } from "@/lib/sanitize";
 import { isValidGtin, readinessGaps, readinessScore } from "@/lib/product-attributes";
+import type { ImageMeta } from "@/lib/image-frame";
+import { MAX_SHIPPING_DAYS, normalizeShippingTime, shippingTimeLabel } from "@/lib/shipping-time";
+import { SEO_DESC_RECOMMENDED, truncateForSerp } from "@/lib/product-seo";
 
 export interface ProductSpec {
   key: string;
@@ -32,13 +36,19 @@ export interface ProductFormData {
   shortDesc: string;
   description: string;
   images: string[];
+  /** Kadr i opis alternatywny zdjęć; klucz = adres zdjęcia. */
+  imageMeta: Record<string, ImageMeta>;
   sizes: string; // rozmiary po przecinku, "" = produkt bez rozmiarów
   stock: string; // "" = nie śledzę stanu
   weight: string;  // gramy, "" = nie podano
   length: string;  // cm
   width: string;   // cm
   height: string;  // cm
+  /** Czas wysyłki w dniach roboczych; oba puste = bez informacji na karcie. */
+  shippingMin: string;
+  shippingMax: string;
   specs: ProductSpec[];
+  seo: SeoFormValue;
   // Dane dla Google i agentów AI (products.attributes)
   gtin: string;
   mpn: string;
@@ -68,13 +78,17 @@ const EMPTY: ProductFormData = {
   shortDesc: "",
   description: "",
   images: [],
+  imageMeta: {},
   sizes: "",
   stock: "",
   weight: "",
   length: "",
   width: "",
   height: "",
+  shippingMin: "",
+  shippingMax: "",
   specs: [],
+  seo: EMPTY_SEO,
   gtin: "",
   mpn: "",
   material: "",
@@ -149,6 +163,9 @@ function normalizePrice(raw: string): string | null {
 
 interface Props {
   shopSlug: string;
+  /** Nazwa sklepu i jego host (bez protokołu): do podglądu wyniku w Google. */
+  shopName: string;
+  shopHost: string;
   productId?: string;
   initial?: ProductFormData;
   /** Na platformie jest klucz do modelu AI: pokaż przycisk propozycji. */
@@ -157,10 +174,9 @@ interface Props {
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export default function ProductForm({ shopSlug, productId, initial, aiEnabled = false }: Props) {
+export default function ProductForm({ shopSlug, shopName, shopHost, productId, initial, aiEnabled = false }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<ProductFormData>(initial ?? EMPTY);
-  const [newImageUrl, setNewImageUrl] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -170,17 +186,6 @@ export default function ProductForm({ shopSlug, productId, initial, aiEnabled = 
 
   function patch(updates: Partial<ProductFormData>) {
     setForm((prev) => ({ ...prev, ...updates }));
-  }
-
-  function addImage() {
-    const url = newImageUrl.trim();
-    if (!url) return;
-    patch({ images: [...form.images, url] });
-    setNewImageUrl("");
-  }
-
-  function removeImage(index: number) {
-    patch({ images: form.images.filter((_, i) => i !== index) });
   }
 
   function addSpec() {
@@ -249,6 +254,21 @@ export default function ProductForm({ shopSlug, productId, initial, aiEnabled = 
       return;
     }
 
+    // Czas wysyłki: puste = brak; inaczej liczby całkowite dni roboczych.
+    const shippingRaw = [form.shippingMin.trim(), form.shippingMax.trim()];
+    const shippingTime =
+      form.type === "physical" && (shippingRaw[0] || shippingRaw[1])
+        ? normalizeShippingTime({ min: shippingRaw[0] || shippingRaw[1], max: shippingRaw[1] || shippingRaw[0] })
+        : undefined;
+    if (
+      form.type === "physical" &&
+      (shippingRaw[0] || shippingRaw[1]) &&
+      (!shippingTime || shippingRaw.some((v) => v && !/^\d{1,2}$/.test(v)))
+    ) {
+      setValidationError(`Czas wysyłki: podaj liczbę dni roboczych od 0 do ${MAX_SHIPPING_DAYS}.`);
+      return;
+    }
+
     setValidationError(null);
     setSaveState("saving");
 
@@ -313,6 +333,14 @@ export default function ProductForm({ shopSlug, productId, initial, aiEnabled = 
         gtin: form.gtin.replace(/\s/g, "") || undefined,
         mpn: form.mpn.trim() || undefined,
         material: form.material.trim() || undefined,
+        imageMeta: form.imageMeta,
+        shippingTime,
+        seo: {
+          title: form.seo.title,
+          description: form.seo.description,
+          focus: form.seo.focus,
+          phrases: form.seo.phrases,
+        },
       },
     };
 
@@ -769,83 +797,12 @@ export default function ProductForm({ shopSlug, productId, initial, aiEnabled = 
 
       {/* Images */}
       <SectionCard title="Zdjęcia">
-        {form.images.length > 0 && (
-          <div className="flex flex-wrap gap-3 mb-4">
-            {form.images.map((url, i) => (
-              <div key={`${url}-${i}`} className="relative group">
-                <img
-                  src={url}
-                  alt={`Zdjęcie ${i + 1}`}
-                  className="w-20 h-20 rounded-xl object-cover"
-                  style={{ border: "1px solid var(--panel-border)" }}
-                />
-                {i === 0 && (
-                  <span
-                    className="absolute bottom-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: "var(--panel-accent)", color: "#fff" }}
-                  >
-                    Główne
-                  </span>
-                )}
-                <button
-                  onClick={() => removeImage(i)}
-                  aria-label="Usuń zdjęcie"
-                  className="absolute -top-1.5 -right-1.5 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: "var(--panel-ink)", color: "var(--panel-surface)" }}
-                >
-                  <X className="w-3 h-3" strokeWidth={2} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {form.images.length === 0 && (
-          <div
-            className="flex flex-col items-center justify-center py-8 rounded-xl mb-4 gap-2"
-            style={{ border: "1.5px dashed var(--panel-border-strong)", background: "var(--panel-surface-2)" }}
-          >
-            <ImageIcon className="w-8 h-8" style={{ color: "var(--panel-border-strong)" }} strokeWidth={1} />
-            <p className="text-xs" style={{ color: "var(--panel-ink-muted)" }}>
-              Brak zdjęć. Pierwsze dodane będzie zdjęciem głównym
-            </p>
-          </div>
-        )}
-
-        <div className="mb-3">
-          <ImageUpload
-            endpoint="productImage"
-            multiple
-            label="Wgraj zdjęcia z dysku"
-            onUploaded={(urls) =>
-              setForm((prev) => ({ ...prev, images: [...prev.images, ...urls] }))
-            }
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <input
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addImage();
-              }
-            }}
-            placeholder="Wklej adres URL zdjęcia"
-            style={{ ...inputStyle, flex: 1, width: "auto" }}
-            {...focusProps}
-          />
-          <button
-            onClick={addImage}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all shrink-0"
-            style={{ border: "1.5px solid var(--panel-border-strong)", color: "var(--panel-ink)", background: "var(--panel-surface-2)" }}
-          >
-            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
-            Dodaj
-          </button>
-        </div>
+        <ProductImages
+          images={form.images}
+          imageMeta={form.imageMeta}
+          productName={form.name}
+          onChange={({ images, imageMeta }) => patch({ images, imageMeta })}
+        />
       </SectionCard>
 
       {/* Stock — physical only */}
@@ -926,6 +883,31 @@ export default function ProductForm({ shopSlug, productId, initial, aiEnabled = 
       </SectionCard>
       )}
 
+      {/* Shipping time — physical only */}
+      {form.type === "physical" && <ShippingTimeCard form={form} patch={patch} />}
+
+      {/* SEO */}
+      <SectionCard title="SEO: wyniki w Google">
+        <SeoFields
+          value={form.seo}
+          onChange={(seo) => patch({ seo: { ...form.seo, ...seo } })}
+          displayUrl={`${shopHost} › produkty › ${form.slug.trim() || "adres-produktu"}`}
+          defaultTitle={`${form.name.trim() || "Nazwa produktu"} — ${shopName}`}
+          defaultDescription={
+            form.shortDesc.trim() ||
+            truncateForSerp(plainText(form.description), SEO_DESC_RECOMMENDED)
+          }
+          subject="produktu"
+          context={{
+            name: form.name,
+            slug: form.slug.trim() || undefined,
+            body: `${form.shortDesc} ${plainText(form.description)}`,
+            imageCount: form.images.length,
+            imagesWithAlt: form.images.filter((u) => form.imageMeta[u]?.alt).length,
+          }}
+        />
+      </SectionCard>
+
       {/* Visibility */}
       <SectionCard title="Widoczność">
         <label className="flex items-center gap-2.5 cursor-pointer w-fit">
@@ -960,6 +942,112 @@ export default function ProductForm({ shopSlug, productId, initial, aiEnabled = 
         </div>
       )}
     </div>
+  );
+}
+
+/** Treść z edytora jako zwykły tekst: do podglądu opisu w Google i listy kontrolnej SEO. */
+function plainText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const SHIPPING_PRESETS: { label: string; min: string; max: string }[] = [
+  { label: "W dniu zamówienia", min: "0", max: "0" },
+  { label: "1 dzień", min: "1", max: "1" },
+  { label: "1–2 dni", min: "1", max: "2" },
+  { label: "3–5 dni", min: "3", max: "5" },
+  { label: "7–14 dni", min: "7", max: "14" },
+];
+
+/** Czas wysyłki produktu: pokazuje się klientowi na karcie produktu. */
+function ShippingTimeCard({
+  form,
+  patch,
+}: {
+  form: ProductFormData;
+  patch: (u: Partial<ProductFormData>) => void;
+}) {
+  const parsed = normalizeShippingTime({
+    min: form.shippingMin.trim() || form.shippingMax.trim(),
+    max: form.shippingMax.trim() || form.shippingMin.trim(),
+  });
+  const set = form.shippingMin.trim() !== "" || form.shippingMax.trim() !== "";
+  return (
+    <SectionCard title="Czas wysyłki">
+      <div className="flex flex-wrap gap-2 mb-4">
+        {SHIPPING_PRESETS.map((p) => {
+          const active = form.shippingMin === p.min && form.shippingMax === p.max;
+          return (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => patch({ shippingMin: p.min, shippingMax: p.max })}
+              aria-pressed={active}
+              className="h-8 px-3 rounded-full text-[12.5px] font-medium transition-colors"
+              style={{
+                border: active ? "1.5px solid var(--panel-primary)" : "1.5px solid var(--panel-border)",
+                background: active ? "var(--panel-primary-soft)" : "var(--panel-surface)",
+                color: active ? "var(--panel-primary)" : "var(--panel-ink)",
+              }}
+            >
+              {p.label}
+            </button>
+          );
+        })}
+        {set && (
+          <button
+            type="button"
+            onClick={() => patch({ shippingMin: "", shippingMax: "" })}
+            className="h-8 px-3 rounded-full text-[12.5px] font-medium text-[var(--panel-ink-muted)] hover:text-[var(--panel-ink)]"
+          >
+            Wyczyść
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 max-w-xs">
+        <Field label="Od (dni robocze)" id="p-ship-min">
+          <input
+            id="p-ship-min"
+            value={form.shippingMin}
+            onChange={(e) => patch({ shippingMin: e.target.value })}
+            placeholder="np. 1"
+            inputMode="numeric"
+            style={inputStyle}
+            {...focusProps}
+          />
+        </Field>
+        <Field label="Do (dni robocze)" id="p-ship-max">
+          <input
+            id="p-ship-max"
+            value={form.shippingMax}
+            onChange={(e) => patch({ shippingMax: e.target.value })}
+            placeholder="np. 2"
+            inputMode="numeric"
+            style={inputStyle}
+            {...focusProps}
+          />
+        </Field>
+      </div>
+
+      <p className="text-[11px] mt-3" style={{ color: "var(--panel-ink-faint)" }}>
+        {parsed ? (
+          <>
+            Klient zobaczy na karcie produktu: <strong>{shippingTimeLabel(parsed)}</strong>. Ta sama informacja trafia
+            do Google (feed i dane strukturalne) w miejsce domyślnego czasu realizacji sklepu.
+          </>
+        ) : (
+          <>
+            To czas od zamówienia do nadania paczki, bez czasu przewozu (ten ustawiasz przy metodzie dostawy).
+            Zostaw puste, jeśli nie chcesz podawać go przy tym produkcie. Wpisz jedną liczbę, jeśli czas jest stały.
+          </>
+        )}
+      </p>
+    </SectionCard>
   );
 }
 

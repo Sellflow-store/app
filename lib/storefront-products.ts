@@ -39,7 +39,10 @@ export function searchProducts(products: StorefrontProduct[], query: string): St
   return products.filter((p) => {
     // Opis to HTML z edytora: szukamy w tekście, nie w znacznikach, inaczej
     // „strong” czy „span” pasowałyby do prawie każdego produktu.
-    const haystack = [p.name, p.category, p.shortDesc, stripHtml(p.description, 5000)]
+    // Frazy z SEO produktu (główna i dodatkowe) działają też jako synonimy w
+    // wyszukiwarce sklepu: klient wpisze „koszula jedwabna”, produkt nazywa się „Bluzka”.
+    const phrases = [p.attributes?.seo?.focus, ...(p.attributes?.seo?.phrases ?? [])];
+    const haystack = [p.name, p.category, p.shortDesc, stripHtml(p.description, 5000), ...phrases]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();

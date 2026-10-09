@@ -49,7 +49,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   for (const f of fields) {
     if (body[f] !== undefined) updates[f] = body[f];
   }
-  if (body.attributes !== undefined) updates.attributes = normalizeAttributes(body.attributes);
+  // Lista zdjęć jedzie razem z atrybutami (formularz wysyła oba), więc kadry
+  // i opisy usuniętych zdjęć odpadają przy zapisie.
+  if (body.attributes !== undefined) {
+    updates.attributes = normalizeAttributes(
+      body.attributes,
+      Array.isArray(body.images) ? body.images.filter((u): u is string => typeof u === "string") : undefined,
+    );
+  }
 
   // Adres zmienia się TYLKO wtedy, gdy merchant świadomie go wpisze. Zmiana
   // nazwy go nie rusza — inaczej każda korekta literówki zrywałaby linki

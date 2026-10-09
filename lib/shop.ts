@@ -37,6 +37,7 @@ import {
   DEFAULT_LOGO_MAX_WIDTH,
 } from "@/types/shop";
 import { materialFromSpecs, normalizeAttributes } from "@/lib/product-attributes";
+import { normalizeSeoConfig } from "@/lib/page-seo";
 
 export const DEFAULT_BRANDING: BrandingConfig = {
   shopName: "Mój sklep",
@@ -452,6 +453,7 @@ export async function getShopBySlug(slug: string): Promise<ShopContext | null> {
     integrations,
     compliance,
     legal: legalResolved,
+    seo: normalizeSeoConfig(configMap.seo),
     onlinePaymentsEnabled,
     products: storefrontProducts,
   };

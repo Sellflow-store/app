@@ -1,7 +1,7 @@
 import {
   Home, Package, Info, HelpCircle, FileText, Settings, BarChart2, Users, CreditCard,
   ClipboardList, Truck, Tag, Mail, Palette, Layers, MenuIcon, LayoutDashboard,
-  PanelBottom, PackageCheck, type LucideIcon,
+  PanelBottom, PackageCheck, Search, type LucideIcon,
 } from "lucide-react";
 
 /**
@@ -87,6 +87,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { slug: "discounts",  label: "Kody rabatowe", icon: Tag,  hint: "Rabaty procentowe i kwotowe", keywords: ["rabat", "promocja", "kupon", "zniżka"] },
       { slug: "newsletter", label: "Newsletter",    icon: Mail, hint: "Zapisy na newsletter i eksport adresów", keywords: ["mailing", "subskrybenci"] },
+      { slug: "seo",        label: "SEO stron",     icon: Search, hint: "Tytuły i opisy stron w Google, frazy kluczowe", keywords: ["google", "meta title", "meta description", "frazy", "pozycjonowanie", "wyszukiwarka"] },
     ],
   },
   {

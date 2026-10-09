@@ -9,6 +9,7 @@
  */
 
 import type { DeliveryConfig, LegalDataConfig, StorefrontProduct, FaqItem } from "@/types/shop";
+import type { ShippingTime } from "./shipping-time";
 
 // ─── Boty AI ─────────────────────────────────────────────────────────────────
 
@@ -104,8 +105,10 @@ export function shippingDetailsLd(
   delivery: DeliveryConfig,
   legal: LegalDataConfig,
   productPrice: number,
+  /** Czas wysyłki ustawiony przy produkcie; wygrywa z domyślnym czasem realizacji sklepu. */
+  productHandling?: ShippingTime,
 ): Record<string, unknown>[] {
-  const handling = parseDayRange(legal.fulfillmentDays);
+  const handling = productHandling ?? parseDayRange(legal.fulfillmentDays);
   const freeFrom = parseFloat(delivery.freeShippingFrom);
   const free = Number.isFinite(freeFrom) && freeFrom > 0 && productPrice >= freeFrom;
 
@@ -228,8 +231,8 @@ export function productFeedXml(input: FeedInput): string {
         `<g:condition>new</g:condition>`,
         ...(p.category ? [`<g:product_type>${xml(p.category)}</g:product_type>`] : []),
         ...(p.colors.length ? [`<g:color>${xml(p.colors.slice(0, 3).join("/"))}</g:color>`] : []),
-        `<g:min_handling_time>${handling.min}</g:min_handling_time>`,
-        `<g:max_handling_time>${handling.max}</g:max_handling_time>`,
+        `<g:min_handling_time>${(p.attributes.shippingTime ?? handling).min}</g:min_handling_time>`,
+        `<g:max_handling_time>${(p.attributes.shippingTime ?? handling).max}</g:max_handling_time>`,
         ...shippingMethods.map(
           (m) =>
             `<g:shipping><g:country>PL</g:country><g:service>${xml(m.label)}</g:service><g:price>${(free ? 0 : parseFloat(m.price) || 0).toFixed(2)} PLN</g:price></g:shipping>`,

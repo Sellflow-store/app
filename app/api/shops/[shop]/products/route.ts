@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { products, shops } from "@/lib/db/schema";
-import { asc, count, eq } from "drizzle-orm";
+import { asc, count, eq, max } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { planLimits } from "@/lib/plans";
 import { recordPrice } from "@/lib/price-history";
@@ -60,12 +60,15 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Plan limit — counted against the shop owner's plan, not the requester's
   // (an admin acting as owner shouldn't bypass the merchant's limit).
-  const [shopRow, [{ total }]] = await Promise.all([
+  const [shopRow, [{ total, lastOrder }]] = await Promise.all([
     db.query.shops.findFirst({
       where: eq(shops.id, access.shopId),
       with: { owner: true },
     }),
-    db.select({ total: count() }).from(products).where(eq(products.shopId, access.shopId)),
+    db
+      .select({ total: count(), lastOrder: max(products.sortOrder) })
+      .from(products)
+      .where(eq(products.shopId, access.shopId)),
   ]);
   const ownerPlan = shopRow?.owner.plan ?? "free";
   const limit = planLimits(ownerPlan).maxProducts;
@@ -106,8 +109,13 @@ export async function POST(req: NextRequest, { params }: Params) {
       dimensions: body.dimensions ?? {},
       type: body.type ?? "physical",
       fulfillment: body.fulfillment ?? {},
-      attributes: normalizeAttributes(body.attributes),
-      sortOrder: body.sortOrder ?? 0,
+      attributes: normalizeAttributes(
+        body.attributes,
+        Array.isArray(body.images) ? body.images.filter((u): u is string => typeof u === "string") : undefined,
+      ),
+      // Nowy produkt ląduje na końcu listy. Sam 0 zrównałby go z pierwszym
+      // produktem po ręcznym ułożeniu kolejności.
+      sortOrder: body.sortOrder ?? (lastOrder ?? -1) + 1,
     })
     .returning();
 

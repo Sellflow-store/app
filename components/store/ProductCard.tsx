@@ -6,6 +6,7 @@ import { ShoppingBag, Check, Mail } from "lucide-react";
 import type { StorefrontProduct, CardStyle } from "@/types/shop";
 import { useCart } from "@/lib/cart";
 import { MADE_TO_ORDER_LABEL } from "@/lib/storefront-products";
+import { frameStyle } from "@/lib/image-frame";
 import { useStoreBase } from "./StoreBaseContext";
 
 interface Props {
@@ -19,6 +20,10 @@ interface Props {
 
 export default function ProductCard({ product, shopSlug, variant = "default" }: Props) {
   const mainImage = product.images?.[0] ?? null;
+  // Kadr i opis zdjęcia ustawione w panelu (Zdjęcia → ikona kadru).
+  const mainMeta = mainImage ? product.attributes?.imageMeta?.[mainImage] : undefined;
+  const mainFrame = frameStyle(mainMeta?.frame);
+  const mainAlt = mainMeta?.alt || product.name;
   const { add } = useCart(shopSlug);
   const base = useStoreBase();
   const [added, setAdded] = useState(false);
@@ -54,7 +59,8 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
           {mainImage ? (
             <img
               src={mainImage}
-              alt={product.name}
+              alt={mainAlt}
+              style={mainFrame}
               className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             />
           ) : (
@@ -97,7 +103,7 @@ export default function ProductCard({ product, shopSlug, variant = "default" }: 
       {/* Image */}
       <div className="relative aspect-[4/5] bg-paper-3 rounded-card overflow-hidden mb-4">
         {mainImage ? (
-          <img src={mainImage} alt={product.name} className="w-full h-full object-cover" />
+          <img src={mainImage} alt={mainAlt} style={mainFrame} className="w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-ink-2/60">
             <div className="w-16 h-16 border-2 border-dashed border-rule rounded-xl flex items-center justify-center mb-3">

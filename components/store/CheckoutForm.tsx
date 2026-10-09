@@ -9,6 +9,7 @@ import { useStoreBase } from "./StoreBaseContext";
 import DiscountBox from "./DiscountBox";
 import type { CartOffers, DeliveryMethod } from "@/types/shop";
 import { requiresPickupPoint } from "@/types/shop";
+import { isValidNip, normalizeNip } from "@/lib/mf-whitelist";
 import PickupPointPicker, { type PickedPoint } from "./PickupPointPicker";
 
 interface Props {
@@ -93,6 +94,20 @@ export default function CheckoutForm({
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Faktura VAT na firmę: dane podaje klient, serwer sprawdza je jeszcze raz.
+  const [wantsInvoice, setWantsInvoice] = useState(false);
+  const [invoiceRequested, setInvoiceRequested] = useState(false);
+  const [invNip, setInvNip] = useState("");
+  const [invName, setInvName] = useState("");
+  const [invStreet, setInvStreet] = useState("");
+  const [invZip, setInvZip] = useState("");
+  const [invCity, setInvCity] = useState("");
+  const [invLookup, setInvLookup] = useState<{ busy: boolean; message: string | null; error: boolean }>({
+    busy: false,
+    message: null,
+    error: false,
+  });
+
   // ── Confirmation view (cart already cleared) ─────────────────────────────
   if (confirmation) {
     return (
@@ -118,6 +133,12 @@ export default function CheckoutForm({
             <p className="text-sm text-ink font-medium">{confirmation.pickupPoint.code}</p>
             <p className="text-sm text-ink-2 mt-0.5">{confirmation.pickupPoint.address}</p>
           </div>
+        )}
+
+        {invoiceRequested && (
+          <p className="text-sm text-ink-2 font-light mb-6">
+            Fakturę VAT wyślemy na adres <span className="font-medium text-ink">{email}</span>.
+          </p>
         )}
 
         {confirmation.paymentMethod === "transfer" && confirmation.transfer && (
@@ -270,6 +291,32 @@ export default function CheckoutForm({
   const discountAmount = discount ? discountValue(subtotal, discount.percent) : 0;
   const total = subtotal - discountAmount + shippingCost + codFeeValue;
 
+  async function lookupCompany() {
+    if (!isValidNip(invNip)) {
+      setInvLookup({ busy: false, message: "To nie jest poprawny NIP. Sprawdź, czy nie ma literówki.", error: true });
+      return;
+    }
+    setInvLookup({ busy: true, message: null, error: false });
+    try {
+      const res = await fetch(`/api/shops/${shopSlug}/company-lookup?nip=${encodeURIComponent(normalizeNip(invNip))}`);
+      const data = (await res.json()) as {
+        error?: string;
+        company?: { name: string; street: string; zip: string; city: string };
+      };
+      if (!res.ok || !data.company) {
+        setInvLookup({ busy: false, message: data.error ?? "Nie udało się pobrać danych. Wpisz je ręcznie.", error: true });
+        return;
+      }
+      setInvName(data.company.name);
+      setInvStreet(data.company.street);
+      setInvZip(data.company.zip);
+      setInvCity(data.company.city);
+      setInvLookup({ busy: false, message: "Dane uzupełnione z rejestru. Sprawdź je przed złożeniem zamówienia.", error: false });
+    } catch {
+      setInvLookup({ busy: false, message: "Nie udało się połączyć z rejestrem. Wpisz dane ręcznie.", error: true });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -277,6 +324,10 @@ export default function CheckoutForm({
     try {
       if (pointMissing) {
         setError("Wybierz paczkomat, do którego mamy dowieźć paczkę.");
+        return;
+      }
+      if (wantsInvoice && !isValidNip(invNip)) {
+        setError("Faktura: NIP jest niepoprawny. Sprawdź, czy ma 10 cyfr i czy nie ma literówki.");
         return;
       }
       const res = await fetch(`/api/shops/${shopSlug}/orders`, {
@@ -291,6 +342,9 @@ export default function CheckoutForm({
           paymentMethod: effPayment,
           discountCode: discount?.code ?? null,
           notes,
+          invoice: wantsInvoice
+            ? { companyName: invName, taxId: normalizeNip(invNip), street: invStreet, zip: invZip, city: invCity }
+            : null,
         }),
       });
       const data = await res.json();
@@ -299,6 +353,7 @@ export default function CheckoutForm({
         return;
       }
       const confirmation = data as Confirmation;
+      setInvoiceRequested(wantsInvoice);
       clear();
       setDiscount(null);
       // Płatność online: od razu na stronę Tpay. Koszyk czyścimy wcześniej, bo
@@ -513,6 +568,95 @@ export default function CheckoutForm({
                 </label>
               )}
             </div>
+          </section>
+
+          {/* Faktura VAT na firmę */}
+          <section>
+            <h2 className="text-sm font-semibold tracking-wide text-ink mb-4">Faktura</h2>
+            <label
+              className={`flex items-center gap-3 border rounded-input px-4 py-3.5 cursor-pointer transition-colors ${
+                wantsInvoice ? "border-ink" : "border-rule hover:border-ink-2/40"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={wantsInvoice}
+                onChange={(e) => setWantsInvoice(e.target.checked)}
+                className="accent-current"
+              />
+              <span className="text-sm text-ink">Chcę otrzymać fakturę VAT na firmę</span>
+            </label>
+
+            {wantsInvoice && (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <FieldLabel htmlFor="co-inv-nip">NIP *</FieldLabel>
+                  <div className="flex gap-2">
+                    <input
+                      id="co-inv-nip"
+                      name="inv-nip"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      required
+                      value={invNip}
+                      onChange={(e) => {
+                        setInvNip(e.target.value);
+                        setInvLookup({ busy: false, message: null, error: false });
+                      }}
+                      className={inputClass}
+                      placeholder="123-456-32-18"
+                    />
+                    <button
+                      type="button"
+                      onClick={lookupCompany}
+                      disabled={invLookup.busy || normalizeNip(invNip).length !== 10}
+                      className="shrink-0 border border-rule rounded-button px-4 text-sm font-medium text-ink hover:border-ink transition-colors disabled:opacity-50"
+                    >
+                      {invLookup.busy ? "Szukam…" : "Pobierz dane"}
+                    </button>
+                  </div>
+                  {invLookup.message && (
+                    <p className={`text-xs mt-1.5 ${invLookup.error ? "text-red-600" : "text-ink-2"}`} role={invLookup.error ? "alert" : "status"}>
+                      {invLookup.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <FieldLabel htmlFor="co-inv-name">Nazwa firmy *</FieldLabel>
+                  <input id="co-inv-name" name="inv-company" autoComplete="organization" required value={invName} onChange={(e) => setInvName(e.target.value)} className={inputClass} placeholder="Firma Sp. z o.o." />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="co-inv-street">Ulica i numer *</FieldLabel>
+                  <input id="co-inv-street" name="inv-street" autoComplete="off" required value={invStreet} onChange={(e) => setInvStreet(e.target.value)} className={inputClass} placeholder="ul. Biznesowa 12/3" />
+                </div>
+                <div className="grid grid-cols-[8rem_1fr] gap-4">
+                  <div>
+                    <FieldLabel htmlFor="co-inv-zip">Kod *</FieldLabel>
+                    <input id="co-inv-zip" name="inv-zip" autoComplete="off" inputMode="numeric" required value={invZip} onChange={(e) => setInvZip(e.target.value)} className={inputClass} placeholder="00-001" />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="co-inv-city">Miasto *</FieldLabel>
+                    <input id="co-inv-city" name="inv-city" autoComplete="off" required value={invCity} onChange={(e) => setInvCity(e.target.value)} className={inputClass} placeholder="Warszawa" />
+                  </div>
+                </div>
+                {hasPhysical && street.trim() && zip.trim() && city.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInvStreet(street);
+                      setInvZip(zip);
+                      setInvCity(city);
+                    }}
+                    className="text-xs font-medium text-ink underline underline-offset-2 hover:opacity-70"
+                  >
+                    Adres firmy taki jak adres dostawy
+                  </button>
+                )}
+                <p className="text-xs text-ink-2/70">
+                  Fakturę wyślemy na adres e-mail z zamówienia. Dane zapisujemy tylko po to, żeby ją wystawić.
+                </p>
+              </div>
+            )}
           </section>
 
           {/* Notes */}

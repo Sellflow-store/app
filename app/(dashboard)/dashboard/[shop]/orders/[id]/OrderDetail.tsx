@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Banknote, ExternalLink, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Banknote, ExternalLink, Mail, Phone, Copy, Check } from "lucide-react";
 import { CARRIERS, trackingUrl } from "@/lib/tracking";
 import { STATUS_STYLES, PAYMENT_LABELS } from "@/lib/order-status";
 import { formatPln } from "@/lib/money";
+import { formatNip, invoiceSummary, type InvoiceData } from "@/lib/invoice";
 
 interface OrderData {
   id: string;
@@ -22,6 +23,8 @@ interface OrderData {
   paymentMethod: string | null;
   paymentStatus: string;
   shippingAddress: Record<string, string | undefined>;
+  /** Dane do faktury VAT, jeśli klient o nią poprosił. */
+  invoice: InvoiceData | null;
   pickupPoint: { code?: string; name?: string; address?: string } | null;
   carrier: string | null;
   trackingNumber: string | null;
@@ -64,6 +67,7 @@ export default function OrderDetail({ shopSlug, order }: Props) {
   const [shipSaved, setShipSaved] = useState(false);
   const [shipError, setShipError] = useState<string | null>(null);
   const [shipBusy, setShipBusy] = useState(false);
+  const [invoiceCopied, setInvoiceCopied] = useState(false);
 
   const st = STATUS_STYLES[order.status] ?? STATUS_STYLES.pending;
   const addr = order.shippingAddress;
@@ -272,6 +276,37 @@ export default function OrderDetail({ shopSlug, order }: Props) {
               </a>
             )}
           </Card>
+
+          {order.invoice && (
+            <Card
+              title="Faktura VAT"
+              aside={
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(invoiceSummary(order.invoice!));
+                    setInvoiceCopied(true);
+                    setTimeout(() => setInvoiceCopied(false), 2000);
+                  }}
+                  className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md text-[12.5px] font-medium border border-[var(--panel-border)] text-[var(--panel-ink-muted)] hover:text-[var(--panel-ink)] hover:border-[var(--panel-border-strong)]"
+                >
+                  {invoiceCopied ? <Check className="w-3.5 h-3.5" strokeWidth={2} /> : <Copy className="w-3.5 h-3.5" strokeWidth={1.75} />}
+                  {invoiceCopied ? "Skopiowano" : "Kopiuj"}
+                </button>
+              }
+            >
+              <p className="text-[13.5px] font-medium text-[var(--panel-ink)]">{order.invoice.companyName}</p>
+              <p className="text-[13px] mt-1 text-[var(--panel-ink)]">NIP: {formatNip(order.invoice.taxId)}</p>
+              <p className="text-[13px] mt-1 leading-relaxed text-[var(--panel-ink-muted)]">
+                {order.invoice.street}
+                <br />
+                {order.invoice.zip} {order.invoice.city}
+              </p>
+              <p className="text-[12.5px] mt-3 leading-relaxed text-[var(--panel-ink-faint)]">
+                Klient prosi o fakturę. Wystaw ją w swoim programie księgowym i wyślij na {order.customerEmail}.
+              </p>
+            </Card>
+          )}
 
           <Card title={point ? "Paczkomat" : "Adres dostawy"}>
             {point ? (
