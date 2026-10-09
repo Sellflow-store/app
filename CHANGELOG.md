@@ -1068,3 +1068,10 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 ### 0.14.3 · 09.10.2026
 **Zdjęcia produktu: przyciski na kafelku nie nakładają się**
 - Kafelki zdjęć w karcie produktu są szersze (min. 10 rem), a przyciski większe (32 px), żeby strzałki, „ustaw jako główne”, kadr i usuwanie dało się kliknąć bez trafiania w sąsiedni przycisk.
+
+### 0.14.5 · 09.10.2026 · SEL-29, SEL-32
+**Wylogowanie z kreatora, z panelu i z panelu operacyjnego prowadzi do logowania**
+- Kreator ma w nagłówku „Wyloguj” dla zalogowanych (na telefonie sama ikona) i „Masz konto? Zaloguj się” dla gości. Wcześniej konto bez sklepu nie miało jak wyjść z kreatora, bo każda trasa odsyłała do niego z powrotem. Przy wylogowaniu z kreatora szkic jest czyszczony, żeby następna osoba na tej przeglądarce zaczynała od pustego formularza.
+- Po wylogowaniu z panelu sklepu sprzedawca trafia na `/login`, a nie do kreatora (`afterSignOutUrl` w `ClerkProvider`).
+- „Wyloguj” w panelu operacyjnym naprawdę wylogowuje. Wcześniej był to link do `/login`, który zalogowanego odsyłał z powrotem do `/ops`.
+- Strona główna przekierowuje sprzedawcę ze sklepem prosto do panelu. `redirect()` był wewnątrz `try/catch`, więc przekierowanie było połykane i sprzedawca szedł przez `/onboarding`.

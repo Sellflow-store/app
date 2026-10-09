@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { OnboardingProvider } from "./state";
+import Link from "next/link";
+import { SignOutButton } from "@clerk/nextjs";
+import { LogOut } from "lucide-react";
+import { OnboardingProvider, useOnboarding } from "./state";
 import Welcome from "./steps/Welcome";
 import Sells from "./steps/Sells";
 import Name from "./steps/Name";
@@ -16,17 +19,18 @@ type StepId =
 
 const ORDER: StepId[] = ["welcome", "sells", "name", "logo", "problem", "edge", "brand", "preview"];
 
-interface Props { firstName: string }
+interface Props { firstName: string; userId: string | null }
 
-export default function Wizard({ firstName }: Props) {
+export default function Wizard({ firstName, userId }: Props) {
   return (
     <OnboardingProvider>
-      <Shell firstName={firstName} />
+      <Shell firstName={firstName} signedIn={!!userId} />
     </OnboardingProvider>
   );
 }
 
-function Shell({ firstName }: { firstName: string }) {
+function Shell({ firstName, signedIn }: { firstName: string; signedIn: boolean }) {
+  const { reset } = useOnboarding();
   const [step, setStep] = useState<StepId>("welcome");
   const index = ORDER.indexOf(step);
   const progressPct = useMemo(() => {
@@ -63,31 +67,57 @@ function Shell({ firstName }: { firstName: string }) {
             Sellflow
           </span>
         </div>
-        {index > 0 && (
-          <div className="flex items-center gap-3" aria-label="Postęp onboardingu">
-            <span className="text-xs font-mono"
-                  style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
-              {Math.min(index, ORDER.length - 1)} / {ORDER.length - 1}
-            </span>
-            <div
-              className="h-1 w-32 rounded-full overflow-hidden"
-              role="progressbar"
-              aria-valuenow={progressPct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              style={{ background: "var(--brand-rule)" }}
-            >
+        <div className="flex items-center gap-4">
+          {index > 0 && (
+            <div className="flex items-center gap-3" aria-label="Postęp onboardingu">
+              <span className="text-xs font-mono"
+                    style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
+                {Math.min(index, ORDER.length - 1)} / {ORDER.length - 1}
+              </span>
               <div
-                className="h-full transition-[width] duration-500"
-                style={{
-                  width: `${progressPct}%`,
-                  background: "var(--brand-accent)",
-                  transitionTimingFunction: "var(--brand-ease-out)",
-                }}
-              />
+                className="h-1 w-20 sm:w-32 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={progressPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                style={{ background: "var(--brand-rule)" }}
+              >
+                <div
+                  className="h-full transition-[width] duration-500"
+                  style={{
+                    width: `${progressPct}%`,
+                    background: "var(--brand-accent)",
+                    transitionTimingFunction: "var(--brand-ease-out)",
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          {/* A signed-in user without a shop is sent back here from every route,
+              so the wizard is the only place they can sign out. The draft is
+              cleared first so the next person on this browser starts empty. */}
+          {signedIn ? (
+            <SignOutButton redirectUrl="/login">
+              <button
+                type="button"
+                onClick={reset}
+                className="inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-xs font-medium hover:underline"
+                style={{ color: "var(--brand-ink-2)" }}
+              >
+                <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                <span className="sr-only sm:not-sr-only">Wyloguj</span>
+              </button>
+            </SignOutButton>
+          ) : (
+            <Link
+              href="/login"
+              className="text-xs font-medium hover:underline"
+              style={{ color: "var(--brand-ink-2)" }}
+            >
+              <span className="hidden sm:inline">Masz konto? </span>Zaloguj się
+            </Link>
+          )}
+        </div>
       </header>
 
       <main className="flex-1 px-4 py-12">
