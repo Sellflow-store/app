@@ -4,6 +4,7 @@ import { blogPosts } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { slugify } from "@/lib/slug";
+import { writeBlogSeo } from "@/lib/blog-seo";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     content?: string;
     coverImage?: string;
     published?: boolean;
+    seo?: unknown;
   };
 
   if (!body.title?.trim()) {
@@ -70,6 +72,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       publishedAt: published ? new Date() : null,
     })
     .returning();
+
+  if (body.seo) await writeBlogSeo(access.shopId, post.id, body.seo);
 
   return NextResponse.json(post, { status: 201 });
 }

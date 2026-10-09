@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/lib/page-seo";
 import { getShopBySlug } from "@/lib/shop";
 import { storefrontBase } from "@/lib/storefront-base";
 import { absoluteUrl, jsonLdProps, shopOrigin } from "@/lib/seo";
@@ -113,8 +114,10 @@ export async function generateMetadata({ params }: Props) {
   if (!shop) return {};
   const base = await storefrontBase(shop.slug);
   return {
-    title: shop.branding.shopName,
-    description: shop.home.hero.description,
+    ...pageMetadata(shop.seo, "home", {
+      title: shop.branding.shopName,
+      description: shop.home.hero.description,
+    }),
     alternates: { canonical: base || "/" },
   };
 }

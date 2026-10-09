@@ -4,6 +4,7 @@ import { orders } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import OrderDetail from "./OrderDetail";
+import { readInvoice } from "@/lib/invoice";
 
 export default async function OrderDetailPage({
   params,
@@ -46,7 +47,8 @@ export default async function OrderDetailPage({
         status: order.status,
         paymentMethod: order.paymentMethod,
         paymentStatus: order.paymentStatus,
-        shippingAddress: (order.shippingAddress as Record<string, string | undefined>) ?? {},
+        shippingAddress: stringFields(order.shippingAddress),
+        invoice: readInvoice(order.shippingAddress),
         pickupPoint:
           (order.pickupPoint as { code?: string; name?: string; address?: string } | null) ?? null,
         carrier: order.carrier,
@@ -62,4 +64,13 @@ export default async function OrderDetailPage({
       }}
     />
   );
+}
+
+/** Adres dostawy z samymi tekstami: zagnieżdżone dane (faktura) idą osobnym polem. */
+function stringFields(raw: unknown): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = {};
+  for (const [k, v] of Object.entries((raw ?? {}) as Record<string, unknown>)) {
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
 }

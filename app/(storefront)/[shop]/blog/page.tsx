@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/lib/page-seo";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { blogPosts } from "@/lib/db/schema";
@@ -77,5 +78,5 @@ export async function generateMetadata({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
-  return { title: `Blog` };
+  return pageMetadata(shop.seo, "blog", { title: "Blog" });
 }

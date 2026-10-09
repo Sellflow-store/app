@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { frameStyle, type ImageMeta } from "@/lib/image-frame";
 
 interface Props {
   images: string[];
   name: string;
+  /** Kadry i opisy zdjęć z panelu; klucz = adres zdjęcia. */
+  imageMeta?: Record<string, ImageMeta>;
 }
 
 /**
@@ -16,7 +19,7 @@ interface Props {
  * Kolumna z opisem na stronie produktu jest przyklejona (lg:sticky), więc
  * długa kolumna zdjęć przewija się obok informacji, a nie zamiast nich.
  */
-export default function ProductGallery({ images, name }: Props) {
+export default function ProductGallery({ images, name, imageMeta = {} }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null);
 
   const close = useCallback(() => setLightbox(null), []);
@@ -54,6 +57,9 @@ export default function ProductGallery({ images, name }: Props) {
   }
 
   const [lead, ...rest] = images;
+  // Brak własnego opisu = nazwa produktu (jak dotąd): dla pierwszego zdjęcia,
+  // reszta zostaje dekoracyjna, żeby czytnik ekranu nie powtarzał nazwy.
+  const altFor = (url: string, fallback: string) => imageMeta[url]?.alt || fallback;
 
   return (
     <div>
@@ -65,7 +71,8 @@ export default function ProductGallery({ images, name }: Props) {
       >
         <img
           src={lead}
-          alt={name}
+          alt={altFor(lead, name)}
+          style={frameStyle(imageMeta[lead]?.frame)}
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.02]"
         />
       </button>
@@ -82,7 +89,8 @@ export default function ProductGallery({ images, name }: Props) {
             >
               <img
                 src={url}
-                alt=""
+                alt={altFor(url, "")}
+                style={frameStyle(imageMeta[url]?.frame)}
                 className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.02]"
               />
             </button>
@@ -137,7 +145,7 @@ export default function ProductGallery({ images, name }: Props) {
           {/* stopImmediatePropagation na obrazku: klik w tło zamyka, klik w zdjęcie nie */}
           <img
             src={images[lightbox]}
-            alt={name}
+            alt={altFor(images[lightbox], name)}
             onClick={(e) => e.stopPropagation()}
             className="max-h-full max-w-full object-contain cursor-default"
           />

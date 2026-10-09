@@ -1,3 +1,5 @@
+import { formatNip, type InvoiceData } from "./invoice";
+
 interface OrderItem {
   name: string;
   price: string;
@@ -17,6 +19,8 @@ interface OrderSummary {
   showShipping?: boolean; // false for all-digital/service orders
   /** Wybrany paczkomat — pokazywany zamiast ogólnego "damy Ci znać". */
   pickupPoint?: { code: string; address: string } | null;
+  /** Dane do faktury VAT na firmę, jeśli klient o nią poprosił. */
+  invoice?: InvoiceData | null;
 }
 
 interface TransferDetails {
@@ -31,6 +35,21 @@ function pickupBlock(order: OrderSummary): string {
   return `<div style="background:#f8f8f7;border-radius:12px;padding:16px 20px;margin:16px 0;">
     <p style="margin:0 0 4px;font-size:12px;font-weight:bold;color:#111111;">Paczkomat</p>
     <p style="margin:0;font-size:13px;color:#444444;"><strong>${esc(order.pickupPoint.code)}</strong> — ${esc(order.pickupPoint.address)}</p>
+  </div>`;
+}
+
+/** Dane do faktury: klient widzi, na co wystawimy fakturę, sprzedawca — co wpisać w programie księgowym. */
+function invoiceBlock(order: OrderSummary, audience: "customer" | "merchant"): string {
+  const inv = order.invoice;
+  if (!inv) return "";
+  const note =
+    audience === "customer"
+      ? "Fakturę VAT wyślemy na ten adres e-mail. Jeśli dane są błędne, odpisz na tę wiadomość albo skontaktuj się ze sklepem przed realizacją zamówienia."
+      : "Klient prosi o fakturę VAT. Wystaw ją na poniższe dane.";
+  return `<div style="background:#f8f8f7;border-radius:12px;padding:16px 20px;margin:16px 0;">
+    <p style="margin:0 0 6px;font-size:12px;font-weight:bold;color:#111111;">Faktura VAT na firmę</p>
+    <p style="margin:0;font-size:13px;color:#444444;"><strong>${esc(inv.companyName)}</strong><br>NIP: ${esc(formatNip(inv.taxId))}<br>${esc(inv.street)}, ${esc(inv.zip)} ${esc(inv.city)}</p>
+    <p style="margin:10px 0 0;font-size:12px;color:#888888;">${note}</p>
   </div>`;
 }
 
@@ -137,6 +156,7 @@ export function orderConfirmationEmail(params: {
     <p style="margin:0 0 16px;font-size:14px;color:#444444;">przyjęliśmy Twoje zamówienie <strong>${esc(order.orderNumber)}</strong>. Poniżej podsumowanie:</p>
     ${itemsTable(order)}
     ${pickupBlock(order)}
+    ${invoiceBlock(order, "customer")}
     ${paymentBlock}
     ${fulfillmentBlock}
     ${order.showShipping === false ? "" : `<p style="margin:16px 0 0;font-size:13px;color:#666666;">Damy Ci znać, gdy paczka będzie w drodze.</p>`}`;
@@ -171,6 +191,7 @@ export function merchantNewOrderEmail(params: {
     </p>
     ${itemsTable(order)}
     ${pickupBlock(order)}
+    ${invoiceBlock(order, "merchant")}
     ${fulfillmentBlock}
     <p style="margin:20px 0 0;">
       <a href="${orderUrl}" style="display:inline-block;background:#d6009f;color:#ffffff;font-size:13px;font-weight:bold;padding:12px 24px;border-radius:99px;text-decoration:none;">Zobacz zamówienie w panelu</a>

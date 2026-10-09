@@ -1,4 +1,5 @@
 import type { ProductAttributes } from "@/lib/product-attributes";
+import type { SeoConfig } from "@/lib/page-seo";
 // ─── Shop config value types (stored as JSONB in shop_config table) ───────────
 
 export interface TopBarConfig {
@@ -517,6 +518,8 @@ export interface ShopContext {
   integrations: IntegrationsConfig;
   compliance: ComplianceConfig;
   legal: LegalDataConfig;
+  /** Tytuły i opisy stron sklepu dla wyszukiwarek (klucz configu `seo`). */
+  seo: SeoConfig;
   /** Sklep ma podpięte i włączone konto Tpay (płatność online w checkoucie). */
   onlinePaymentsEnabled: boolean;
   products: StorefrontProduct[];

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Pencil, Eye, EyeOff, Package, Search } from "lucide-react";
+import { Plus, Pencil, Eye, EyeOff, Package, Search, ArrowUp, ArrowDown, GripVertical, ListOrdered, Check } from "lucide-react";
 import { formatPln } from "@/lib/money";
 
 export interface Product {
@@ -70,7 +70,37 @@ function Thumb({ image }: { image?: string }) {
   );
 }
 
+function MoveButtons({
+  name,
+  canUp,
+  canDown,
+  onUp,
+  onDown,
+}: {
+  name: string;
+  canUp: boolean;
+  canDown: boolean;
+  onUp: () => void;
+  onDown: () => void;
+}) {
+  const cls =
+    "flex items-center justify-center w-7 h-7 rounded-md border border-[var(--panel-border)] text-[var(--panel-ink-muted)] hover:text-[var(--panel-ink)] hover:border-[var(--panel-border-strong)] disabled:opacity-30 disabled:hover:text-[var(--panel-ink-muted)] disabled:hover:border-[var(--panel-border)] transition-colors";
+  return (
+    <span className="flex items-center gap-1 shrink-0">
+      <button type="button" onClick={onUp} disabled={!canUp} aria-label={`Przesuń wyżej: ${name}`} className={cls}>
+        <ArrowUp className="w-3.5 h-3.5" strokeWidth={2} />
+      </button>
+      <button type="button" onClick={onDown} disabled={!canDown} aria-label={`Przesuń niżej: ${name}`} className={cls}>
+        <ArrowDown className="w-3.5 h-3.5" strokeWidth={2} />
+      </button>
+    </span>
+  );
+}
+
 const COLS = "grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)_120px_140px_90px_120px_44px]";
+const COLS_REORDER = "grid-cols-[84px_minmax(0,2.4fr)_minmax(0,1fr)_120px_140px_90px_120px_44px]";
+
+type OrderState = "idle" | "saving" | "saved" | "error";
 
 interface Props {
   shopSlug: string;
@@ -80,7 +110,12 @@ interface Props {
 export default function ProductsTable({ shopSlug, products: initial }: Props) {
   const [products, setProducts] = useState(initial);
   const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
+  // Tryb układania kolejności: ta sama kolejność obowiązuje w sklepie ("Polecane").
+  const [reorder, setReorder] = useState(false);
+  const [orderState, setOrderState] = useState<OrderState>("idle");
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const q = reorder ? "" : query.trim().toLowerCase();
   const visible = q
     ? products.filter((p) => p.name.toLowerCase().includes(q) || (p.category ?? "").toLowerCase().includes(q))
     : products;
@@ -108,6 +143,37 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
         prev.map((p) => (p.id === id ? { ...p, visible: currentVisible } : p))
       );
     }
+  }
+
+  async function saveOrder(next: Product[], previous: Product[]) {
+    setOrderState("saving");
+    try {
+      const res = await fetch(`/api/shops/${shopSlug}/products/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: next.map((p) => p.id) }),
+      });
+      if (!res.ok) {
+        setProducts(previous);
+        setOrderState("error");
+        return;
+      }
+      setOrderState("saved");
+      setTimeout(() => setOrderState((s) => (s === "saved" ? "idle" : s)), 2000);
+    } catch {
+      setProducts(previous);
+      setOrderState("error");
+    }
+  }
+
+  function move(from: number, to: number) {
+    if (from === to || to < 0 || to >= products.length) return;
+    const previous = products;
+    const next = [...products];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    setProducts(next);
+    void saveOrder(next, previous);
   }
 
   const editHref = (id: string) => `/dashboard/${shopSlug}/products/${id}`;
@@ -143,16 +209,54 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
           <p className="text-[13px] mt-0.5 text-[var(--panel-ink-muted)]">{products.length} produktów w sklepie</p>
         </div>
 
-        <Link
-          href={`/dashboard/${shopSlug}/products/new`}
-          className="flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold bg-[var(--panel-accent)] text-white hover:opacity-90 transition-opacity"
-        >
-          <Plus className="w-4 h-4" strokeWidth={2} />
-          Dodaj produkt
-        </Link>
+        <div className="flex items-center gap-2">
+          {products.length > 1 && (
+            <button
+              type="button"
+              onClick={() => {
+                setReorder((r) => !r);
+                setOrderState("idle");
+              }}
+              aria-pressed={reorder}
+              className={[
+                "flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold border transition-colors",
+                reorder
+                  ? "border-[var(--panel-primary)] bg-[var(--panel-primary-soft)] text-[var(--panel-primary)]"
+                  : "border-[var(--panel-border-strong)] text-[var(--panel-ink)] hover:bg-[var(--panel-surface-hover)]",
+              ].join(" ")}
+            >
+              {reorder ? <Check className="w-4 h-4" strokeWidth={2} /> : <ListOrdered className="w-4 h-4" strokeWidth={1.75} />}
+              {reorder ? "Gotowe" : "Ułóż kolejność"}
+            </button>
+          )}
+          <Link
+            href={`/dashboard/${shopSlug}/products/new`}
+            className="flex items-center gap-2 h-9 px-3.5 rounded-lg text-[13px] font-semibold bg-[var(--panel-accent)] text-white hover:opacity-90 transition-opacity"
+          >
+            <Plus className="w-4 h-4" strokeWidth={2} />
+            Dodaj produkt
+          </Link>
+        </div>
       </div>
 
-      {products.length > 0 && (
+      {reorder && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-4 py-2.5 mb-4 text-[13px] border border-[var(--panel-border)] bg-[var(--panel-surface-2)] text-[var(--panel-ink-muted)]"
+        >
+          <span>
+            Przeciągnij produkt albo użyj strzałek. Taka kolejność obowiązuje w sklepie w sortowaniu „Polecane”
+            i na stronie głównej.
+          </span>
+          <span
+            className={orderState === "error" ? "font-medium text-[var(--panel-danger-ink)]" : "font-medium text-[var(--panel-ink)]"}
+          >
+            {orderState === "saving" ? "Zapisywanie…" : orderState === "saved" ? "Zapisano" : orderState === "error" ? "Nie udało się zapisać. Spróbuj ponownie." : ""}
+          </span>
+        </div>
+      )}
+
+      {products.length > 0 && !reorder && (
         <label className="flex items-center gap-2 h-9 w-full sm:w-80 px-3 mb-4 rounded-lg border border-[var(--panel-border)] bg-[var(--panel-surface)] focus-within:border-[var(--panel-primary)] transition-colors">
           <Search className="w-4 h-4 text-[var(--panel-ink-faint)]" strokeWidth={1.75} />
           <input
@@ -177,7 +281,7 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
           <>
             {/* Telefon: karty */}
             <ul className="md:hidden divide-y divide-[var(--panel-border)]">
-              {visible.map((product) => (
+              {visible.map((product, index) => (
                 <li key={product.id} className="flex items-center gap-3 px-4 py-3">
                   <Thumb image={product.image} />
                   <Link href={editHref(product.id)} className="flex-1 min-w-0">
@@ -187,7 +291,17 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
                       {product.category ? ` · ${product.category}` : ""}
                     </p>
                   </Link>
-                  <VisibilityButton product={product} />
+                  {reorder ? (
+                    <MoveButtons
+                      name={product.name}
+                      canUp={index > 0}
+                      canDown={index < products.length - 1}
+                      onUp={() => move(index, index - 1)}
+                      onDown={() => move(index, index + 1)}
+                    />
+                  ) : (
+                    <VisibilityButton product={product} />
+                  )}
                 </li>
               ))}
             </ul>
@@ -195,8 +309,9 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
             <div role="table" aria-label="Produkty" className="hidden md:block">
               <div
                 role="row"
-                className={`grid ${COLS} gap-4 items-center px-5 h-9 text-[12px] font-medium text-[var(--panel-ink-muted)] border-b border-[var(--panel-border)] bg-[var(--panel-surface-2)]`}
+                className={`grid ${reorder ? COLS_REORDER : COLS} gap-4 items-center px-5 h-9 text-[12px] font-medium text-[var(--panel-ink-muted)] border-b border-[var(--panel-border)] bg-[var(--panel-surface-2)]`}
               >
+                {reorder && <span role="columnheader">Kolejność</span>}
                 <span role="columnheader">Produkt</span>
                 <span role="columnheader">Kategoria</span>
                 <span role="columnheader" className="text-right">Cena</span>
@@ -206,12 +321,42 @@ export default function ProductsTable({ shopSlug, products: initial }: Props) {
                 <span role="columnheader" className="sr-only">Edytuj</span>
               </div>
 
-              {visible.map((product) => (
+              {visible.map((product, index) => (
                 <div
                   key={product.id}
                   role="row"
-                  className={`group grid ${COLS} gap-4 items-center px-5 py-2.5 text-[13.5px] border-b last:border-b-0 border-[var(--panel-border)] transition-colors hover:bg-[var(--panel-surface-hover)]`}
+                  draggable={reorder}
+                  onDragStart={reorder ? (e) => { setDragFrom(index); e.dataTransfer.effectAllowed = "move"; } : undefined}
+                  onDragOver={reorder ? (e) => { e.preventDefault(); if (dragOver !== index) setDragOver(index); } : undefined}
+                  onDragEnd={reorder ? () => { setDragFrom(null); setDragOver(null); } : undefined}
+                  onDrop={
+                    reorder
+                      ? (e) => {
+                          e.preventDefault();
+                          if (dragFrom != null) move(dragFrom, index);
+                          setDragFrom(null);
+                          setDragOver(null);
+                        }
+                      : undefined
+                  }
+                  className={[
+                    `group grid ${reorder ? COLS_REORDER : COLS} gap-4 items-center px-5 py-2.5 text-[13.5px] border-b last:border-b-0 border-[var(--panel-border)] transition-colors hover:bg-[var(--panel-surface-hover)]`,
+                    reorder && dragFrom === index ? "opacity-50" : "",
+                    reorder && dragOver === index && dragFrom !== index ? "bg-[var(--panel-primary-soft)]" : "",
+                  ].join(" ")}
                 >
+                  {reorder && (
+                    <span className="flex items-center gap-1">
+                      <GripVertical className="w-4 h-4 cursor-grab text-[var(--panel-ink-faint)]" strokeWidth={1.75} aria-hidden />
+                      <MoveButtons
+                        name={product.name}
+                        canUp={index > 0}
+                        canDown={index < products.length - 1}
+                        onUp={() => move(index, index - 1)}
+                        onDown={() => move(index, index + 1)}
+                      />
+                    </span>
+                  )}
                   <Link href={editHref(product.id)} className="flex items-center gap-3 min-w-0">
                     <Thumb image={product.image} />
                     <span className="min-w-0 flex flex-col gap-1">

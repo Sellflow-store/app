@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/lib/page-seo";
 import Link from "next/link";
 import { RotateCcw, ShieldCheck, Mail } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
@@ -88,5 +89,5 @@ export async function generateMetadata({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
-  return { title: `Zwroty` };
+  return pageMetadata(shop.seo, "returns", { title: "Zwroty" });
 }

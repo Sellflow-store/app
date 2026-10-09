@@ -3,6 +3,7 @@ import { orders } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import OrdersTable, { type OrderRow } from "./OrdersTable";
+import { readInvoice } from "@/lib/invoice";
 
 export default async function OrdersPage({
   params,
@@ -30,6 +31,7 @@ export default async function OrdersPage({
         status: o.status,
         paymentStatus: o.paymentStatus,
         paymentMethod: o.paymentMethod,
+        invoice: readInvoice(o.shippingAddress) != null,
         date: o.createdAt.toLocaleDateString("pl-PL", {
           day: "2-digit",
           month: "2-digit",

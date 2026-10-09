@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Package } from "lucide-react";
+import { ChevronRight, FileText, Package } from "lucide-react";
 // Statusy i etykiety płatności są w lib/order-status.ts: ten plik jest
 // kliencki, a Pulpit (komponent serwerowy) też ich potrzebuje.
 import { STATUS_STYLES, PAYMENT_LABELS } from "@/lib/order-status";
@@ -17,6 +17,8 @@ export interface OrderRow {
   status: string;
   paymentStatus: string;
   paymentMethod: string | null;
+  /** Klient poprosił o fakturę VAT na firmę. */
+  invoice?: boolean;
   date: string;
 }
 
@@ -28,6 +30,19 @@ const FILTERS: { label: string; value: string | null }[] = [
   { label: "Dostarczone", value: "delivered" },
   { label: "Anulowane", value: "cancelled" },
 ];
+
+/** Znacznik "klient chce fakturę": sprzedawca widzi to bez otwierania zamówienia. */
+function InvoiceChip() {
+  return (
+    <span
+      title="Klient prosi o fakturę VAT na firmę"
+      className="inline-flex items-center gap-1 h-5 px-1.5 rounded-md text-[11px] font-medium border border-[var(--panel-border-strong)] text-[var(--panel-ink-muted)] shrink-0"
+    >
+      <FileText className="w-3 h-3" strokeWidth={1.75} aria-hidden />
+      Faktura
+    </span>
+  );
+}
 
 // Kolumny tabeli — jedna definicja dla nagłówka i wierszy.
 const COLS = "grid-cols-[112px_minmax(0,1.6fr)_minmax(0,1fr)_132px_120px_96px]";
@@ -111,7 +126,10 @@ export default function OrdersTable({ shopSlug, orders }: Props) {
                       </span>
                       <span className="font-semibold tabular-nums text-[var(--panel-ink)]">{formatPln(order.total)}</span>
                     </span>
-                    <span className="font-medium text-[14px] text-[var(--panel-ink)] truncate">{order.customer}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-medium text-[14px] text-[var(--panel-ink)] truncate">{order.customer}</span>
+                      {order.invoice && <InvoiceChip />}
+                    </span>
                     <span className="flex items-center gap-3 text-[12.5px] text-[var(--panel-ink-muted)]">
                       <span className="flex items-center gap-1.5">
                         <span aria-hidden className="w-2 h-2 rounded-full" style={{ background: st.dot }} />
@@ -155,6 +173,7 @@ export default function OrdersTable({ shopSlug, orders }: Props) {
 
                   <span className="flex items-baseline gap-2.5 min-w-0">
                     <span className="font-medium text-[var(--panel-ink)] truncate shrink-0 max-w-[60%]">{order.customer}</span>
+                    {order.invoice && <InvoiceChip />}
                     <span className="text-[12.5px] text-[var(--panel-ink-faint)] truncate">{order.email}</span>
                   </span>
 

@@ -1,6 +1,12 @@
+import type { ImageMeta } from "./image-frame";
+import { normalizeImageMeta, normalizeSeo, type PageSeo } from "./product-seo";
+import { normalizeShippingTime, type ShippingTime } from "./shipping-time";
+
 /**
  * Atrybuty produktu, po których filtrują agenci AI i wyszukiwarki produktowe
  * (Google Merchant Center, AI Mode, ChatGPT). Trzymane w `products.attributes`.
+ * Ten sam JSON niesie też ustawienia prezentacji (kadry i opisy zdjęć, SEO,
+ * czas wysyłki), żeby kolejne pola nie wymagały migracji bazy.
  *
  * Plik bez zależności serwerowych: używa go formularz w panelu, API zapisu,
  * karta produktu w sklepie i feed.
@@ -13,6 +19,12 @@ export interface ProductAttributes {
   mpn?: string;
   /** Materiał lub skład, np. „100% jedwab”, „len 70%, bawełna 30%”. */
   material?: string;
+  /** Kadr i opis alternatywny zdjęć. Klucz = adres zdjęcia z `products.images`. */
+  imageMeta?: Record<string, ImageMeta>;
+  /** Czas wysyłki tego produktu w dniach roboczych. Brak = bez informacji na karcie. */
+  shippingTime?: ShippingTime;
+  /** Tytuł, opis i frazy dla wyszukiwarek. */
+  seo?: PageSeo;
 }
 
 /** Cyfra kontrolna GS1 (ta sama reguła dla GTIN-8/12/13/14). */
@@ -28,16 +40,23 @@ export function isValidGtin(raw: string): boolean {
 }
 
 /** Oczyszcza dane z formularza lub bazy. Niepoprawny EAN odrzuca: błędny kod
- *  w feedzie powoduje odrzucenie produktu w Merchant Center. */
-export function normalizeAttributes(raw: unknown): ProductAttributes {
+ *  w feedzie powoduje odrzucenie produktu w Merchant Center. Gdy znamy listę
+ *  zdjęć, meta zdjęć usuniętych z produktu odpada (`images`). */
+export function normalizeAttributes(raw: unknown, images?: string[]): ProductAttributes {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const str = (v: unknown, max: number) =>
     typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined;
   const gtinRaw = str(r.gtin, 20)?.replace(/\s/g, "");
+  const imageMeta = normalizeImageMeta(r.imageMeta, images);
+  const shippingTime = normalizeShippingTime(r.shippingTime);
+  const seo = normalizeSeo(r.seo);
   return {
     ...(gtinRaw && isValidGtin(gtinRaw) ? { gtin: gtinRaw } : {}),
     ...(str(r.mpn, 70) ? { mpn: str(r.mpn, 70) } : {}),
     ...(str(r.material, 200) ? { material: str(r.material, 200) } : {}),
+    ...(imageMeta ? { imageMeta } : {}),
+    ...(shippingTime ? { shippingTime } : {}),
+    ...(seo ? { seo } : {}),
   };
 }
 

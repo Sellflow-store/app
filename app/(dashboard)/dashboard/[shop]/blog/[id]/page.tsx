@@ -4,6 +4,8 @@ import { blogPosts } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import BlogEditor, { type BlogFormData } from "../BlogEditor";
+import { readBlogSeo } from "@/lib/blog-seo";
+import { shopDisplay } from "@/lib/shop-display";
 
 export default async function EditBlogPostPage({
   params,
@@ -23,13 +25,31 @@ export default async function EditBlogPostPage({
   });
   if (!post) notFound();
 
+  const [seo, display] = await Promise.all([readBlogSeo(access.shopId, post.id), shopDisplay(shop)]);
+
   const initial: BlogFormData = {
     title: post.title,
     excerpt: post.excerpt ?? "",
     content: post.content ?? "",
     coverImage: post.coverImage ?? "",
     published: post.published,
+    slug: post.slug,
+    coverAlt: seo?.coverAlt ?? "",
+    seo: {
+      title: seo?.title ?? "",
+      description: seo?.description ?? "",
+      focus: seo?.focus ?? "",
+      phrases: seo?.phrases ?? [],
+    },
   };
 
-  return <BlogEditor shopSlug={shop} postId={post.id} initial={initial} />;
+  return (
+    <BlogEditor
+      shopSlug={shop}
+      shopName={display.name}
+      shopHost={display.host}
+      postId={post.id}
+      initial={initial}
+    />
+  );
 }

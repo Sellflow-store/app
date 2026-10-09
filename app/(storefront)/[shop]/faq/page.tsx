@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/lib/page-seo";
 import { getShopBySlug } from "@/lib/shop";
 import StorefrontShell from "@/components/store/StorefrontShell";
 import { faqPageLd } from "@/lib/agent-commerce";
@@ -53,5 +54,5 @@ export async function generateMetadata({ params }: Props) {
   const { shop: shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return {};
-  return { title: `FAQ` };
+  return pageMetadata(shop.seo, "faq", { title: "FAQ" });
 }

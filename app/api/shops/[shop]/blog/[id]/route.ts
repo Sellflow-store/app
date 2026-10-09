@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { blogPosts } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { deleteBlogSeo, writeBlogSeo } from "@/lib/blog-seo";
 
 type Params = { params: Promise<{ shop: string; id: string }> };
 
@@ -17,6 +18,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     content: string | null;
     coverImage: string | null;
     published: boolean;
+    seo: unknown;
   }>;
 
   // Aktualny wpis — potrzebny do ustawienia publishedAt przy pierwszej publikacji
@@ -42,6 +44,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .where(and(eq(blogPosts.id, id), eq(blogPosts.shopId, access.shopId)))
     .returning();
 
+  // SEO jedzie razem z wpisem; brak pola = zostaw bez zmian, pusty obiekt = wyczyść.
+  if (body.seo !== undefined) await writeBlogSeo(access.shopId, id, body.seo);
+
   return NextResponse.json(updated);
 }
 
@@ -56,5 +61,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .returning({ id: blogPosts.id });
 
   if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await deleteBlogSeo(access.shopId, id);
   return NextResponse.json({ ok: true });
 }

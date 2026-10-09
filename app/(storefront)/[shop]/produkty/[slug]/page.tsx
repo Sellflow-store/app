@@ -1,6 +1,6 @@
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Check, Download, Clock } from "lucide-react";
+import { ChevronLeft, Check, Download, Clock, Truck } from "lucide-react";
 import { getShopBySlug } from "@/lib/shop";
 import { storefrontBase } from "@/lib/storefront-base";
 import BrandTheme from "@/components/store/BrandTheme";
@@ -13,6 +13,7 @@ import InquiryCta from "@/components/store/InquiryCta";
 import { toSafeHtml, stripHtml } from "@/lib/sanitize";
 import { absoluteUrl, jsonLdProps, shopOrigin } from "@/lib/seo";
 import { faqPageLd, returnPolicyLd, shippingDetailsLd } from "@/lib/agent-commerce";
+import { shippingTimeLabel } from "@/lib/shipping-time";
 import type { StorefrontProduct } from "@/types/shop";
 
 interface Props {
@@ -77,7 +78,7 @@ export default async function ProductPage({ params }: Props) {
     // Dostawa i zwroty z konfiguracji sklepu: to pierwsze kryteria, po których
     // agent AI i Google odsiewają oferty („darmowa dostawa”, „zwrot 14 dni”).
     const shipping =
-      product.type === "physical" ? shippingDetailsLd(shop.delivery, shop.legal, parseFloat(product.price)) : [];
+      product.type === "physical" ? shippingDetailsLd(shop.delivery, shop.legal, parseFloat(product.price), attrs.shippingTime) : [];
     productLd.offers = {
       "@type": "Offer",
       url,
@@ -135,7 +136,7 @@ export default async function ProductPage({ params }: Props) {
 
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
             {/* Gallery */}
-            <ProductGallery images={product.images} name={product.name} />
+            <ProductGallery images={product.images} name={product.name} imageMeta={attrs.imageMeta} />
 
             {/* Info — przyklejona, bo galeria jest teraz długą kolumną zdjęć */}
             <div className="lg:py-4 lg:sticky lg:top-8 lg:self-start">
@@ -221,6 +222,18 @@ export default async function ProductPage({ params }: Props) {
                   {product.shortDesc}
                 </p>
               )}
+
+              {/* Czas wysyłki ustawiony przy produkcie. Wyprzedany nie obiecuje
+                  terminu, a produkt na zamówienie ma własny termin w rozmowie. */}
+              {product.type === "physical" &&
+                attrs.shippingTime &&
+                !product.priceOnRequest &&
+                !(product.stock != null && product.stock <= 0) && (
+                  <p className="flex items-center gap-2 mb-4 text-sm text-ink-2">
+                    <Truck className="w-4 h-4 text-ink shrink-0" strokeWidth={1.5} />
+                    <span>{shippingTimeLabel(attrs.shippingTime)}</span>
+                  </p>
+                )}
 
               {product.priceOnRequest ? (
                 <InquiryCta
@@ -315,15 +328,26 @@ export async function generateMetadata({ params }: Props) {
   const { product } = resolveProduct(shop.products, slug);
   if (!product) return {};
   const base = await storefrontBase(shop.slug);
+
+  // Własny tytuł i opis z panelu (SEO produktu) wygrywają z domyślnymi.
+  // Własny tytuł jest pełnym tytułem strony: `absolute` pomija szablon
+  // „%s — Nazwa sklepu”, żeby to, co sprzedawca wpisał i zobaczył w podglądzie
+  // Google, było dokładnie tym, co trafi do <title>.
+  const seo = product.attributes?.seo;
+  const description =
+    seo?.description || product.shortDesc || stripHtml(product.description) || undefined;
+  const leadImage = product.images[0];
+  const leadAlt = leadImage ? product.attributes?.imageMeta?.[leadImage]?.alt || product.name : undefined;
+
   return {
-    title: `${product.name}`,
-    description: product.shortDesc ?? stripHtml(product.description) ?? undefined,
+    title: seo?.title ? { absolute: seo.title } : product.name,
+    description,
     // Kanoniczny jest adres tekstowy, także gdy ktoś wszedł starym linkiem.
     alternates: { canonical: `${base}/produkty/${product.slug}` },
     openGraph: {
-      title: product.name,
-      description: product.shortDesc ?? undefined,
-      images: product.images.length > 0 ? [product.images[0]] : undefined,
+      title: seo?.title || product.name,
+      description: seo?.description || product.shortDesc || undefined,
+      images: leadImage ? [{ url: leadImage, alt: leadAlt }] : undefined,
       type: "website",
     },
   };
