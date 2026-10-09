@@ -7,6 +7,8 @@ import { and, eq } from "drizzle-orm";
 import { getShopBySlug } from "@/lib/shop";
 import { storefrontBase } from "@/lib/storefront-base";
 import StorefrontShell from "@/components/store/StorefrontShell";
+import { readBlogSeo } from "@/lib/blog-seo";
+import { absoluteUrl, jsonLdProps, shopOrigin } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ shop: string; slug: string }>;
@@ -31,6 +33,22 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const base = await storefrontBase(shop.slug);
+  const seo = await readBlogSeo(shop.id, post.id);
+  const origin = await shopOrigin();
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: seo?.description || post.excerpt || undefined,
+    url: absoluteUrl(origin, base, `/blog/${post.slug}`),
+    ...(post.coverImage
+      ? { image: post.coverImage.startsWith("http") ? post.coverImage : `${origin}${post.coverImage}` }
+      : {}),
+    ...(post.publishedAt ? { datePublished: post.publishedAt.toISOString() } : {}),
+    dateModified: post.updatedAt.toISOString(),
+    author: { "@type": "Organization", name: shop.branding.shopName },
+    publisher: { "@type": "Organization", name: shop.branding.shopName },
+  };
 
   const date = post.publishedAt
     ? new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", year: "numeric" }).format(
@@ -40,6 +58,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <StorefrontShell shop={shop}>
+      <script {...jsonLdProps(articleLd)} />
       <article className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <Link
           href={`${base}/blog`}
@@ -54,7 +73,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {post.coverImage && (
           <div className="aspect-[16/9] bg-paper-3 rounded-2xl overflow-hidden mb-10">
-            <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
+            <img src={post.coverImage} alt={seo?.coverAlt || post.title} className="w-full h-full object-cover" />
           </div>
         )}
 
@@ -76,8 +95,19 @@ export async function generateMetadata({ params }: Props) {
   if (!shop) return {};
   const post = await getPost(shop.id, slug);
   if (!post) return { title: `Blog` };
+  const seo = await readBlogSeo(shop.id, post.id);
+  const base = await storefrontBase(shop.slug);
+  const description = seo?.description || post.excerpt || undefined;
   return {
-    title: `${post.title}`,
-    description: post.excerpt ?? undefined,
+    // Własny tytuł z panelu jest pełnym tytułem strony (bez „— Nazwa sklepu”).
+    title: seo?.title ? { absolute: seo.title } : `${post.title}`,
+    description,
+    alternates: { canonical: `${base}/blog/${post.slug}` },
+    openGraph: {
+      title: seo?.title || post.title,
+      description,
+      type: "article",
+      images: post.coverImage ? [{ url: post.coverImage, alt: seo?.coverAlt || post.title }] : undefined,
+    },
   };
 }

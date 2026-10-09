@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Trash2, X, ImageIcon } from "lucide-react";
 import Link from "next/link";
 import ImageUpload from "@/components/admin/ImageUpload";
+import SeoFields, { EMPTY_SEO, type SeoFormValue } from "@/components/admin/SeoFields";
+import { SEO_DESC_RECOMMENDED, truncateForSerp } from "@/lib/product-seo";
 
 export interface BlogFormData {
   title: string;
@@ -12,6 +14,10 @@ export interface BlogFormData {
   content: string;
   coverImage: string;
   published: boolean;
+  /** Adres wpisu; pusty przy nowym (powstaje z tytułu). */
+  slug: string;
+  coverAlt: string;
+  seo: SeoFormValue;
 }
 
 const EMPTY: BlogFormData = {
@@ -20,6 +26,9 @@ const EMPTY: BlogFormData = {
   content: "",
   coverImage: "",
   published: false,
+  slug: "",
+  coverAlt: "",
+  seo: EMPTY_SEO,
 };
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -65,13 +74,15 @@ const focusProps = {
 
 interface Props {
   shopSlug: string;
+  shopName: string;
+  shopHost: string;
   postId?: string;
   initial?: BlogFormData;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export default function BlogEditor({ shopSlug, postId, initial }: Props) {
+export default function BlogEditor({ shopSlug, shopName, shopHost, postId, initial }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<BlogFormData>(initial ?? EMPTY);
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -100,6 +111,7 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
       content: form.content,
       coverImage: form.coverImage.trim() || null,
       published,
+      seo: { ...form.seo, coverAlt: form.coverAlt },
     };
 
     try {
@@ -235,7 +247,7 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
           <div className="relative group w-fit mb-3">
             <img
               src={form.coverImage}
-              alt="Zdjęcie główne"
+              alt={form.coverAlt || "Zdjęcie główne"}
               className="w-40 h-24 rounded-xl object-cover"
               style={{ border: "1px solid var(--panel-border)" }}
             />
@@ -263,6 +275,39 @@ export default function BlogEditor({ shopSlug, postId, initial }: Props) {
           endpoint="productImage"
           label="Wgraj zdjęcie z dysku"
           onUploaded={(urls) => urls[0] && patch({ coverImage: urls[0] })}
+        />
+        {form.coverImage && (
+          <Field label="Opis zdjęcia (alt)" id="b-cover-alt">
+            <input
+              id="b-cover-alt"
+              value={form.coverAlt}
+              maxLength={200}
+              onChange={(e) => patch({ coverAlt: e.target.value })}
+              placeholder="Co widać na zdjęciu. Puste = tytuł wpisu"
+              style={{ ...inputStyle, marginTop: 12 }}
+              {...focusProps}
+            />
+          </Field>
+        )}
+      </SectionCard>
+
+      <SectionCard title="SEO: wynik w Google">
+        <SeoFields
+          value={form.seo}
+          onChange={(seo) => patch({ seo: { ...form.seo, ...seo } })}
+          displayUrl={`${shopHost} › blog › ${form.slug || "adres-wpisu"}`}
+          defaultTitle={`${form.title.trim() || "Tytuł wpisu"} — ${shopName}`}
+          defaultDescription={
+            form.excerpt.trim() || truncateForSerp(form.content, SEO_DESC_RECOMMENDED)
+          }
+          subject="wpisu"
+          context={{
+            name: form.title,
+            slug: form.slug || undefined,
+            body: `${form.excerpt} ${form.content}`,
+            imageCount: form.coverImage ? 1 : 0,
+            imagesWithAlt: form.coverImage && form.coverAlt.trim() ? 1 : 0,
+          }}
         />
       </SectionCard>
 

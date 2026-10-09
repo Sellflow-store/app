@@ -1053,3 +1053,9 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Czas wysyłki per produkt (dni robocze, od–do): widoczny na karcie produktu, trafia do danych strukturalnych i feedu Google zamiast domyślnego czasu sklepu.
 - Faktura na firmę w checkoucie: pole „Chcę fakturę VAT”, NIP z sumą kontrolną, pobranie danych z rejestru MF (`/api/shops/[shop]/company-lookup`, z limitem), dane w zamówieniu, mailach i panelu (karta „Faktura VAT”, znacznik na liście).
 - Bez migracji bazy: nowe dane siedzą w istniejących kolumnach JSON.
+
+### 0.14.1 · 09.10.2026
+**SEO wpisów na blogu**
+- Edytor wpisu ma sekcję „SEO: wynik w Google” (tytuł, opis, główna i dodatkowe frazy, podgląd Google, lista kontrolna) oraz opis zdjęcia głównego (alt).
+- Sklep używa ich w `<title>`, opisie, Open Graph (wpis jako `article`, zdjęcie z alt) i dodaje dane strukturalne `BlogPosting` oraz adres kanoniczny.
+- Bez migracji: dane leżą w `shop_config` pod kluczem `blogSeo` (mapa id wpisu → SEO) i są usuwane razem z wpisem.

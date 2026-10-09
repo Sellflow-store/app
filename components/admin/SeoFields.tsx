@@ -246,8 +246,8 @@ export default function SeoFields({
           style={inputStyle}
         />
         <p className="text-[11px] mt-1.5 text-[var(--panel-ink-faint)]">
-          Synonimy i warianty, np. „bluzka z jedwabiu”, „koszula jedwabna”. Dzięki nim wyszukiwarka w sklepie
-          znajdzie {subject === "produktu" ? "produkt" : "stronę"} także po tych słowach.
+          Synonimy i warianty, np. „bluzka z jedwabiu”, „koszula jedwabna”.
+          {subject === "produktu" ? " Dzięki nim wyszukiwarka w sklepie znajdzie produkt także po tych słowach." : ""}
         </p>
       </div>
 
