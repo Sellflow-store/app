@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
@@ -41,7 +41,6 @@ const CLERK_ERRORS_PL: Record<string, string> = {
   form_password_untrusted:                    PWNED_AT_SIGN_IN,
   form_password_length_too_short:             "Hasło jest za krótkie. Sprawdź wymagania pod polem hasła.",
   form_password_size_in_bytes_exceeded:       "Hasło jest za długie.",
-  form_password_validation_failed:            "Hasło nie spełnia wymagań. Sprawdź listę pod polem hasła.",
   form_password_not_strong_enough:            "Hasło jest za słabe. Wydłuż je, np. dodając kilka słów.",
   form_password_matches_identifier:           "Hasło nie może być takie samo jak adres e-mail.",
   form_new_password_matches_current:          "Nowe hasło musi się różnić od obecnego.",
@@ -49,7 +48,6 @@ const CLERK_ERRORS_PL: Record<string, string> = {
   verification_expired:                       "Kod wygasł. Kliknij „Wyślij kod ponownie”.",
   verification_failed:                        "Za dużo nieudanych prób. Kliknij „Wyślij kod ponownie”.",
   user_locked:                                "Konto jest tymczasowo zablokowane po zbyt wielu nieudanych próbach. Spróbuj ponownie później.",
-  too_many_requests:                          TOO_MANY_TRIES,
   signup_rate_limit_exceeded:                 TOO_MANY_TRIES,
   captcha_invalid:                            CAPTCHA_FAILED,
   captcha_missing_token:                      CAPTCHA_FAILED,
@@ -57,14 +55,21 @@ const CLERK_ERRORS_PL: Record<string, string> = {
 };
 
 function clerkMsg(err: unknown, flow?: "sign_in"): string {
-  const e = (err as { errors?: { code?: string; meta?: { paramName?: string } }[] })?.errors?.[0];
-  const code = e?.code ?? "";
-  return (
+  const { status, errors } = (err ?? {}) as {
+    status?: number; errors?: { code?: string; meta?: { paramName?: string } }[];
+  };
+  const code = errors?.[0]?.code ?? "";
+  const msg =
     (flow && CLERK_ERRORS_PL[`${code}__${flow}`]) ||
-    CLERK_ERRORS_PL[`${code}__${e?.meta?.paramName}`] ||
-    CLERK_ERRORS_PL[code] ||
-    "Wystąpił błąd. Spróbuj ponownie."
-  );
+    CLERK_ERRORS_PL[`${code}__${errors?.[0]?.meta?.paramName}`] ||
+    CLERK_ERRORS_PL[code];
+  if (msg) return msg;
+  if (status === 429) return TOO_MANY_TRIES;
+  // Server-side password rules (form_password_no_number etc.), which the
+  // requirements list under the field spells out. Login has no such list.
+  if (code.startsWith("form_password_") && !flow) return "Hasło nie spełnia wymagań. Sprawdź listę pod polem hasła.";
+  if (code) console.warn("Clerk error without a Polish message:", code);
+  return "Wystąpił błąd. Spróbuj ponownie.";
 }
 
 function clerkCode(err: unknown): string | undefined {
@@ -163,8 +168,10 @@ function failedRules(validator: PasswordValidator | undefined, password: string)
 }
 
 function PasswordRules({ password, validator }: { password: string; validator?: PasswordValidator }) {
-  const enabled = failedRules(validator, "");
-  const failed  = failedRules(validator, password);
+  // Memoized: with strength checks on, each call also loads and runs zxcvbn,
+  // and the whole form re-renders on every keystroke in any field.
+  const enabled = useMemo(() => failedRules(validator, ""), [validator]);
+  const failed  = useMemo(() => failedRules(validator, password), [validator, password]);
   const rules = enabled && failed
     ? PASSWORD_RULES.filter((r) => enabled.has(r.key)).map((r) => ({ ...r, ok: !failed.has(r.key) }))
     : [{ ...PASSWORD_RULES[0], ok: password.length >= 8 }];
