@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { shopConfig } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { shopConfig, shops } from "@/lib/db/schema";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 import { CONFIG_KEYS, MAX_CONFIG_BYTES, scrubConfigValue } from "@/lib/config-validation";
 
@@ -50,7 +50,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const clean = scrubConfigValue(key, value as Record<string, unknown>);
 
-  await db
+  // One shop name (SEL-38): mails, Tpay and transfer details read shops.name,
+  // so a new branding.shopName is written there too. An empty one is
+  // rejected: the storefront would render a shop without a name.
+  let shopName: string | undefined;
+  if (key === "branding" && "shopName" in clean) {
+    shopName = typeof clean.shopName === "string" ? clean.shopName.trim() : "";
+    if (!shopName) {
+      return NextResponse.json({ error: "Nazwa sklepu nie może być pusta." }, { status: 400 });
+    }
+    clean.shopName = shopName;
+  }
+
+  const upsert = db
     .insert(shopConfig)
     .values({
       shopId: access.shopId,
@@ -67,6 +79,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         updatedAt: new Date(),
       },
     });
+
+  if (shopName === undefined) {
+    await upsert;
+  } else {
+    await db.batch([
+      upsert,
+      db
+        .update(shops)
+        .set({ name: shopName, updatedAt: new Date() })
+        .where(and(eq(shops.id, access.shopId), ne(shops.name, shopName))),
+    ]);
+  }
 
   return NextResponse.json({ ok: true });
 }

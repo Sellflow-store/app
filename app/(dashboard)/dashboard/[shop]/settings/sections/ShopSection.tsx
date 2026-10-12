@@ -62,7 +62,7 @@ export default function ShopSection({ shopSlug, initialName, initialActive }: Pr
       </div>
 
       <Card title="Nazwa sklepu">
-        <Field label="Nazwa" hint="Używana w mailach do klientów i jako domyślna nazwa w sklepie.">
+        <Field label="Nazwa" hint="Klienci widzą ją w sklepie, w regulaminie, w mailach i przy płatności. To ta sama nazwa co w „Logo i kolorystyka”.">
           <TextInput value={name} onChange={(e) => setName(e.target.value)} aria-label="Nazwa sklepu" />
         </Field>
       </Card>

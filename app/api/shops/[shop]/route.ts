@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { shops } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { shopConfig, shops } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
 
 type Params = { params: Promise<{ shop: string }> };
@@ -26,11 +26,36 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     updates.active = body.active;
   }
 
-  const [updated] = await db
+  const update = db
     .update(shops)
     .set(updates)
     .where(eq(shops.id, access.shopId))
     .returning({ name: shops.name, active: shops.active, slug: shops.slug });
+
+  if (typeof updates.name !== "string") {
+    const [updated] = await update;
+    return NextResponse.json(updated);
+  }
+
+  // One shop name (SEL-38): the storefront and legal documents read
+  // branding.shopName, mails, Tpay and transfer details read shops.name, so a
+  // rename writes both in one transaction. Merged like the config route, so
+  // the rest of branding stays as it is.
+  const [[updated]] = await db.batch([
+    update,
+    db
+      .insert(shopConfig)
+      .values({
+        shopId: access.shopId,
+        key: "branding",
+        value: { shopName: updates.name },
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [shopConfig.shopId, shopConfig.key],
+        set: { value: sql`${shopConfig.value} || excluded.value`, updatedAt: new Date() },
+      }),
+  ]);
 
   return NextResponse.json(updated);
 }

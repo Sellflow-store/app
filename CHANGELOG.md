@@ -1092,3 +1092,11 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Pod hasłem przy rejestracji i przy ustawianiu nowego hasła jest lista wymagań, odhaczana podczas pisania. Reguły pochodzą z ustawień Clerka (`validatePassword`), więc zmiana polityki haseł w Clerk Dashboard pojawi się w formularzu bez zmian w kodzie. Zanim Clerk się załaduje, lista ma tylko „co najmniej 8 znaków”.
 - Pole kodu z e-maila przyjmuje tylko cyfry, najwyżej 6, ma podpowiedź „Kod ma 6 cyfr.” i otwiera klawiaturę numeryczną na telefonie. Wklejony kod ze spacją („123 456”) też działa. Przycisk jest aktywny tylko przy 6 cyfrach.
 - Ekran kodu po rejestracji zostaje na miejscu podczas sprawdzania kodu (wcześniej na chwilę wracał formularz rejestracji) i ma „Wyślij kod ponownie”, tak jak reset hasła.
+
+### 0.14.9 · 12.10.2026
+**Jedna nazwa sklepu: zmiana w Ustawieniach albo w „Logo i kolorystyka” zmienia ją wszędzie (SEL-38)**
+- Nazwa sklepu żyła w dwóch polach, które się nie synchronizowały. Sklep i regulamin czytały nazwę z „Logo i kolorystyka”, a maile, opis płatności Tpay, odbiorca przelewu i formularz kontaktowy czytały nazwę z Ustawień. Onboarding wypełniał oba pola naraz, więc po pierwszej zmianie nazwy w jednym miejscu klientka kupowała w sklepie o jednej nazwie, a potwierdzenie i przelew przychodziły pod inną.
+- Zapis nazwy w Ustawieniach → Sklep zmienia też nazwę w „Logo i kolorystyka”, w jednej transakcji. Zapis w „Logo i kolorystyka” zmienia też nazwę w Ustawieniach. Pusta nazwa jest odrzucana: formularz „Logo i kolorystyka” pokazuje „Wpisz nazwę sklepu, żeby zapisać zmiany” i blokuje zapis, a API zwraca błąd. Wcześniej pusta nazwa dawała sklep bez nazwy.
+- „Logo i kolorystyka” wysyła nazwę tylko wtedy, gdy zmieniła się na tej stronie. Inaczej zapis tej strony cofałby nazwę zmienioną w międzyczasie w Ustawieniach.
+- Ustawienia → Sklep pokazują nazwę, którą widzą klienci, a podpis pola mówi, gdzie ta nazwa się pojawia.
+- Skrypt `scripts/backfill-shop-name.ts` wyrównuje sklepy sprzed tej zmiany. Tam, gdzie nazwy się różnią, wygrywa nazwa z „Logo i kolorystyka”, bo tę klienci widzą w sklepie i w regulaminie. Sklep bez tej nazwy dostaje nazwę z Ustawień. Domyślnie skrypt tylko wypisuje plan, a zapisuje z `--apply`.
