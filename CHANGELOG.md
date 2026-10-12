@@ -1096,7 +1096,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Pole kodu z e-maila przyjmuje tylko cyfry, najwyżej 6, ma podpowiedź „Kod ma 6 cyfr.” i otwiera klawiaturę numeryczną na telefonie. Wklejony kod ze spacją („123 456”) też działa. Przycisk jest aktywny tylko przy 6 cyfrach.
 - Ekran kodu po rejestracji zostaje na miejscu podczas sprawdzania kodu (wcześniej na chwilę wracał formularz rejestracji) i ma „Wyślij kod ponownie”, tak jak reset hasła.
 
-### 0.14.8 · 12.10.2026
+### 0.14.8 · 12.10.2026 · PR #42
 **CHANGELOG: wpisy 0.14.4–0.14.7 wskazują zbiorczy PR #41**
 - Wersje 0.14.4–0.14.7 weszły na `main` jednym squashem zbiorczego PR #41 (`c4a4a91`), a PR-y #37–#40 zamknięto bez scalania. Nagłówki tych wpisów mają teraz skrót commitu i adnotację „scalone w #41”.
 - Bez zmian w działaniu aplikacji.
