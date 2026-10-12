@@ -1100,3 +1100,14 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 **CHANGELOG: wpisy 0.14.4–0.14.7 wskazują zbiorczy PR #41**
 - Wersje 0.14.4–0.14.7 weszły na `main` jednym squashem zbiorczego PR #41 (`c4a4a91`), a PR-y #37–#40 zamknięto bez scalania. Nagłówki tych wpisów mają teraz skrót commitu i adnotację „scalone w #41”.
 - Bez zmian w działaniu aplikacji.
+
+### 0.14.9 · 12.10.2026 · PR #43
+**Jedna nazwa sklepu i zmiana adresu sklepu w Ustawieniach (SEL-38)**
+- Nazwa sklepu żyła w dwóch polach, które się nie synchronizowały. Sklep i regulamin czytały nazwę z „Logo i kolorystyka”, a maile, opis płatności Tpay, odbiorca przelewu i formularz kontaktowy czytały nazwę z Ustawień. Onboarding wypełniał oba pola naraz, więc po pierwszej zmianie nazwy w jednym miejscu klientka kupowała w sklepie o jednej nazwie, a potwierdzenie i przelew przychodziły pod inną.
+- Zapis nazwy w Ustawieniach → Sklep zmienia też nazwę w „Logo i kolorystyka”, w jednej transakcji. Zapis w „Logo i kolorystyka” zmienia też nazwę w Ustawieniach. Pusta nazwa jest odrzucana: formularz „Logo i kolorystyka” pokazuje „Wpisz nazwę sklepu, żeby zapisać zmiany” i blokuje zapis, a API zwraca błąd. Wcześniej pusta nazwa dawała sklep bez nazwy.
+- „Logo i kolorystyka” wysyła nazwę tylko wtedy, gdy zmieniła się na tej stronie. Inaczej zapis tej strony cofałby nazwę zmienioną w międzyczasie w Ustawieniach.
+- Ustawienia → Sklep pokazują nazwę, którą widzą klienci, a podpis pola mówi, gdzie ta nazwa się pojawia.
+- Skrypt `scripts/backfill-shop-name.ts` wyrównuje sklepy sprzed tej zmiany. Tam, gdzie nazwy się różnią, wygrywa nazwa z „Logo i kolorystyka”, bo tę klienci widzą w sklepie i w regulaminie. Sklep bez tej nazwy dostaje nazwę z Ustawień. Domyślnie skrypt tylko wypisuje plan, a zapisuje z `--apply`.
+- Adres sklepu (`{adres}.sell-flow.store`) można zmienić w Ustawieniach → Sklep, w osobnej karcie „Adres sklepu”. Nazwa i adres są niezależne: nazwa może się powtarzać między sklepami, adres jest unikalny. Zajęty, zarezerwowany albo niepoprawny adres zwraca błąd z wolnym wariantem do kliknięcia.
+- Stary adres dalej prowadzi do sklepu. Strony sklepu na starej subdomenie przekierowują (307) na nową albo na zweryfikowaną własną domenę. Po starym adresie działają też: powiadomienia Tpay dla płatności rozpoczętych przed zmianą, adresy wklejone w Furgonetce, linki potwierdzenia newslettera z wysłanych maili i panel (przekierowuje na nowy adres).
+- Stare adresy leżą w `shop_config` pod kluczem `oldSlugs`, bez migracji bazy. Zostają zajęte na zawsze, jak adres usuniętego sklepu, więc nikt ich nie przejmie. Kreator onboardingu też je pomija. Sklep może wrócić do własnego starego adresu. Limit to 5 zmian adresu na sklep, żeby jedno konto nie zajmowało adresów na zapas.

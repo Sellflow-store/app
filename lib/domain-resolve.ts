@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { OLD_SLUGS_KEY } from "./slug-rules";
 
 /**
  * Resolve a custom-domain host (e.g. "mojsklep.pl") → the shop's slug, at the
@@ -38,28 +39,36 @@ export async function resolveCustomDomainSlug(host: string): Promise<string | nu
 
 /**
  * Reverse of resolveCustomDomainSlug: given a shop slug (i.e. a request on
- * {slug}.<appDomain>), return its custom domain IF that domain is verified —
- * so the middleware can 307-redirect the subdomain to the shop's own address
- * (one canonical host). Returns null when there's no verified custom domain,
- * so the subdomain keeps serving directly. Gated on customDomainVerified (not
- * a live Vercel call) to keep this cheap on the subdomain hot path.
+ * {slug}.<appDomain>), return the origin the request belongs on instead, so
+ * the middleware can 307-redirect there:
+ * - the shop's custom domain IF it is verified (one canonical host);
+ * - for a slug the shop gave up in an address change (SEL-38, OLD_SLUGS_KEY),
+ *   the subdomain of its current slug.
+ * Returns null when the subdomain should keep serving directly. Gated on
+ * customDomainVerified (not a live Vercel call) to keep this cheap on the
+ * subdomain hot path; old slugs come in the same single query.
  */
-export async function resolveVerifiedCustomDomain(slug: string): Promise<string | null> {
+export async function resolveSubdomainRedirect(slug: string, appDomain: string): Promise<string | null> {
   const url = process.env.DATABASE_URL;
   if (!url) return null;
   try {
     const sql = neon(url);
     const rows = (await sql`
-      SELECT custom_domain FROM shops
-      WHERE slug = ${slug}
-        AND custom_domain_verified = true
-        AND custom_domain IS NOT NULL
+      SELECT slug, custom_domain, custom_domain_verified FROM shops
+      WHERE (slug = ${slug} OR id IN (
+          SELECT shop_id FROM shop_config
+          WHERE key = ${OLD_SLUGS_KEY} AND value -> 'slugs' @> ${JSON.stringify([slug])}::jsonb
+        ))
         AND active = true
         AND suspended = false
         AND deleted_at IS NULL
       LIMIT 1
-    `) as { custom_domain: string }[];
-    return rows[0]?.custom_domain ?? null;
+    `) as { slug: string; custom_domain: string | null; custom_domain_verified: boolean }[];
+    const shop = rows[0];
+    if (!shop) return null;
+    if (shop.custom_domain_verified && shop.custom_domain) return `https://${shop.custom_domain}`;
+    if (shop.slug !== slug) return `https://${shop.slug}.${appDomain}`;
+    return null;
   } catch {
     return null;
   }

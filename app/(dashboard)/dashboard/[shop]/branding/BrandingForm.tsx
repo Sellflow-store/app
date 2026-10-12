@@ -134,7 +134,8 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 
 export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initialConfig }: Props) {
   const [shopName, setShopName]       = useState(initialConfig.shopName);
-  const [tagline, setTagline]         = useState(initialConfig.tagline ?? "");
+  const [savedShopName, setSavedShopName] = useState(initialConfig.shopName);
+  const [tagline, setTagline]      = useState(initialConfig.tagline ?? "");
   const [logoUrl, setLogoUrl]         = useState(initialConfig.logoUrl ?? "");
   const [logoHeight, setLogoHeight]   = useState(initialConfig.logoHeight ?? DEFAULT_LOGO_HEIGHT);
   const [logoMaxWidth, setLogoMaxWidth] = useState(initialConfig.logoMaxWidth ?? DEFAULT_LOGO_MAX_WIDTH);
@@ -163,7 +164,9 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           // fields owned by Settings → Style (radius, secondaryColor) stay as
           // they are instead of being reset to this page's load-time snapshot.
           value: {
-            shopName,
+            // The name only when changed here: Settings → Shop renames the
+            // shop too, and this page's load-time copy would undo that.
+            ...(shopName !== savedShopName ? { shopName } : {}),
             tagline,
             logoUrl,
             logoHeight,
@@ -182,6 +185,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
           } satisfies Partial<BrandingConfig>,
         }),
       });
+      if (res.ok) setSavedShopName(shopName);
       setSaveState(res.ok ? "saved" : "error");
     } catch {
       setSaveState("error");
@@ -220,7 +224,7 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
 
         <button
           onClick={handleSave}
-          disabled={saveState === "saving"}
+          disabled={saveState === "saving" || !shopName.trim()}
           className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: buttonBg, color: "#fff" }}
         >
@@ -457,6 +461,11 @@ export default function BrandingForm({ shopSlug, dbShopName: _dbShopName, initia
               onFocus={(e) => (e.target.style.borderColor = "var(--panel-primary)")}
               onBlur={(e) =>  (e.target.style.borderColor = "var(--panel-border)")}
             />
+            {!shopName.trim() && (
+              <p className="text-[11px] mt-1" style={{ color: "var(--panel-danger-ink)" }}>
+                Wpisz nazwę sklepu, żeby zapisać zmiany.
+              </p>
+            )}
           </Field>
           <div className="sm:pl-3">
             <Field label="Hasło / tagline" id="tagline">

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { shops, shopConfig, newsletterSubscribers } from "@/lib/db/schema";
+import { shopConfig, newsletterSubscribers } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { verifyNewsletterToken } from "@/lib/newsletter-token";
 import { checkDiscountCode } from "@/lib/discounts";
 import { sendEmail } from "@/lib/email";
 import { newsletterRewardEmail } from "@/lib/email-templates";
 import { storefrontBase } from "@/lib/storefront-base";
+import { shopAtSlug } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { HomeConfig } from "@/types/shop";
 
@@ -46,7 +47,9 @@ async function resolve(req: NextRequest, params: Params["params"]) {
   const limited = checkRateLimit(req, `newsletter-confirm:${shopSlug}`, 30, 60_000);
   if (limited) return limited;
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
+  // shopAtSlug: the link in an e-mail sent before an address change (SEL-38)
+  // carries the old slug.
+  const shop = await db.query.shops.findFirst({ where: shopAtSlug(shopSlug) });
   const shopName = shop?.name ?? "Sklep";
   const backUrl = `${req.nextUrl.origin}${(await storefrontBase(shopSlug)) || "/"}`;
 

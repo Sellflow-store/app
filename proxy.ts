@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { clerkConfigured } from "@/lib/auth-env";
-import { resolveCustomDomainSlug, resolveVerifiedCustomDomain } from "@/lib/domain-resolve";
+import { resolveCustomDomainSlug, resolveSubdomainRedirect } from "@/lib/domain-resolve";
 import { RESERVED_SLUGS, SLUG_RE } from "@/lib/slug-rules";
 
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
@@ -121,14 +121,17 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     const shopSlug = hostname.replace(`.${appDomain}`, "");
     // If this shop has a verified custom domain, the subdomain is not its
     // canonical address — 307-redirect storefront pages there so there's one
-    // public URL (no duplicate content). Global paths (/api, /sso-callback)
-    // are excluded: they must keep working on the subdomain host.
+    // public URL (no duplicate content). Same for an old slug after an address
+    // change: its pages go to the current subdomain. 307, not 308, because
+    // the shop may switch back to that slug later and a cached permanent
+    // redirect would loop. Global paths (/api, /sso-callback) are excluded:
+    // they must keep working on the subdomain host.
     const p = url.pathname;
     const isGlobalPath = p.startsWith("/api") || /^\/(sso-callback)(\/|$)/.test(p);
     if (!isGlobalPath) {
-      const verifiedDomain = await resolveVerifiedCustomDomain(shopSlug);
-      if (verifiedDomain) {
-        return NextResponse.redirect(`https://${verifiedDomain}${p}${url.search}`, 307);
+      const target = await resolveSubdomainRedirect(shopSlug, appDomain);
+      if (target) {
+        return NextResponse.redirect(`${target}${p}${url.search}`, 307);
       }
     }
     const res = rewriteStorefront(req, shopSlug);

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { shops } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { shopConfig, shops } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { changeShopSlug } from "@/lib/slug";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -11,7 +12,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const access = await getShopAccess(shopSlug);
   if (!access) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json()) as Partial<{ name: string; active: boolean }>;
+  const body = (await req.json()) as Partial<{ name: string; active: boolean; slug: string }>;
+
+  // Address change (SEL-38), sent on its own by its card in Settings → Sklep.
+  if (body.slug !== undefined) {
+    const result = await changeShopSlug(access.shopId, body.slug);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error, suggestion: result.suggestion ?? null }, { status: 400 });
+    }
+    return NextResponse.json({ slug: result.slug });
+  }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.name !== undefined) {
@@ -26,11 +36,36 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     updates.active = body.active;
   }
 
-  const [updated] = await db
+  const update = db
     .update(shops)
     .set(updates)
     .where(eq(shops.id, access.shopId))
     .returning({ name: shops.name, active: shops.active, slug: shops.slug });
+
+  if (typeof updates.name !== "string") {
+    const [updated] = await update;
+    return NextResponse.json(updated);
+  }
+
+  // One shop name (SEL-38): the storefront and legal documents read
+  // branding.shopName, mails, Tpay and transfer details read shops.name, so a
+  // rename writes both in one transaction. Merged like the config route, so
+  // the rest of branding stays as it is.
+  const [[updated]] = await db.batch([
+    update,
+    db
+      .insert(shopConfig)
+      .values({
+        shopId: access.shopId,
+        key: "branding",
+        value: { shopName: updates.name },
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [shopConfig.shopId, shopConfig.key],
+        set: { value: sql`${shopConfig.value} || excluded.value`, updatedAt: new Date() },
+      }),
+  ]);
 
   return NextResponse.json(updated);
 }

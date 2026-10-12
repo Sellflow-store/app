@@ -55,7 +55,9 @@ export default async function SettingsPage({
       userId={owner?.id ?? shop.ownerId}
       plan={owner?.plan ?? "free"}
       account={account}
-      shopName={shop.name}
+      // The name customers see (storefront reads branding). The API writes
+      // both fields, so this only differs for shops not yet backfilled.
+      shopName={branding.shopName || shop.name}
       active={shop.active}
       storeUrl={`https://${shop.slug}.${appDomain}`}
       customDomain={shop.customDomain}

@@ -2,10 +2,14 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "./db";
 import { users, shops } from "./db/schema";
 import { and, eq, isNull } from "drizzle-orm";
+import { shopAtSlug } from "./slug";
 
 export interface ShopAccess {
   userId: string;
   shopId: string;
+  /** The shop's current slug. Differs from the one asked for when that was an
+   *  old address (SEL-38): the layout then redirects to the current one. */
+  slug: string;
   /** True when the access was granted via the admin role bypass. The
    *  dashboard can use this to surface a "viewing as admin" banner. */
   asAdmin: boolean;
@@ -32,18 +36,18 @@ export async function getShopAccess(shopSlug: string): Promise<ShopAccess | null
   // dashboard until the shop is restored (from /ops).
   if (user.role === "admin") {
     const shop = await db.query.shops.findFirst({
-      where: and(eq(shops.slug, shopSlug), isNull(shops.deletedAt)),
+      where: and(shopAtSlug(shopSlug), isNull(shops.deletedAt)),
     });
     if (!shop) return null;
-    return { userId: user.id, shopId: shop.id, asAdmin: true };
+    return { userId: user.id, shopId: shop.id, slug: shop.slug, asAdmin: true };
   }
 
   const shop = await db.query.shops.findFirst({
-    where: and(eq(shops.slug, shopSlug), eq(shops.ownerId, user.id), isNull(shops.deletedAt)),
+    where: and(shopAtSlug(shopSlug), eq(shops.ownerId, user.id), isNull(shops.deletedAt)),
   });
   if (!shop) return null;
 
-  return { userId: user.id, shopId: shop.id, asAdmin: false };
+  return { userId: user.id, shopId: shop.id, slug: shop.slug, asAdmin: false };
 }
 
 /** True if the currently signed-in user has role=admin. Used by /ops gate
