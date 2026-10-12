@@ -3,13 +3,15 @@
  *
  * Żądanie przychodzi z ich serwera, bez sesji i bez Clerka — jedynym dowodem
  * tożsamości jest token, który merchant wkleił u siebie w panelu. Sklep
- * rozpoznajemy po slugu w ścieżce, tak jak w całym /api.
+ * rozpoznajemy po slugu w ścieżce, tak jak w całym /api. Także po starym slugu
+ * sprzed zmiany adresu (SEL-38): adresy wklejone w Furgonetce się nie zmieniają.
  */
 
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "./db";
 import { shopIntegrations, shops } from "./db/schema";
 import { tokenFromHeader, tokenMatches } from "./furgonetka";
+import { shopAtSlug } from "./slug";
 
 export const FURGONETKA_PROVIDER = "furgonetka";
 
@@ -33,7 +35,7 @@ export async function authorizeFurgonetka(
   if (!token) return null;
 
   const shop = await db.query.shops.findFirst({
-    where: and(eq(shops.slug, shopSlug), isNull(shops.deletedAt)),
+    where: and(shopAtSlug(shopSlug), isNull(shops.deletedAt)),
   });
   if (!shop || !shop.active || shop.suspended) return null;
 

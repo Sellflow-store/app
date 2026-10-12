@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { shopConfig, shops } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getShopAccess } from "@/lib/api";
+import { changeShopSlug } from "@/lib/slug";
 
 type Params = { params: Promise<{ shop: string }> };
 
@@ -11,7 +12,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const access = await getShopAccess(shopSlug);
   if (!access) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json()) as Partial<{ name: string; active: boolean }>;
+  const body = (await req.json()) as Partial<{ name: string; active: boolean; slug: string }>;
+
+  // Address change (SEL-38), sent on its own by its card in Settings → Sklep.
+  if (body.slug !== undefined) {
+    const result = await changeShopSlug(access.shopId, body.slug);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error, suggestion: result.suggestion ?? null }, { status: 400 });
+    }
+    return NextResponse.json({ slug: result.slug });
+  }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.name !== undefined) {

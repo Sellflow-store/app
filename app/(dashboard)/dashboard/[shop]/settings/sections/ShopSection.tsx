@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Power } from "lucide-react";
+import { SLUG_RE } from "@/lib/slug-rules";
 import { SectionTitle, Card, Field, TextInput, SaveButton, P, type SaveState } from "../ui";
+
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN ?? "sell-flow.store";
 
 interface Props {
   shopSlug: string;
@@ -17,6 +20,10 @@ export default function ShopSection({ shopSlug, initialName, initialActive }: Pr
   const [active, setActive] = useState(initialActive);
   const [state, setState] = useState<SaveState>("idle");
   const [toggling, setToggling] = useState(false);
+  const [slug, setSlug] = useState(shopSlug);
+  const [slugState, setSlugState] = useState<SaveState>("idle");
+  const [slugError, setSlugError] = useState<{ error: string; suggestion: string | null } | null>(null);
+  const slugValid = SLUG_RE.test(slug);
 
   async function patch(body: { name?: string; active?: boolean }) {
     const res = await fetch(`/api/shops/${shopSlug}`, {
@@ -32,6 +39,33 @@ export default function ShopSection({ shopSlug, initialName, initialActive }: Pr
     setState("saving");
     setState((await patch({ name: name.trim() })) ? "saved" : "error");
     setTimeout(() => setState("idle"), 2500);
+  }
+
+  async function saveSlug() {
+    if (
+      !confirm(
+        `Zmienić adres sklepu na ${slug}.${APP_DOMAIN}?
+
+Stary adres ${shopSlug}.${APP_DOMAIN} dalej działa i przenosi klientów na nowy. Linki w wysłanych mailach, płatności Tpay i Furgonetka działają bez zmian.`
+      )
+    )
+      return;
+    setSlugState("saving");
+    setSlugError(null);
+    const res = await fetch(`/api/shops/${shopSlug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+    });
+    const data = (await res.json().catch(() => null)) as { slug?: string; error?: string; suggestion?: string | null } | null;
+    if (res.ok && data?.slug) {
+      // The panel's URL holds the slug: reload under the new one.
+      window.location.assign(`/dashboard/${data.slug}/settings`);
+      return;
+    }
+    setSlugState("error");
+    setSlugError({ error: data?.error ?? "Nie udało się zmienić adresu.", suggestion: data?.suggestion ?? null });
+    setTimeout(() => setSlugState("idle"), 2500);
   }
 
   async function toggleActive() {
@@ -65,6 +99,62 @@ export default function ShopSection({ shopSlug, initialName, initialActive }: Pr
         <Field label="Nazwa" hint="Klienci widzą ją w sklepie, w regulaminie, w mailach i przy płatności. To ta sama nazwa co w „Logo i kolorystyka”.">
           <TextInput value={name} onChange={(e) => setName(e.target.value)} aria-label="Nazwa sklepu" />
         </Field>
+      </Card>
+
+      <Card title="Adres sklepu">
+        <Field
+          label="Adres"
+          hint="Adres sklepu w Sellflow, inny w każdym sklepie. Zmiana nazwy go nie zmienia. Po zmianie adresu stary dalej działa i przenosi klientów na nowy. Własna domena, jeśli ją masz, zostaje bez zmian."
+        >
+          <div className="flex items-center gap-1.5">
+            <TextInput
+              value={slug}
+              onChange={(e) => {
+                setSlug(e.target.value.trim().toLowerCase());
+                setSlugError(null);
+              }}
+              aria-label="Adres sklepu"
+              spellCheck={false}
+              autoCapitalize="none"
+              className="min-w-0"
+            />
+            <span className="text-[13px] shrink-0" style={{ color: P.muted }}>
+              .{APP_DOMAIN}
+            </span>
+          </div>
+        </Field>
+        {slug !== shopSlug && !slugValid && (
+          <p className="text-[12px] mb-3" style={{ color: "var(--panel-danger-ink)" }}>
+            Od 3 do 50 znaków: małe litery bez polskich znaków, cyfry i myślniki. Bez myślnika na początku i na końcu.
+          </p>
+        )}
+        {slugError && (
+          <p className="text-[12px] mb-3" style={{ color: "var(--panel-danger-ink)" }}>
+            {slugError.error}
+            {slugError.suggestion && (
+              <>
+                {" "}Wolny jest{" "}
+                <button
+                  type="button"
+                  className="underline font-semibold"
+                  onClick={() => {
+                    setSlug(slugError.suggestion!);
+                    setSlugError(null);
+                  }}
+                >
+                  {slugError.suggestion}
+                </button>
+                .
+              </>
+            )}
+          </p>
+        )}
+        <SaveButton
+          state={slugState}
+          onClick={saveSlug}
+          disabled={slug === shopSlug || !slugValid}
+          idleLabel="Zmień adres"
+        />
       </Card>
 
       <Card title="Status sklepu">

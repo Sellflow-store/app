@@ -14,7 +14,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { orders, shopIntegrations, shops, users } from "@/lib/db/schema";
+import { shopAtSlug } from "@/lib/slug";
+import { orders, shopIntegrations, users } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email";
 import { merchantPaidAfterCancelEmail } from "@/lib/email-templates";
 import { TPAY_PROVIDER, getTpayCredentials, getTpayTransaction, isTpayPaid } from "@/lib/tpay";
@@ -44,7 +45,9 @@ export async function POST(req: NextRequest, { params }: Params) {
   const orderId = form.get("tr_crc")?.trim() ?? "";
   if (!UUID_RE.test(orderId)) return ack();
 
-  const shop = await db.query.shops.findFirst({ where: eq(shops.slug, shopSlug) });
+  // shopAtSlug: the notify URL is fixed when the payment starts, so after an
+  // address change (SEL-38) Tpay still calls the old slug.
+  const shop = await db.query.shops.findFirst({ where: shopAtSlug(shopSlug) });
   if (!shop) return ack();
 
   const order = await db.query.orders.findFirst({

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getShopAccess } from "@/lib/api";
 import { clerkConfigured } from "@/lib/auth-env";
@@ -34,14 +34,19 @@ export default async function DashboardLayout({
   let staff = false;
   if (clerkConfigured()) {
     let denied = false;
+    let currentSlug: string | null = null;
     try {
       const access = await getShopAccess(shop);
       denied = access === null;
       staff = access?.asAdmin ?? false;
+      currentSlug = access?.slug ?? null;
     } catch {
       // DB unreachable — let pages render their own degraded states
     }
     if (denied) notFound();
+    // An old address after an address change (SEL-38), e.g. a bookmark:
+    // open the panel under the current one.
+    if (currentSlug && currentSlug !== shop) redirect(`/dashboard/${currentSlug}`);
   }
 
   const host = (await headers()).get("host") ?? "";

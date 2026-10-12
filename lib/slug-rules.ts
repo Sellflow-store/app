@@ -1,5 +1,10 @@
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
+/** shop_config key with the slugs a shop had before an address change,
+ *  as `{ slugs: string[] }`, oldest first (SEL-38). Here and not in slug.ts
+ *  because the edge proxy queries it too. */
+export const OLD_SLUGS_KEY = "oldSlugs";
+
 /**
  * Slugs a shop must never claim: platform subdomains (app, www, mail, Clerk
  * hosts) — owning one would hijack that subdomain once *.sell-flow.store is
