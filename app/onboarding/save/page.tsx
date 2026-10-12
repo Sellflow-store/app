@@ -1,12 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { STORAGE_KEY } from "@/lib/brand/types";
+import { GUEST_DATA_TTL_MS, PENDING_SAVE_KEY, SAVE_BOUNCE_KEY, STORAGE_KEY } from "@/lib/brand/types";
 
-const PENDING_KEY = "sellflow_pending_onboarding";
-const BOUNCE_KEY  = "sellflow_save_auth_bounced";
+type Pending = { raw: string; stale: boolean; shopName: string };
+
+// Sign-up takes minutes. An older stash, or one from before stashes carried
+// savedAt, may be someone else's who walked away mid-sign-up in this tab, so
+// it is used only after the person here confirms the shop is theirs.
+function readPending(): Pending | null {
+  const raw = sessionStorage.getItem(PENDING_SAVE_KEY);
+  if (!raw) return null;
+  try {
+    const { savedAt, shopName } = JSON.parse(raw) ?? {};
+    return {
+      raw,
+      stale: !(Date.now() - Number(savedAt) < GUEST_DATA_TTL_MS),
+      shopName: typeof shopName === "string" ? shopName : "",
+    };
+  } catch {
+    // uszkodzony stash — traktuj jak brak
+    sessionStorage.removeItem(PENDING_SAVE_KEY);
+    return null;
+  }
+}
+
+// The stash is accepted: keep the guest's wizard draft fresh too, so
+// "Wróć do kreatora" after a failed save still finds it.
+function touchGuestDraft() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const draft = raw ? JSON.parse(raw) : null;
+    if (draft?.owner === null) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...draft, savedAt: Date.now() }));
+    }
+  } catch {}
+}
 
 /**
  * Auto-finalizer for anonymous → signed-up onboarding flow.
@@ -22,15 +53,25 @@ const BOUNCE_KEY  = "sellflow_save_auth_bounced";
  */
 export default function OnboardingSavePage() {
   const router = useRouter();
-  const [status, setStatus] = useState<"loading" | "missing" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "missing" | "confirm" | "error">("loading");
+  const [staleName, setStaleName] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // Bumping re-runs the save effect — router.refresh() would NOT re-fire
   // a client effect, so the old retry button silently did nothing.
   const [attempt, setAttempt] = useState(0);
+  // The stash this page accepted (fresh, or confirmed as theirs):
+  // "Spróbuj ponownie" retries it without asking again.
+  const pendingRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(PENDING_KEY);
-    if (!raw) { setStatus("missing"); return; }
+    const pending = pendingRef.current
+      ? { raw: pendingRef.current, stale: false, shopName: "" }
+      : readPending();
+    if (!pending) { setStatus("missing"); return; }
+    if (pending.stale) { setStaleName(pending.shopName); setStatus("confirm"); return; }
+    const raw = pending.raw;
+    if (!pendingRef.current) touchGuestDraft();
+    pendingRef.current = raw;
     setStatus("loading");
 
     let cancelled = false;
@@ -63,8 +104,8 @@ export default function OnboardingSavePage() {
           // back here, so a second 401 means the server genuinely can't see
           // the session and bouncing again would just loop forever.
           if (res.status === 401) {
-            if (!sessionStorage.getItem(BOUNCE_KEY)) {
-              sessionStorage.setItem(BOUNCE_KEY, "1");
+            if (!sessionStorage.getItem(SAVE_BOUNCE_KEY)) {
+              sessionStorage.setItem(SAVE_BOUNCE_KEY, "1");
               router.push(`/login?redirect_url=${encodeURIComponent("/onboarding/save")}`);
               return;
             }
@@ -77,8 +118,10 @@ export default function OnboardingSavePage() {
           return;
         }
 
-        sessionStorage.removeItem(BOUNCE_KEY);
-        sessionStorage.removeItem(PENDING_KEY);
+        sessionStorage.removeItem(SAVE_BOUNCE_KEY);
+        sessionStorage.removeItem(PENDING_SAVE_KEY);
+        // The shop exists now — the wizard draft must not prefill the next account.
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
         router.replace(`/dashboard/${data.shopSlug}`);
       } catch {
         if (cancelled) return;
@@ -88,6 +131,22 @@ export default function OnboardingSavePage() {
     })();
     return () => { cancelled = true; };
   }, [router, attempt]);
+
+  const confirmPending = () => {
+    pendingRef.current = sessionStorage.getItem(PENDING_SAVE_KEY);
+    touchGuestDraft();
+    setAttempt((a) => a + 1);
+  };
+
+  // Not theirs: drop it. Without the stash the guest draft it came with is not
+  // adopted either, so the wizard opens empty.
+  const discardPending = () => {
+    try {
+      sessionStorage.removeItem(PENDING_SAVE_KEY);
+      sessionStorage.removeItem(SAVE_BOUNCE_KEY);
+    } catch {}
+    router.push("/onboarding");
+  };
 
   return (
     <div
@@ -139,6 +198,47 @@ export default function OnboardingSavePage() {
             >
               Otwórz kreator
             </button>
+          </>
+        )}
+
+        {status === "confirm" && (
+          <>
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-3"
+              style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}
+            >
+              Dokończ zakładanie sklepu
+            </p>
+            <p className="text-base" style={{ color: "var(--brand-ink)" }}>
+              W tej karcie czeka niedokończony sklep
+              {staleName && <> „<strong>{staleName}</strong>”</>}. Czy to Twój sklep?
+            </p>
+            <p className="mt-2 mb-6 text-sm" style={{ color: "var(--brand-ink-2)" }}>
+              Czeka tu od dłuższego czasu, więc mogła go zostawić osoba, która
+              wcześniej korzystała z tej przeglądarki.
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={confirmPending}
+                className="inline-flex items-center rounded-full px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: "var(--brand-accent)", color: "var(--brand-paper)" }}
+              >
+                Tak, utwórz sklep
+              </button>
+              <button
+                type="button"
+                onClick={discardPending}
+                className="inline-flex items-center rounded-full px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
+                style={{
+                  background: "var(--brand-paper)",
+                  color: "var(--brand-ink)",
+                  border: "1.5px solid var(--brand-rule)",
+                }}
+              >
+                Nie, zacznij od nowa
+              </button>
+            </div>
           </>
         )}
 

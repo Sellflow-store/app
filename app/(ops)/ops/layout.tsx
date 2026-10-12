@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { SignOutButton } from "@clerk/nextjs";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -89,13 +89,17 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
         <div className="px-5 py-4 border-t border-[var(--panel-sidebar-border)]">
           <div className="text-xs font-medium text-white">{displayName}</div>
           <div className="text-[11px] mt-0.5 text-[var(--panel-sidebar-muted)] truncate">{user.email}</div>
-          <Link
-            href="/login?logout=1"
-            className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium hover:underline text-[var(--panel-sidebar-muted)] hover:text-white"
-          >
-            <LogOut className="w-3 h-3" strokeWidth={1.75} />
-            Wyloguj
-          </Link>
+          {/* A plain link to /login did not sign out: AuthForm sends a signed-in
+              visitor on to "/", which proxy.ts rewrites back to /ops here. */}
+          <SignOutButton redirectUrl="/login">
+            <button
+              type="button"
+              className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium hover:underline text-[var(--panel-sidebar-muted)] hover:text-white"
+            >
+              <LogOut className="w-3 h-3" strokeWidth={1.75} />
+              Wyloguj
+            </button>
+          </SignOutButton>
         </div>
       </aside>
 

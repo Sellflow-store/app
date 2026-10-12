@@ -5,6 +5,7 @@ import { Check, Loader2, TriangleAlert } from "lucide-react";
 import { useOnboarding } from "../state";
 import { suggestNames } from "@/lib/brand/inference";
 import { slugifyName } from "@/lib/brand/bootstrap";
+import { nameHasSlugChars } from "@/lib/slug-rules";
 import StepFooter from "../StepFooter";
 
 type Props = { onNext: () => void; onBack: () => void };
@@ -27,7 +28,8 @@ export default function Name({ onNext, onBack }: Props) {
   // /api/onboarding picks the suggested variant automatically on save.
   useEffect(() => {
     const name = value.trim();
-    if (!name) {
+    // No letters or digits: there is no address of its own to check.
+    if (!name || !nameHasSlugChars(name)) {
       setSlugCheck({ state: "idle" });
       return;
     }
@@ -61,6 +63,9 @@ export default function Name({ onNext, onBack }: Props) {
   }, [value]);
 
   const suggestions = useMemo(() => suggestNames(state.business.sells), [state.business.sells]);
+
+  const trimmed = value.trim();
+  const slugless = !!trimmed && !nameHasSlugChars(trimmed);
 
   const commit = (next: string) => {
     setValue(next);
@@ -98,6 +103,11 @@ export default function Name({ onNext, onBack }: Props) {
           }}
           onFocus={(e) => (e.target.style.borderColor = "var(--brand-navy)")}
         />
+        {slugless && (
+          <p className="text-xs" style={{ color: "var(--brand-ink-2)" }}>
+            Dodaj do nazwy litery lub cyfry. Z nich powstaje adres sklepu.
+          </p>
+        )}
         {/* Live address availability */}
         {slugCheck.state !== "idle" && (
           <div
@@ -193,10 +203,13 @@ export default function Name({ onNext, onBack }: Props) {
         </div>
       )}
 
+      {/* Required: an empty name was silently replaced with the first stock
+          suggestion ("Common"), giving every such shop a common-N address. A
+          name with nothing to build a slug from would share sklep-N likewise. */}
       <StepFooter
         onBack={onBack}
-        onSkip={() => { patchBusiness({ name: "" }); onNext(); }}
-        onNext={() => { patchBusiness({ name: value.trim() }); onNext(); }}
+        onNext={() => { patchBusiness({ name: trimmed }); onNext(); }}
+        nextDisabled={!trimmed || slugless}
       />
     </div>
   );

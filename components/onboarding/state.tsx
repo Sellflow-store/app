@@ -10,7 +10,9 @@ import {
   type ReactNode,
 } from "react";
 import {
+  GUEST_DATA_TTL_MS,
   INITIAL_STATE,
+  PENDING_SAVE_KEY,
   STORAGE_KEY,
   type Brand,
   type Business,
@@ -64,12 +66,30 @@ type Ctx = {
 
 const OnboardingCtx = createContext<Ctx | null>(null);
 
-function loadFromStorage(): OnboardingState | null {
+/** owner: the Clerk user id the draft belongs to, or null for an anonymous
+ *  visitor. Drafts saved before this field existed have no owner at all.
+ *  savedAt: last write. */
+type StoredDraft = OnboardingState & { owner?: string | null; savedAt?: number };
+
+function loadFromStorage(userId: string | null): OnboardingState | null {
   if (typeof localStorage === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as OnboardingState;
+    const parsed = JSON.parse(raw) as StoredDraft;
+    // On a shared browser the draft may be another account's, an abandoned
+    // guest's, or one saved before drafts carried an owner — drop it instead
+    // of prefilling the wizard. A fresh guest draft stays with the guest, and
+    // goes to an account only when this tab still holds the Save it signed up
+    // from — never to whoever signs in next.
+    const fresh = Date.now() - Number(parsed.savedAt) < GUEST_DATA_TTL_MS;
+    const keep = parsed.owner === null
+      ? fresh && (userId === null || sessionStorage.getItem(PENDING_SAVE_KEY) !== null)
+      : parsed.owner === userId;
+    if (!keep) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
     return {
       business: { ...INITIAL_STATE.business, ...(parsed.business ?? {}) },
       brand: {
@@ -86,16 +106,17 @@ function loadFromStorage(): OnboardingState | null {
   }
 }
 
-export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, INITIAL_STATE, (init) => loadFromStorage() ?? init);
+export function OnboardingProvider({ children, userId }: { children: ReactNode; userId: string | null }) {
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE, (init) => loadFromStorage(userId) ?? init);
 
   // Persist on every meaningful state change. Quota errors are non-fatal
   // for a draft — silently swallow.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const draft: StoredDraft = { ...state, owner: userId, savedAt: Date.now() };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
     } catch {}
-  }, [state]);
+  }, [state, userId]);
 
   const value: Ctx = useMemo(
     () => ({

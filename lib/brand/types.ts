@@ -40,6 +40,11 @@ export type Inferred = {
 // draft z suwakami nie da się sensownie zmapować na preset.
 export const STORAGE_KEY = 'sellflow_onboarding_v2'
 
+// sessionStorage: the Save payload an anonymous visitor leaves while signing up
+// (picked up by /onboarding/save) and that page's one-time re-login flag.
+export const PENDING_SAVE_KEY = 'sellflow_pending_onboarding'
+export const SAVE_BOUNCE_KEY = 'sellflow_save_auth_bounced'
+
 export const DEFAULT_PRESET: StylePresetId = 'minimal'
 
 export const INITIAL_STATE: OnboardingState = {
@@ -47,6 +52,11 @@ export const INITIAL_STATE: OnboardingState = {
   brand: { traits: [], tone: [], preset: DEFAULT_PRESET },
   previewSeen: false,
 }
+
+// A guest draft and the stashed Save payload may be left by whoever used this
+// browser before. Past this age the draft is dropped and /onboarding/save asks
+// before creating the shop.
+export const GUEST_DATA_TTL_MS = 30 * 60 * 1000
 
 // ─── Bootstrap payload (handed off from onboarding to API + storefront) ───
 

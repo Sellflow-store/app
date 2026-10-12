@@ -15,10 +15,12 @@ import Wizard from "@/components/onboarding/Wizard";
 export default async function OnboardingPage() {
   const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   let firstName = "";
+  let userId: string | null = null;
   let existingSlug: string | null = null;
 
   if (clerkConfigured) {
     const { userId: clerkId } = await auth();
+    userId = clerkId;
     if (clerkId) {
       try {
         const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
@@ -40,5 +42,5 @@ export default async function OnboardingPage() {
   // pending payload). /onboarding/save handles that case explicitly.
   if (existingSlug) redirect(`/dashboard/${existingSlug}`);
 
-  return <Wizard firstName={firstName} />;
+  return <Wizard firstName={firstName} userId={userId} />;
 }
