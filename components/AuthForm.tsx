@@ -15,7 +15,7 @@ function safeRedirect(raw: string | null, fallback: string): string {
 }
 
 type Mode  = "login" | "register";
-type Phase = "form" | "verifying" | "loading" | "reset-request" | "reset-verify";
+type Phase = "form" | "verifying" | "loading" | "reset-request" | "reset-verify" | "second-factor";
 
 // Clerk's own messages are English. Keys follow @clerk/localizations: the error
 // code, `code__paramName` where the field matters, `code__sign_in` where the
@@ -267,6 +267,8 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       if (result.status === "complete") {
         await setSignInActive!({ session: result.createdSessionId });
         router.push(afterLogin);
+      } else if (await startSecondFactor(result)) {
+        setPhase("second-factor");
       } else {
         setError("Logowanie wymaga dodatkowego kroku, którego ta forma nie obsługuje. Spróbuj przez Google lub skontaktuj się z nami.");
         setPhase("form");
@@ -279,6 +281,63 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
       setError(clerkMsg(err, "sign_in"));
       setPhase("form");
     }
+  }
+
+  // ── Login step 2 — email code (new-device check / second factor) ────────────
+  // Clerk answers a correct password with needs_client_trust (new device) or
+  // needs_second_factor; both are cleared by an email code. Other second
+  // factors (TOTP, SMS) stay unsupported and fall back to the generic message.
+  async function startSecondFactor(result: SignInResource): Promise<boolean> {
+    if (result.status !== "needs_client_trust" && result.status !== "needs_second_factor") return false;
+    const factor = result.supportedSecondFactors?.find((f) => f.strategy === "email_code");
+    if (!factor) return false;
+    await signIn!.prepareSecondFactor({
+      strategy: "email_code",
+      emailAddressId: "emailAddressId" in factor ? factor.emailAddressId : undefined,
+    });
+    return true;
+  }
+
+  async function handleSecondFactor(e: React.FormEvent) {
+    e.preventDefault();
+    if (!siLoaded) return;
+    setVerifyBusy(true);
+    setError("");
+    setVerifyNotice("");
+    try {
+      const result = await signIn!.attemptSecondFactor({ strategy: "email_code", code });
+      if (result.status === "complete") {
+        await setSignInActive!({ session: result.createdSessionId });
+        router.push(afterLogin);
+        return; // stay busy until the navigation lands
+      }
+      setError("Nie udało się dokończyć logowania. Spróbuj przez Google lub skontaktuj się z nami.");
+    } catch (err) {
+      setError(clerkMsg(err));
+    }
+    setVerifyBusy(false);
+  }
+
+  async function handleResendSecondFactor() {
+    if (!siLoaded) return;
+    setVerifyBusy(true);
+    setError("");
+    setVerifyNotice("");
+    setCode("");
+    try {
+      if (await startSecondFactor(signIn!)) setVerifyNotice(`Wysłaliśmy nowy kod na ${email}.`);
+    } catch (err) {
+      setError(clerkMsg(err));
+    } finally {
+      setVerifyBusy(false);
+    }
+  }
+
+  function backFromSecondFactor() {
+    setError("");
+    setVerifyNotice("");
+    setCode("");
+    setPhase("form");
   }
 
   // ── Register step 1 — create account ────────────────────────────────────────
@@ -580,6 +639,65 @@ export default function AuthForm({ defaultMode = "register" }: Props) {
                   ← Wróć i zmień e-mail
                 </button>
                 <button type="button" onClick={handleResendSignUpCode} disabled={verifyBusy}
+                  className="text-xs font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>
+                  Wyślij kod ponownie
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Login step 2: email code (new-device check) */}
+          {phase === "second-factor" && (
+            <form onSubmit={handleSecondFactor} className="space-y-5">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: "oklch(56% 0.30 335 / 0.1)" }}>
+                <Mail className="w-7 h-7" style={{ color: "oklch(56% 0.30 335)" }} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)", color: "oklch(11% 0.10 275)" }}>
+                  Potwierdź logowanie
+                </h2>
+                <p className="text-sm mt-1" style={{ color: "oklch(40% 0.06 240)" }}>
+                  Logujesz się z nowego urządzenia. Wysłaliśmy 6-cyfrowy kod na <strong>{email}</strong>
+                </p>
+              </div>
+
+              <Field
+                label="Kod z e-maila"
+                value={code}
+                onChange={onCodeChange}
+                placeholder="123456"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                hint="Kod ma 6 cyfr."
+                disabled={verifyBusy}
+              />
+
+              {error && (
+                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-danger-soft)", color: "var(--panel-danger-ink)" }}>
+                  {error}
+                </p>
+              )}
+              {verifyNotice && (
+                <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "var(--panel-success-soft)", color: "var(--panel-success-ink)" }}>
+                  {verifyNotice}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={verifyBusy || code.length !== 6}
+                className="w-full flex items-center justify-center gap-2 text-sm font-semibold transition-all disabled:opacity-60"
+                style={{ padding: "14px 22px", borderRadius: "999px", background: "oklch(56% 0.30 335)", color: "#fff" }}
+              >
+                {verifyBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Zaloguj się <ArrowRight className="w-4 h-4" strokeWidth={2} /></>}
+              </button>
+
+              <div className="flex items-center justify-between">
+                <button type="button" onClick={backFromSecondFactor} disabled={verifyBusy}
+                  className="text-xs" style={{ color: "oklch(40% 0.06 240)" }}>
+                  ← Wróć do logowania
+                </button>
+                <button type="button" onClick={handleResendSecondFactor} disabled={verifyBusy}
                   className="text-xs font-semibold" style={{ color: "oklch(22% 0.24 270)" }}>
                   Wyślij kod ponownie
                 </button>
