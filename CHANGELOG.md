@@ -1120,7 +1120,7 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Konto właścicielki HAGI w bazie miało tymczasowy `clerk_id` (`pending:haga`), którego Clerk nie zna, więc skrypt nie ma czego zmieniać w Clerku. W tym przypadku zmienia tylko `users.email` (albo podpina istniejące konto Clerka z nowym adresem), a właścicielka rejestruje się adresem contact@hagastore.pl i `/api/onboarding` podpina jej konto do istniejącego sklepu.
 - Podpięcie konta po rejestracji: drugie uruchomienie `scripts/haga-zmiana-emaila-konta.ts --apply`, po założeniu konta w Clerku adresem contact@hagastore.pl, ustawia `users.clerk_id` na to konto, więc sklep działa po zalogowaniu bez przechodzenia kreatora. Skrypt podpina tylko konto z zweryfikowanym adresem.
 
-### 0.14.11 · 13.10.2026
+### 0.14.11 · 13.10.2026 · `8ee48c7` · PR #46
 **Logowanie: kod z e-maila przy nowym urządzeniu**
 - Po poprawnym haśle Clerk potrafi zażądać potwierdzenia nowego urządzenia kodem z e-maila (status `needs_client_trust`, ewentualnie `needs_second_factor`). Formularz obsługiwał tylko zalogowanie od razu i pokazywał „Logowanie wymaga dodatkowego kroku, którego ta forma nie obsługuje”, więc konto z prawidłowym hasłem nie mogło wejść do panelu.
 - Formularz wysyła teraz kod na adres konta i pokazuje ekran „Potwierdź logowanie” (6 cyfr, tak jak przy rejestracji i resecie hasła, z „Wyślij kod ponownie” i powrotem do logowania). Po poprawnym kodzie sesja startuje i następuje przekierowanie jak dotąd.
