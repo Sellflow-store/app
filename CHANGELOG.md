@@ -1125,3 +1125,8 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Po poprawnym haśle Clerk potrafi zażądać potwierdzenia nowego urządzenia kodem z e-maila (status `needs_client_trust`, ewentualnie `needs_second_factor`). Formularz obsługiwał tylko zalogowanie od razu i pokazywał „Logowanie wymaga dodatkowego kroku, którego ta forma nie obsługuje”, więc konto z prawidłowym hasłem nie mogło wejść do panelu.
 - Formularz wysyła teraz kod na adres konta i pokazuje ekran „Potwierdź logowanie” (6 cyfr, tak jak przy rejestracji i resecie hasła, z „Wyślij kod ponownie” i powrotem do logowania). Po poprawnym kodzie sesja startuje i następuje przekierowanie jak dotąd.
 - Inne drugie składniki (aplikacja uwierzytelniająca, SMS) nadal nie są obsługiwane i dają dotychczasowy komunikat z odesłaniem do Google.
+
+### 0.14.12 · 13.10.2026
+**Skrypt nadający rolę admina (panel admin.sell-flow.store)**
+- Nowy jednorazowy skrypt `scripts/grant-admin.ts` ustawia `users.role = 'admin'` dla konta o podanym adresie e-mail. Dostęp do `/ops` i `/api/ops/*` zależy od tej roli, a nie od samego konta w Clerku. Domyślnie tylko wypisuje plan, zapisuje z `--apply`.
+- Skrypt wymaga istniejącego wiersza w `users`, więc osoba musi się wcześniej zalogować i przejść kreator sklepu. Gdy go nie ma, kończy się czytelnym błędem. Cofnięcie: `update users set role = 'merchant' where email = '…'`.
