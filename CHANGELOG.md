@@ -1111,3 +1111,8 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Adres sklepu (`{adres}.sell-flow.store`) można zmienić w Ustawieniach → Sklep, w osobnej karcie „Adres sklepu”. Nazwa i adres są niezależne: nazwa może się powtarzać między sklepami, adres jest unikalny. Zajęty, zarezerwowany albo niepoprawny adres zwraca błąd z wolnym wariantem do kliknięcia.
 - Stary adres dalej prowadzi do sklepu. Strony sklepu na starej subdomenie przekierowują (307) na nową albo na zweryfikowaną własną domenę. Po starym adresie działają też: powiadomienia Tpay dla płatności rozpoczętych przed zmianą, adresy wklejone w Furgonetce, linki potwierdzenia newslettera z wysłanych maili i panel (przekierowuje na nowy adres).
 - Stare adresy leżą w `shop_config` pod kluczem `oldSlugs`, bez migracji bazy. Zostają zajęte na zawsze, jak adres usuniętego sklepu, więc nikt ich nie przejmie. Kreator onboardingu też je pomija. Sklep może wrócić do własnego starego adresu. Limit to 5 zmian adresu na sklep, żeby jedno konto nie zajmowało adresów na zapas.
+
+### 0.14.10 · 13.10.2026
+**E-mail HAGI: contact@hagastore.pl**
+- Główny adres sklepu HAGA zmieniony z kontakt@hagastore.pl na contact@hagastore.pl w trzech miejscach naraz: `legal.email` (regulamin i polityka prywatności), `account.contactEmail` (panel „Konto i firma”) oraz `about.email` (strona Kontakt, formularz kontaktowy i przycisk zapytania przy produktach na zamówienie).
+- Zmianę robi jednorazowy skrypt `scripts/haga-zmiana-emaila.ts`, który podmienia tylko pola z adresem i zostawia resztę wartości bez zmian. Można go uruchomić ponownie bez skutków ubocznych. `scripts/haga-dane-firmy.ts` nadal zawiera stary adres, więc jego ponowne uruchomienie cofnęłoby zmianę.
