@@ -10,9 +10,12 @@
  *   2. `users.email` (to czyta panel i `TeamSection`).
  *
  * Wyjątek: gdy `users.clerk_id` jest placeholderem (`pending:haga`), właściciel
- * nigdy nie miał konta w Clerku. Wtedy zmieniamy tylko `users.email` (albo
- * podpinamy istniejące konto Clerka z nowym adresem), a właścicielka zakłada
- * konto rejestrując się adresem contact@hagastore.pl.
+ * nigdy nie miał konta w Clerku. Wtedy robimy to w dwóch przebiegach:
+ *   1. pierwszy `--apply` zmienia tylko `users.email`,
+ *   2. po rejestracji w Clerku adresem contact@hagastore.pl (z potwierdzonym
+ *      kodem z maila) ten sam skrypt, puszczony drugi raz z `--apply`, podpina
+ *      to konto: ustawia `users.clerk_id` na id konta z Clerka. Sklep działa
+ *      wtedy od razu po zalogowaniu, bez przechodzenia kreatora.
  *
  * Adres dodajemy jako zweryfikowany bez wysyłania kodu, więc skrzynka
  * contact@hagastore.pl musi działać, zanim ktoś użyje „Nie pamiętam hasła".
@@ -57,6 +60,12 @@ async function main() {
     // adresem /api/onboarding sam podepnie jej clerk_id do tego wiersza.
     const { data } = await clerk.users.getUserList({ emailAddress: [NEW_EMAIL], limit: 2 });
     const existing = data[0];
+    // Podpinamy tylko konto z zweryfikowanym adresem: clerk_id daje pełny dostęp
+    // do sklepu, więc nie może trafić do kogoś, kto adresu nie potwierdził.
+    const match = existing?.emailAddresses.find((e) => e.emailAddress.toLowerCase() === NEW_EMAIL);
+    if (existing && match?.verification?.status !== "verified") {
+      throw new Error(`Konto ${existing.id} ma niezweryfikowany adres ${NEW_EMAIL}, najpierw potwierdź kod z maila`);
+    }
     console.log(
       existing
         ? `Clerk ma już konto ${NEW_EMAIL} (${existing.id}), zostanie podpięte do sklepu.`
