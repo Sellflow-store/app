@@ -9,6 +9,11 @@
  *      Od tej chwili logowanie i kody e-mail idą na contact@hagastore.pl.
  *   2. `users.email` (to czyta panel i `TeamSection`).
  *
+ * Wyjątek: gdy `users.clerk_id` jest placeholderem (`pending:haga`), właściciel
+ * nigdy nie miał konta w Clerku. Wtedy zmieniamy tylko `users.email` (albo
+ * podpinamy istniejące konto Clerka z nowym adresem), a właścicielka zakłada
+ * konto rejestrując się adresem contact@hagastore.pl.
+ *
  * Adres dodajemy jako zweryfikowany bez wysyłania kodu, więc skrzynka
  * contact@hagastore.pl musi działać, zanim ktoś użyje „Nie pamiętam hasła".
  *
@@ -35,16 +40,40 @@ async function main() {
     .where(eq(shops.slug, "haga"));
   if (!owner) throw new Error("Nie ma sklepu haga");
 
-  const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
-  const user = await clerk.users.getUser(owner.clerkId);
-  const current = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId);
-  console.log(`Clerk: ${current?.emailAddress ?? "(brak)"}  |  users.email: ${owner.email}`);
-  console.log(`Cel:   ${NEW_EMAIL}${apply ? "" : "  (na sucho, dodaj --apply)"}`);
-
-  // Adres zajęty przez inne konto: Clerk i tak by odmówił, a unique na users.email też.
+  // Adres zajęty przez inne konto w bazie: unique na users.email by odmówił.
   const [clash] = await db.select({ id: users.id }).from(users).where(eq(users.email, NEW_EMAIL));
   if (clash && clash.id !== owner.id) throw new Error(`${NEW_EMAIL} należy już do innego konta`);
 
+  const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
+  const pending = owner.clerkId.startsWith("pending:");
+  console.log(`users.email: ${owner.email}  |  clerk_id: ${owner.clerkId}${pending ? "  (placeholder, brak konta w Clerku)" : ""}`);
+  console.log(`Cel:         ${NEW_EMAIL}${apply ? "" : "  (na sucho, dodaj --apply)"}`);
+
+  if (pending) {
+    // Właściciel nigdy się nie zalogował: wiersz w `users` ma tymczasowy clerk_id
+    // (np. `pending:haga`), którego Clerk nie zna. Nie ma czego zmieniać w Clerku.
+    // Jeśli ktoś już założył konto z nowym adresem, podpinamy je do wiersza.
+    // Jeśli nie, zmieniamy tylko `users.email`: przy pierwszej rejestracji tym
+    // adresem /api/onboarding sam podepnie jej clerk_id do tego wiersza.
+    const { data } = await clerk.users.getUserList({ emailAddress: [NEW_EMAIL], limit: 2 });
+    const existing = data[0];
+    console.log(
+      existing
+        ? `Clerk ma już konto ${NEW_EMAIL} (${existing.id}), zostanie podpięte do sklepu.`
+        : `Clerk nie ma jeszcze konta ${NEW_EMAIL}, trzeba zarejestrować się tym adresem.`
+    );
+    if (!apply) return;
+    await db
+      .update(users)
+      .set({ email: NEW_EMAIL, ...(existing ? { clerkId: existing.id } : {}), updatedAt: new Date() })
+      .where(eq(users.id, owner.id));
+    console.log(`\u2713 users.email zaktualizowany${existing ? ", clerk_id podpięty" : ""}`);
+    return;
+  }
+
+  const user = await clerk.users.getUser(owner.clerkId);
+  const current = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId);
+  console.log(`Clerk: ${current?.emailAddress ?? "(brak)"}`);
   if (!apply) return;
 
   let target = user.emailAddresses.find((e) => e.emailAddress === NEW_EMAIL);
@@ -55,21 +84,21 @@ async function main() {
       verified: true,
       primary: true,
     });
-    console.log("✓ Clerk: dodano nowy adres jako główny");
+    console.log("\u2713 Clerk: dodano nowy adres jako główny");
   } else if (user.primaryEmailAddressId !== target.id) {
     await clerk.emailAddresses.updateEmailAddress(target.id, { verified: true, primary: true });
-    console.log("✓ Clerk: nowy adres ustawiony jako główny");
+    console.log("\u2713 Clerk: nowy adres ustawiony jako główny");
   }
 
   for (const e of user.emailAddresses) {
     if (e.id !== target.id) {
       await clerk.emailAddresses.deleteEmailAddress(e.id);
-      console.log(`✓ Clerk: usunięto ${e.emailAddress}`);
+      console.log(`\u2713 Clerk: usunięto ${e.emailAddress}`);
     }
   }
 
   await db.update(users).set({ email: NEW_EMAIL, updatedAt: new Date() }).where(eq(users.id, owner.id));
-  console.log("✓ users.email zaktualizowany");
+  console.log("\u2713 users.email zaktualizowany");
 }
 
 main().then(() => process.exit(0), (e) => { console.error(e); process.exit(1); });
