@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
@@ -201,36 +202,56 @@ function strengthHints({ result: { feedback } }: PasswordStrength): string[] {
 
 type PasswordValidator = Pick<SignInResource, "validatePassword">;
 
-/** Rules `password` fails, or null while Clerk can't validate (not loaded yet).
- *  The strength verdict arrives later, once zxcvbn has loaded, via onStrength. */
-function failedRules(
-  validator: PasswordValidator | undefined, password: string, onStrength?: (s: PasswordStrength) => void,
-): Set<string> | null {
+/** Rules `password` fails (`failed`, null while Clerk can't validate, i.e. not
+ *  loaded yet) and its strength verdict (`strength`), which settles later, once
+ *  zxcvbn has loaded. With strength checks off it never settles. */
+function checkPassword(
+  validator: PasswordValidator | undefined, password: string,
+): { failed: Set<string> | null; strength: Promise<PasswordStrength> } {
   let failed: Set<string> | null = null;
+  let settle: (s: PasswordStrength) => void = () => {};
+  const strength = new Promise<PasswordStrength>((resolve) => { settle = resolve; });
   validator?.validatePassword(password, {
     // Always called, synchronously. onValidation runs synchronously when a rule
-    // fails or strength isn't checked, and again asynchronously with the
-    // strength verdict when it is.
+    // fails or strength isn't checked. With strength checks on, it runs again
+    // asynchronously with the verdict, for every password, rules failed or not.
     onValidationComplexity: () => { failed = new Set(); },
     onValidation: ({ complexity, strength }) => {
       failed = new Set(Object.keys(complexity ?? {}));
-      if (strength) onStrength?.(strength);
+      if (strength) settle(strength);
     },
   });
-  return failed;
+  return { failed, strength };
 }
 
 function PasswordRules({ password, validator }: { password: string; validator?: PasswordValidator }) {
-  // Last strength verdict; stays null when the instance doesn't check strength.
-  const [strength, setStrength] = useState<PasswordStrength | null>(null);
+  // Strength verdict with the password it was computed for; stays null when
+  // the instance doesn't check strength.
+  const [verdict, setVerdict] = useState<{ password: string; strength: PasswordStrength } | null>(null);
   // Memoized: with strength checks on, each call also loads and runs zxcvbn,
   // and the whole form re-renders on every keystroke in any field.
-  const enabled = useMemo(() => failedRules(validator, ""), [validator]);
-  const failed  = useMemo(() => failedRules(validator, password, setStrength), [validator, password]);
+  const enabled = useMemo(() => checkPassword(validator, "").failed, [validator]);
+  const check   = useMemo(() => checkPassword(validator, password), [validator, password]);
+  useEffect(() => {
+    let cancelled = false;
+    check.strength.then((strength) => {
+      // A verdict for an earlier password that settles late is dropped. Once
+      // zxcvbn has loaded, the verdict settles in the same task as the
+      // keystroke; flushSync renders it before the browser paints, so the item
+      // doesn't flash "unknown" between the keystroke and its verdict.
+      if (!cancelled) flushSync(() => setVerdict({ password, strength }));
+    });
+    return () => { cancelled = true; };
+  }, [check, password]);
+  // A verdict counts only for the password currently in the field.
+  const strength = verdict?.password === password ? verdict.strength : null;
+  const failed = check.failed;
   const rules = enabled && failed
     ? PASSWORD_RULES.filter((r) => enabled.has(r.key)).map((r) => ({ ...r, ok: !failed.has(r.key) }))
     : [{ ...PASSWORD_RULES[0], ok: password.length >= 8 }];
-  if (strength) rules.push({ key: "strength", label: "wystarczającą siłę", ok: strength.state !== "fail" });
+  // Kept once strength checks are known to be on, so the list doesn't change
+  // length while the next verdict is on its way.
+  if (verdict) rules.push({ key: "strength", label: "wystarczającą siłę", ok: !!strength && strength.state !== "fail" });
   const hints = strength?.state === "fail" ? strengthHints(strength) : [];
   return (
     <div className="pt-1 text-xs" style={{ color: "oklch(40% 0.06 240)" }}>
@@ -247,8 +268,13 @@ function PasswordRules({ password, validator }: { password: string; validator?: 
           </li>
         ))}
       </ul>
-      {/* Under the strength item, which is last; indented past its icon. */}
-      <p className="mt-0.5 ml-5" aria-live="polite">{hints.join(" ")}</p>
+      {/* Under the strength item, which is last; indented past its icon. The
+          live region stays mounted (one added together with its text is often
+          not announced); the margin goes with the text, so empty it takes no
+          space. */}
+      <p className="ml-5" aria-live="polite">
+        {hints.length > 0 && <span className="block mt-0.5">{hints.join(" ")}</span>}
+      </p>
     </div>
   );
 }
