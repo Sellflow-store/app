@@ -96,31 +96,6 @@ function Shell({ firstName, signedIn }: { firstName: string; signedIn: boolean }
           </span>
         </div>
         <div className="flex items-center gap-4">
-          {index > 0 && (
-            <div className="flex items-center gap-3" aria-label="Postęp onboardingu">
-              <span className="text-xs font-mono"
-                    style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
-                {Math.min(index, ORDER.length - 1)} / {ORDER.length - 1}
-              </span>
-              <div
-                className="h-1 w-20 sm:w-32 rounded-full overflow-hidden"
-                role="progressbar"
-                aria-valuenow={progressPct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                style={{ background: "var(--brand-rule)" }}
-              >
-                <div
-                  className="h-full transition-[width] duration-500"
-                  style={{
-                    width: `${progressPct}%`,
-                    background: "var(--brand-accent)",
-                    transitionTimingFunction: "var(--brand-ease-out)",
-                  }}
-                />
-              </div>
-            </div>
-          )}
           {/* A signed-in user without a shop is sent back here from every route,
               so the wizard is the only place they can sign out. The draft and
               the pending save are cleared after sign-out so the next person on
@@ -151,6 +126,34 @@ function Shell({ firstName, signedIn }: { firstName: string; signedIn: boolean }
 
       <main className="flex-1 px-4 py-12">
         <div className={step === "preview" || step === "brand" ? "max-w-6xl mx-auto" : "max-w-[560px] mx-auto"}>
+          {/* Above the step, in the reading column: in the header corner it went unnoticed. */}
+          {index > 0 && (
+            <div className="mb-6">
+              <p className="text-xs mb-2" aria-hidden
+                 style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
+                Krok {index} z {ORDER.length - 1}
+              </p>
+              <div
+                className="h-1.5 w-full rounded-full overflow-hidden"
+                role="progressbar"
+                aria-label="Postęp onboardingu"
+                aria-valuenow={progressPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuetext={`Krok ${index} z ${ORDER.length - 1}`}
+                style={{ background: "var(--brand-rule)" }}
+              >
+                <div
+                  className="h-full transition-[width] duration-500"
+                  style={{
+                    width: `${progressPct}%`,
+                    background: "var(--brand-accent)",
+                    transitionTimingFunction: "var(--brand-ease-out)",
+                  }}
+                />
+              </div>
+            </div>
+          )}
           {step !== "welcome" && step !== "preview" && step !== "brand" && (
             <div
               className="rounded-3xl p-8 sm:p-10"

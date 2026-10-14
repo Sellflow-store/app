@@ -1130,3 +1130,11 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 **Skrypt nadający rolę admina (panel admin.sell-flow.store)**
 - Nowy jednorazowy skrypt `scripts/grant-admin.ts` ustawia `users.role = 'admin'` dla konta o podanym adresie e-mail. Dostęp do `/ops` i `/api/ops/*` zależy od tej roli, a nie od samego konta w Clerku. Domyślnie tylko wypisuje plan, zapisuje z `--apply`.
 - Skrypt wymaga istniejącego wiersza w `users`, więc osoba musi się wcześniej zalogować i przejść kreator sklepu. Gdy go nie ma, kończy się czytelnym błędem. Cofnięcie: `update users set role = 'merchant' where email = '…'`.
+
+### 0.14.14 · 14.10.2026 · PR #50
+**Kreator sklepu: jeden licznik kroków, jeden przycisk naprzód, widoczny pasek postępu (SEL-18, SEL-19, SEL-26)**
+- Nagłówki kroków mówiły „Krok 1 z 2 · Biznes” i „Krok 2 z 2 · Styl”, a licznik w rogu liczył 7 ekranów. Nagłówki mówią teraz tylko „Biznes” i „Styl”, a liczbę kroków podaje jeden licznik.
+- Pasek postępu przeniesiony z rogu nagłówka nad treść kroku, na całą szerokość kolumny, z napisem „Krok X z 7”. Czytnik ekranu odczytuje go jako „Postęp onboardingu, Krok X z 7”.
+- Każdy krok ma jeden przycisk naprzód. Na krokach nieobowiązkowych (logo, „Jaki problem rozwiązujesz?”, „Co Cię wyróżnia?”) przy pustym polu nazywa się „Pomiń”, a po wpisaniu „Dalej” albo „Przejdź do stylu”. Wcześniej „Pomiń” na logo i stylu robiło to samo co „Dalej”, a na pytaniach tekstowych kasowało wpisaną odpowiedź.
+- Ekran powitalny nie obiecuje już przycisku „Publikuj”, którego w kreatorze nie ma.
+- Krok stylu, tylko tekst (SEL-20): pod cechami marki jest informacja, że pierwsze cztery trafią do sekcji „Dlaczego my”. Zdanie o podglądzie przeszło do „Styl sklepu”, bo podgląd reaguje na styl, a nie na cechy, i na telefonie nie jest „po prawej”. Pasek podglądu pokazuje adres `twoja-marka.sell-flow.store` zamiast `sellflow.app`.

@@ -4,15 +4,15 @@ import { ArrowRight } from "lucide-react";
 
 type Props = {
   onBack?: () => void;
-  onSkip?: () => void;
   onNext: () => void;
   nextLabel?: string;
   nextDisabled?: boolean;
 };
 
+// One forward action per step. Optional steps label it „Pomiń” while empty,
+// so skipping never clears what was already typed.
 export default function StepFooter({
   onBack,
-  onSkip,
   onNext,
   nextLabel = "Dalej",
   nextDisabled,
@@ -31,15 +31,6 @@ export default function StepFooter({
         )}
       </div>
       <div className="flex items-center gap-4">
-        {onSkip && (
-          <button
-            type="button"
-            onClick={onSkip}
-            className="text-sm font-medium text-[var(--brand-ink-2)] hover:text-[var(--brand-ink)] transition-colors"
-          >
-            Pomiń
-          </button>
-        )}
         <button
           type="button"
           onClick={onNext}

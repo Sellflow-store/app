@@ -54,14 +54,14 @@ export default function Brand({ onNext, onBack }: Props) {
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-3"
              style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
-            Krok 2 z 2 · Styl
+            Styl
           </p>
           <h2 className="text-xl font-bold tracking-tight mb-1"
               style={{ fontFamily: "var(--font-display)", color: "var(--brand-ink)" }}>
             Cechy marki
           </h2>
           <p className="text-sm mb-4" style={{ color: "var(--brand-ink-2)" }}>
-            Wybierz do {TRAIT_MAX}. Po prawej zobaczysz, jak zmienia się Twój sklep.
+            Wybierz do {TRAIT_MAX}. Pierwsze cztery trafią do sekcji „Dlaczego my” w Twoim sklepie.
           </p>
           <Pills items={TRAIT_OPTIONS} selected={traitsSet} max={TRAIT_MAX}
                  selectedCount={state.brand.traits.length} onToggle={toggleTrait} />
@@ -98,7 +98,7 @@ export default function Brand({ onNext, onBack }: Props) {
           </h2>
           <p className="text-sm mb-5" style={{ color: "var(--brand-ink-2)" }}>
             Wybierz jeden z czterech stylów. Każdy to gotowa paleta, typografia i układ.
-            Później możesz go zmienić w panelu.
+            Podgląd od razu pokazuje wybrany styl. Później możesz go zmienić w panelu.
           </p>
           <div className="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Styl sklepu">
             {STYLE_PRESETS.map((p) => (
@@ -114,7 +114,6 @@ export default function Brand({ onNext, onBack }: Props) {
 
         <StepFooter
           onBack={onBack}
-          onSkip={onNext}
           nextLabel="Pokaż mój sklep"
           onNext={onNext}
         />
@@ -137,7 +136,7 @@ export default function Brand({ onNext, onBack }: Props) {
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
           <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-rule)" }} />
-          <span className="ml-3">twoja-marka.sellflow.app · podgląd</span>
+          <span className="ml-3">twoja-marka.sell-flow.store · podgląd</span>
         </div>
         <MiniPreview compact />
       </div>
