@@ -191,11 +191,24 @@ const STRENGTH_SUGGESTIONS_PL: Record<string, string> = {
   longerKeyboardPattern: "Wzór z klawiatury powinien być dłuższy i kilka razy zmieniać kierunek.",
 };
 
+// Logged once per key, like Clerk error codes without a Polish message: a new
+// clerk-js may bring zxcvbn translations or new keys, and every hint would
+// silently fall back to the generic one.
+const unknownStrengthKeys = new Set<string>();
+function strengthText(texts: Record<string, string>, key: string): string | undefined {
+  const text = texts[key];
+  if (!text && !unknownStrengthKeys.has(key)) {
+    unknownStrengthKeys.add(key);
+    console.warn("zxcvbn feedback without a Polish message:", key);
+  }
+  return text;
+}
+
 /** Why a failing password is weak and what to change, in Polish. */
 function strengthHints({ result: { feedback } }: PasswordStrength): string[] {
   const hints = [
-    feedback.warning && STRENGTH_WARNINGS_PL[feedback.warning],
-    ...feedback.suggestions.map((s) => STRENGTH_SUGGESTIONS_PL[s]),
+    feedback.warning && strengthText(STRENGTH_WARNINGS_PL, feedback.warning),
+    ...feedback.suggestions.map((s) => strengthText(STRENGTH_SUGGESTIONS_PL, s)),
   ].filter((h): h is string => !!h);
   return hints.length ? [...new Set(hints)] : [STRENGTH_SUGGESTIONS_PL.anotherWord];
 }
@@ -218,7 +231,12 @@ function checkPassword(
     onValidationComplexity: () => { failed = new Set(); },
     onValidation: ({ complexity, strength }) => {
       failed = new Set(Object.keys(complexity ?? {}));
-      if (strength) settle(strength);
+      // Only a verdict zxcvbn computed for this very password. A validator
+      // reused across calls (clerk-js loads as @6, so this can change without
+      // a deploy) hands the previous password's verdict to the synchronous
+      // call. zxcvbn scores at most 256 characters, so for a longer password
+      // the item stays unchecked.
+      if (strength && strength.result.password === password) settle(strength);
     },
   });
   return { failed, strength };
@@ -229,9 +247,14 @@ function PasswordRules({ password, validator }: { password: string; validator?: 
   // the instance doesn't check strength.
   const [verdict, setVerdict] = useState<{ password: string; strength: PasswordStrength } | null>(null);
   // Memoized: with strength checks on, each call also loads and runs zxcvbn,
-  // and the whole form re-renders on every keystroke in any field.
-  const enabled = useMemo(() => checkPassword(validator, "").failed, [validator]);
-  const check   = useMemo(() => checkPassword(validator, password), [validator, password]);
+  // and the whole form re-renders on every keystroke in any field. The empty
+  // password's check doubles as the field's own while the field is empty.
+  const empty = useMemo(() => checkPassword(validator, ""), [validator]);
+  const check = useMemo(
+    () => (password ? checkPassword(validator, password) : empty),
+    [validator, password, empty],
+  );
+  const enabled = empty.failed;
   useEffect(() => {
     let cancelled = false;
     check.strength.then((strength) => {
