@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
-import type { SignInResource } from "@clerk/nextjs/types";
+import type { PasswordStrength, SignInResource } from "@clerk/nextjs/types";
 import { Eye, EyeOff, ArrowRight, Mail, Loader2, Check, Circle } from "lucide-react";
 
 /** Only accept same-origin relative paths to avoid open-redirect abuse. */
@@ -41,7 +42,7 @@ const CLERK_ERRORS_PL: Record<string, string> = {
   form_password_untrusted:                    PWNED_AT_SIGN_IN,
   form_password_length_too_short:             "Hasło jest za krótkie. Sprawdź wymagania pod polem hasła.",
   form_password_size_in_bytes_exceeded:       "Hasło jest za długie.",
-  form_password_not_strong_enough:            "Hasło jest za słabe. Wydłuż je, np. dodając kilka słów.",
+  form_password_not_strong_enough:            "Hasło jest za łatwe do odgadnięcia. Dodaj jedno lub dwa mniej popularne słowa.",
   form_password_matches_identifier:           "Hasło nie może być takie samo jak adres e-mail.",
   form_new_password_matches_current:          "Nowe hasło musi się różnić od obecnego.",
   form_code_incorrect:                        "Nieprawidłowy kod. Sprawdź e-mail i wpisz kod jeszcze raz.",
@@ -153,28 +154,128 @@ const PASSWORD_RULES = [
   { key: "require_special_char", label: "znak specjalny, np. ! ? #" },
 ];
 
+// Strength (zxcvbn) is checked when the instance has show_zxcvbn on; it then
+// rejects a password below min_zxcvbn_strength (form_password_not_strong_enough).
+// Clerk loads zxcvbn without translations, so its feedback comes as
+// @zxcvbn-ts translation keys. Polish for the keys its matchers can produce
+// (no user inputs, no haveibeenpwned matcher).
+const STRENGTH_WARNINGS_PL: Record<string, string> = {
+  straightRow:       "Klawisze z jednego rzędu, np. „qwerty”, łatwo odgadnąć.",
+  keyPattern:        "Krótkie wzory z klawiatury łatwo odgadnąć.",
+  simpleRepeat:      "Powtórzony znak, np. „aaa”, łatwo odgadnąć.",
+  extendedRepeat:    "Powtórzone ciągi znaków, np. „abcabc”, łatwo odgadnąć.",
+  sequences:         "Ciągi, np. „abc” albo „1234”, łatwo odgadnąć.",
+  recentYears:       "Ostatnie lata łatwo odgadnąć.",
+  dates:             "Daty łatwo odgadnąć.",
+  topTen:            "To jedno z najczęściej używanych haseł.",
+  topHundred:        "To jedno z często używanych haseł.",
+  common:            "To popularne hasło.",
+  similarToCommon:   "To hasło jest podobne do popularnego.",
+  wordByItself:      "Pojedyncze słowo łatwo odgadnąć.",
+  namesByThemselves: "Same imiona albo nazwiska łatwo odgadnąć.",
+  commonNames:       "Popularne imiona i nazwiska łatwo odgadnąć.",
+};
+const STRENGTH_SUGGESTIONS_PL: Record<string, string> = {
+  anotherWord:           "Dodaj jedno lub dwa mniej popularne słowa.",
+  useWords:              "Użyj kilku słów, ale unikaj popularnych zwrotów.",
+  noNeed:                "Silne hasło nie potrzebuje znaków specjalnych, cyfr ani wielkich liter.",
+  l33t:                  "Unikaj przewidywalnych zamian, np. „@” zamiast „a”.",
+  reverseWords:          "Unikaj słów zapisanych od tyłu.",
+  allUppercase:          "Wielkimi literami zapisz tylko niektóre litery, nie wszystkie.",
+  capitalization:        "Użyj wielkich liter nie tylko na początku.",
+  dates:                 "Unikaj dat i lat, które się z Tobą kojarzą.",
+  recentYears:           "Unikaj ostatnich lat.",
+  associatedYears:       "Unikaj lat, które się z Tobą kojarzą.",
+  sequences:             "Unikaj ciągów, np. „abc” albo „1234”.",
+  repeated:              "Unikaj powtarzających się słów i znaków.",
+  longerKeyboardPattern: "Wzór z klawiatury powinien być dłuższy i kilka razy zmieniać kierunek.",
+};
+
+// Logged once per key, like Clerk error codes without a Polish message: a new
+// clerk-js may bring zxcvbn translations or new keys, and every hint would
+// silently fall back to the generic one.
+const unknownStrengthKeys = new Set<string>();
+function strengthText(texts: Record<string, string>, key: string): string | undefined {
+  const text = texts[key];
+  if (!text && !unknownStrengthKeys.has(key)) {
+    unknownStrengthKeys.add(key);
+    console.warn("zxcvbn feedback without a Polish message:", key);
+  }
+  return text;
+}
+
+/** Why a failing password is weak and what to change, in Polish. */
+function strengthHints({ result: { feedback } }: PasswordStrength): string[] {
+  const hints = [
+    feedback.warning && strengthText(STRENGTH_WARNINGS_PL, feedback.warning),
+    ...feedback.suggestions.map((s) => strengthText(STRENGTH_SUGGESTIONS_PL, s)),
+  ].filter((h): h is string => !!h);
+  return hints.length ? [...new Set(hints)] : [STRENGTH_SUGGESTIONS_PL.anotherWord];
+}
+
 type PasswordValidator = Pick<SignInResource, "validatePassword">;
 
-/** Rules `password` fails, or null while Clerk can't validate (not loaded yet). */
-function failedRules(validator: PasswordValidator | undefined, password: string): Set<string> | null {
+/** Rules `password` fails (`failed`, null while Clerk can't validate, i.e. not
+ *  loaded yet) and its strength verdict (`strength`), which settles later, once
+ *  zxcvbn has loaded. With strength checks off it never settles. */
+function checkPassword(
+  validator: PasswordValidator | undefined, password: string,
+): { failed: Set<string> | null; strength: Promise<PasswordStrength> } {
   let failed: Set<string> | null = null;
+  let settle: (s: PasswordStrength) => void = () => {};
+  const strength = new Promise<PasswordStrength>((resolve) => { settle = resolve; });
   validator?.validatePassword(password, {
-    // Always called, synchronously. onValidation is skipped when every rule
-    // passes and Clerk's strength check (zxcvbn) still has to load.
+    // Always called, synchronously. onValidation runs synchronously when a rule
+    // fails or strength isn't checked. With strength checks on, it runs again
+    // asynchronously with the verdict, for every password, rules failed or not.
     onValidationComplexity: () => { failed = new Set(); },
-    onValidation: ({ complexity }) => { failed = new Set(Object.keys(complexity ?? {})); },
+    onValidation: ({ complexity, strength }) => {
+      failed = new Set(Object.keys(complexity ?? {}));
+      // Only a verdict zxcvbn computed for this very password. A validator
+      // reused across calls (clerk-js loads as @6, so this can change without
+      // a deploy) hands the previous password's verdict to the synchronous
+      // call. zxcvbn scores at most 256 characters, so for a longer password
+      // the item stays unchecked.
+      if (strength && strength.result.password === password) settle(strength);
+    },
   });
-  return failed;
+  return { failed, strength };
 }
 
 function PasswordRules({ password, validator }: { password: string; validator?: PasswordValidator }) {
+  // Strength verdict with the password it was computed for; stays null when
+  // the instance doesn't check strength.
+  const [verdict, setVerdict] = useState<{ password: string; strength: PasswordStrength } | null>(null);
   // Memoized: with strength checks on, each call also loads and runs zxcvbn,
-  // and the whole form re-renders on every keystroke in any field.
-  const enabled = useMemo(() => failedRules(validator, ""), [validator]);
-  const failed  = useMemo(() => failedRules(validator, password), [validator, password]);
+  // and the whole form re-renders on every keystroke in any field. The empty
+  // password's check doubles as the field's own while the field is empty.
+  const empty = useMemo(() => checkPassword(validator, ""), [validator]);
+  const check = useMemo(
+    () => (password ? checkPassword(validator, password) : empty),
+    [validator, password, empty],
+  );
+  const enabled = empty.failed;
+  useEffect(() => {
+    let cancelled = false;
+    check.strength.then((strength) => {
+      // A verdict for an earlier password that settles late is dropped. Once
+      // zxcvbn has loaded, the verdict settles in the same task as the
+      // keystroke; flushSync renders it before the browser paints, so the item
+      // doesn't flash "unknown" between the keystroke and its verdict.
+      if (!cancelled) flushSync(() => setVerdict({ password, strength }));
+    });
+    return () => { cancelled = true; };
+  }, [check, password]);
+  // A verdict counts only for the password currently in the field.
+  const strength = verdict?.password === password ? verdict.strength : null;
+  const failed = check.failed;
   const rules = enabled && failed
     ? PASSWORD_RULES.filter((r) => enabled.has(r.key)).map((r) => ({ ...r, ok: !failed.has(r.key) }))
     : [{ ...PASSWORD_RULES[0], ok: password.length >= 8 }];
+  // Kept once strength checks are known to be on, so the list doesn't change
+  // length while the next verdict is on its way.
+  if (verdict) rules.push({ key: "strength", label: "wystarczającą siłę", ok: !!strength && strength.state !== "fail" });
+  const hints = strength?.state === "fail" ? strengthHints(strength) : [];
   return (
     <div className="pt-1 text-xs" style={{ color: "oklch(40% 0.06 240)" }}>
       <p>Hasło musi mieć:</p>
@@ -190,6 +291,13 @@ function PasswordRules({ password, validator }: { password: string; validator?: 
           </li>
         ))}
       </ul>
+      {/* Under the strength item, which is last; indented past its icon. The
+          live region stays mounted (one added together with its text is often
+          not announced); the margin goes with the text, so empty it takes no
+          space. */}
+      <p className="ml-5" aria-live="polite">
+        {hints.length > 0 && <span className="block mt-0.5">{hints.join(" ")}</span>}
+      </p>
     </div>
   );
 }

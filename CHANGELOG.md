@@ -1131,6 +1131,13 @@ Sklepy są przygotowane na zakupy przez wyszukiwarki i asystentów AI: dane stru
 - Nowy jednorazowy skrypt `scripts/grant-admin.ts` ustawia `users.role = 'admin'` dla konta o podanym adresie e-mail. Dostęp do `/ops` i `/api/ops/*` zależy od tej roli, a nie od samego konta w Clerku. Domyślnie tylko wypisuje plan, zapisuje z `--apply`.
 - Skrypt wymaga istniejącego wiersza w `users`, więc osoba musi się wcześniej zalogować i przejść kreator sklepu. Gdy go nie ma, kończy się czytelnym błędem. Cofnięcie: `update users set role = 'merchant' where email = '…'`.
 
+### 0.14.13 · 14.10.2026 · PR #49
+**Rejestracja i nowe hasło: lista wymagań pokazuje siłę hasła i podpowiada, co zmienić (SEL-24)**
+- Clerk na produkcji sprawdza siłę hasła (zxcvbn, `show_zxcvbn`, minimum 2 w skali 0–4) i odrzuca słabe hasło, np. „12345678”, mimo że ma 8 znaków. Lista pod hasłem tego nie pokazywała: miała tylko „co najmniej 8 znaków”, więc sprzedawca dostawał „hasło jest za słabe” bez informacji, co zmienić.
+- Lista ma nową pozycję „wystarczającą siłę”, odhaczaną podczas pisania. Pod nią jest podpowiedź z oceny Clerka, po polsku: dlaczego hasło jest słabe (np. „To jedno z najczęściej używanych haseł.”) i co zmienić (np. „Dodaj jedno lub dwa mniej popularne słowa.”). Przy pustym polu podpowiedź mówi, jak zacząć: kilka słów, bez potrzeby znaków specjalnych.
+- Ocenę siły Clerk liczy asynchronicznie, po doczytaniu zxcvbn, a formularz czytał tylko wynik synchroniczny. Teraz odbiera też ten późniejszy. Wynik liczy się tylko dla hasła, które jest w polu: spóźniony wynik dla wcześniejszego hasła jest odrzucany. Gdy zxcvbn jest już załadowany, nowy wynik pojawia się na ekranie razem z wpisanym znakiem, bez mignięcia starego. Wskazówki zxcvbn przychodzą jako klucze (`anotherWord`, `topTen` itd.), bo Clerk ładuje bibliotekę bez tłumaczeń, więc formularz tłumaczy je sam, bez pakietu `@clerk/localizations`. Pozycja pojawia się tylko wtedy, gdy instancja Clerka sprawdza siłę.
+- Komunikat po odrzuceniu przez serwer (`form_password_not_strong_enough`) też mówi, co zmienić: „Hasło jest za łatwe do odgadnięcia. Dodaj jedno lub dwa mniej popularne słowa.”
+
 ### 0.14.14 · 14.10.2026 · PR #50
 **Kreator sklepu: jeden licznik kroków, jeden przycisk naprzód, widoczny pasek postępu (SEL-18, SEL-19, SEL-26)**
 - Nagłówki kroków mówiły „Krok 1 z 2 · Biznes” i „Krok 2 z 2 · Styl”, a licznik w rogu liczył 7 ekranów. Nagłówki mówią teraz tylko „Biznes” i „Styl”, a liczbę kroków podaje jeden licznik.
