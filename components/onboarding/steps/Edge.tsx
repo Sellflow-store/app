@@ -18,7 +18,7 @@ export default function Edge({ onNext, onBack }: Props) {
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-3"
          style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
-        Krok 1 z 2 · Biznes
+        Biznes
       </p>
       <h2 className="text-[28px] font-bold tracking-tight mb-2"
           style={{ fontFamily: "var(--font-display)", color: "var(--brand-ink)", lineHeight: 1.15 }}>
@@ -49,8 +49,7 @@ export default function Edge({ onNext, onBack }: Props) {
 
       <StepFooter
         onBack={onBack}
-        onSkip={() => { patchBusiness({ edge: "" }); onNext(); }}
-        nextLabel="Przejdź do stylu"
+        nextLabel={value.trim() ? "Przejdź do stylu" : "Pomiń"}
         onNext={() => { commit(); onNext(); }}
       />
     </div>

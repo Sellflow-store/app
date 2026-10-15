@@ -78,7 +78,7 @@ export default function Logo({ onNext, onBack }: Props) {
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-3"
          style={{ color: "var(--brand-ink-2)", fontFamily: "var(--font-mono)" }}>
-        Krok 1 z 2 · Biznes
+        Biznes
       </p>
       <h2 className="text-[28px] font-bold tracking-tight mb-2"
           style={{ fontFamily: "var(--font-display)", color: "var(--brand-ink)", lineHeight: 1.15 }}>
@@ -141,7 +141,11 @@ export default function Logo({ onNext, onBack }: Props) {
         )}
       </div>
 
-      <StepFooter onBack={onBack} onSkip={onNext} onNext={onNext} />
+      <StepFooter
+        onBack={onBack}
+        nextLabel={state.business.logoDataUrl ? "Dalej" : "Pomiń"}
+        onNext={onNext}
+      />
     </div>
   );
 }
